@@ -25,6 +25,7 @@ import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppConfiguracoesRouteImport } from './routes/app.configuracoes'
 import { Route as AppCheckoutsIndexRouteImport } from './routes/app.checkouts.index'
 import { Route as AppCheckoutsIdRouteImport } from './routes/app.checkouts.$id'
+import { Route as ApiPublicAbacateWebhookRouteImport } from './routes/api/public/abacate-webhook'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -106,6 +107,11 @@ const AppCheckoutsIdRoute = AppCheckoutsIdRouteImport.update({
   path: '/checkouts/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicAbacateWebhookRoute = ApiPublicAbacateWebhookRouteImport.update({
+  id: '/api/public/abacate-webhook',
+  path: '/api/public/abacate-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
 }
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app': typeof AppIndexRoute
+  '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
   '/app/checkouts': typeof AppCheckoutsIndexRoute
 }
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app/': typeof AppIndexRoute
+  '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
 }
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/app/webhooks'
     | '/checkout/$slug'
     | '/app/'
+    | '/api/public/abacate-webhook'
     | '/app/checkouts/$id'
     | '/app/checkouts/'
   fileRoutesByTo: FileRoutesByTo
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/app/webhooks'
     | '/checkout/$slug'
     | '/app'
+    | '/api/public/abacate-webhook'
     | '/app/checkouts/$id'
     | '/app/checkouts'
   id:
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/app/webhooks'
     | '/checkout/$slug'
     | '/app/'
+    | '/api/public/abacate-webhook'
     | '/app/checkouts/$id'
     | '/app/checkouts/'
   fileRoutesById: FileRoutesById
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   CheckoutSlugRoute: typeof CheckoutSlugRoute
+  ApiPublicAbacateWebhookRoute: typeof ApiPublicAbacateWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -341,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCheckoutsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/abacate-webhook': {
+      id: '/api/public/abacate-webhook'
+      path: '/api/public/abacate-webhook'
+      fullPath: '/api/public/abacate-webhook'
+      preLoaderRoute: typeof ApiPublicAbacateWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -378,6 +398,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   CheckoutSlugRoute: CheckoutSlugRoute,
+  ApiPublicAbacateWebhookRoute: ApiPublicAbacateWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

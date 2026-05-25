@@ -39,7 +39,7 @@ function PublicCheckout() {
           if (!cancelled) setLoading(false);
           return;
         }
-        const c = rowToCheckout(ckRow as CheckoutRow);
+        const c = rowToCheckout(ckRow as unknown as CheckoutRow);
 
         const [{ data: pRow }, { data: bRow }] = await Promise.all([
           c.productId

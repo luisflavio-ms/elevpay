@@ -75,7 +75,7 @@ function Builder() {
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
-      return data ? rowToCheckout(data as CheckoutRow) : null;
+      return data ? rowToCheckout(data as unknown as CheckoutRow) : null;
     },
   });
 
@@ -145,7 +145,7 @@ function Builder() {
     const { id: _ignore, ...payload } = row;
     const { error } = await supabase
       .from("checkouts")
-      .update(payload)
+      .update(payload as never)
       .eq("id", c.id);
     if (error) throw error;
   };

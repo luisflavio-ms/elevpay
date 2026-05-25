@@ -28,7 +28,7 @@ function ChecksList() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => rowToCheckout(r as CheckoutRow));
+      return (data ?? []).map((r) => rowToCheckout(r as unknown as CheckoutRow));
     },
   });
 
@@ -93,7 +93,7 @@ function ChecksList() {
         subheadline: c.subheadline,
         image: c.image || null,
         benefits: c.benefits,
-        testimonials: c.testimonials,
+        testimonials: c.testimonials as never,
         guarantee: c.guarantee,
         primary_color: c.primaryColor,
         button_text: c.buttonText,
@@ -106,7 +106,7 @@ function ChecksList() {
         secure_seal: c.secureSeal,
         urgency_message: c.urgencyMessage,
         active: false,
-        blocks: c.blocks ?? [],
+        blocks: (c.blocks ?? []) as never,
       });
       if (error) throw error;
     },
