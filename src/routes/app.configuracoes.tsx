@@ -46,11 +46,11 @@ function ProfilePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id,full_name,cpf,birth_date,email,whatsapp,address,city,state,notifications_enabled,support_email,support_whatsapp,support_social")
+        .select("*")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
-      return data as Profile | null;
+      return (data ?? null) as Profile | null;
     },
   });
 
