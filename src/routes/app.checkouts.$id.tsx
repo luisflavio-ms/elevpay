@@ -186,7 +186,15 @@ function ConfigPanel({
         </F>
       </Section>
 
+      <Section title="Blocos do checkout (arraste para reordenar)">
+        <BlockBuilder
+          blocks={checkout.blocks ?? []}
+          onChange={(b: CheckoutBlock[]) => update("blocks", b)}
+        />
+      </Section>
+
       <Section title="Conteúdo">
+
         <F label="Headline"><Input value={checkout.headline} onChange={(e) => update("headline", e.target.value)} /></F>
         <F label="Subheadline"><Input value={checkout.subheadline} onChange={(e) => update("subheadline", e.target.value)} /></F>
         <F label="Imagem (URL)"><Input value={checkout.image} onChange={(e) => update("image", e.target.value)} /></F>
