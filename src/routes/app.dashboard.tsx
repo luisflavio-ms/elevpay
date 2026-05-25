@@ -64,12 +64,17 @@ function Dashboard() {
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
-          <Card key={s.label} className="rounded-2xl">
+          <Card key={s.label} className="rounded-2xl border-border bg-card/60 hover:border-primary/40 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 {s.label}
               </CardTitle>
-              <s.icon className="h-4 w-4 text-muted-foreground" />
+              <div
+                className="h-8 w-8 rounded-lg flex items-center justify-center"
+                style={{ background: "var(--gradient-primary)" }}
+              >
+                <s.icon className="h-4 w-4 text-primary-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{s.value}</div>
@@ -78,6 +83,7 @@ function Dashboard() {
           </Card>
         ))}
       </div>
+
 
       <Card className="rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between">
