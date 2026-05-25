@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { notifyOrderStatus } from "./push.server";
+
 
 const ABACATE_BASE = "https://api.abacatepay.com/v2";
 
@@ -215,8 +217,10 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
             net_amount: net,
           });
         }
+        await notifyOrderStatus(order.id, newStatus);
         return { status: newStatus };
       }
+
     } catch (err) {
       console.error("[checkOrderStatus] abacate check failed", err);
     }
