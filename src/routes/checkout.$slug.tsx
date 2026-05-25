@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
+import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 
 export const Route = createFileRoute("/checkout/$slug")({
   component: PublicCheckout,
