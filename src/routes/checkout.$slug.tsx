@@ -137,23 +137,11 @@ function PublicCheckout() {
     e.preventDefault();
     if (!form.name || !form.email) return;
     setSubmitting(true);
+    // Simulação de processamento. O registro real de orders/sales
+    // será feito quando integrarmos um gateway de pagamento.
     setTimeout(() => {
       setSubmitting(false);
       setDone(true);
-      // record fake order
-      try {
-        const orders = JSON.parse(localStorage.getItem("elevpay:orders") || "[]");
-        orders.unshift({
-          id: "o_" + Math.random().toString(36).slice(2, 8),
-          customer: form.name,
-          productId: c.productId,
-          amount: total,
-          status: "aprovado",
-          method,
-          date: new Date().toISOString(),
-        });
-        localStorage.setItem("elevpay:orders", JSON.stringify(orders));
-      } catch {}
     }, 900);
   };
 
