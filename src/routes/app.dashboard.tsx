@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl, db, seedIfNeeded } from "@/lib/store";
 import type { Order, Checkout, Product } from "@/lib/types";
+import { RevenueChart } from "@/components/RevenueChart";
+import { SalesFunnel } from "@/components/SalesFunnel";
+
 
 export const Route = createFileRoute("/app/dashboard")({
   component: Dashboard,
@@ -84,6 +87,58 @@ function Dashboard() {
         ))}
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="rounded-2xl lg:col-span-2 bg-card/60 border-border">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Faturamento</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Últimos 7 dias</p>
+            </div>
+            <Badge variant="secondary" className="bg-primary/15 text-primary border-0">Diário</Badge>
+          </CardHeader>
+          <CardContent>
+            <RevenueChart orders={orders} />
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl bg-card/60 border-border">
+          <CardHeader>
+            <CardTitle>Top produtos</CardTitle>
+            <p className="text-xs text-muted-foreground">Mais vendidos no período</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {topProducts(orders, products).map((p, i) => (
+              <div key={p.id} className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-muted overflow-hidden shrink-0">
+                  {p.image && (
+                    <img src={p.image} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate">{p.name}</div>
+                  <div className="text-xs text-muted-foreground">{p.count} vendas</div>
+                </div>
+                <span className="text-sm font-semibold tabular-nums">{brl(p.total)}</span>
+              </div>
+            ))}
+            {orders.length === 0 && (
+              <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="rounded-2xl bg-card/60 border-border">
+        <CardHeader>
+          <CardTitle>Funil de vendas</CardTitle>
+          <p className="text-xs text-muted-foreground">Jornada do visitante até a venda confirmada</p>
+        </CardHeader>
+        <CardContent>
+          <SalesFunnel orders={orders} />
+        </CardContent>
+      </Card>
+
+
 
       <Card className="rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -115,6 +170,22 @@ function Dashboard() {
     </div>
   );
 }
+
+function topProducts(orders: Order[], products: Product[]) {
+  const acc = new Map<string, { count: number; total: number }>();
+  for (const o of orders) {
+    if (o.status !== "aprovado") continue;
+    const cur = acc.get(o.productId) ?? { count: 0, total: 0 };
+    cur.count += 1;
+    cur.total += o.amount;
+    acc.set(o.productId, cur);
+  }
+  return products
+    .map((p) => ({ ...p, ...(acc.get(p.id) ?? { count: 0, total: 0 }) }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 4);
+}
+
 
 function StatusBadge({ status }: { status: Order["status"] }) {
   const map: Record<Order["status"], string> = {
