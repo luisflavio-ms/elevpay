@@ -36,6 +36,39 @@ function PublicCheckout() {
   const createPix = useServerFn(createPixPayment);
   const checkStatus = useServerFn(checkOrderStatus);
   const simulatePix = useServerFn(simulatePixPayment);
+  const subscribePushFn = useServerFn(subscribePush);
+
+  const enablePushForOrder = async (orderId: string) => {
+    try {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        setPayError("Seu navegador não suporta notificações push");
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") return;
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      }
+      const json = sub.toJSON();
+      await subscribePushFn({
+        data: {
+          orderId,
+          endpoint: sub.endpoint,
+          p256dh: json.keys?.p256dh ?? "",
+          auth: json.keys?.auth ?? "",
+          userAgent: navigator.userAgent.slice(0, 500),
+        },
+      });
+    } catch (err) {
+      setPayError((err as Error).message);
+    }
+  };
+
 
   useEffect(() => {
     let cancelled = false;
