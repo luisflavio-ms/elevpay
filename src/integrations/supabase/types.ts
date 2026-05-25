@@ -350,7 +350,7 @@ export type Database = {
           created_at: string
           endpoint: string
           id: string
-          order_id: string
+          order_id: string | null
           p256dh: string
           user_agent: string | null
           user_id: string
@@ -360,7 +360,7 @@ export type Database = {
           created_at?: string
           endpoint: string
           id?: string
-          order_id: string
+          order_id?: string | null
           p256dh: string
           user_agent?: string | null
           user_id: string
@@ -370,7 +370,7 @@ export type Database = {
           created_at?: string
           endpoint?: string
           id?: string
-          order_id?: string
+          order_id?: string | null
           p256dh?: string
           user_agent?: string | null
           user_id?: string

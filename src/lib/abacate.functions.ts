@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { notifyOrderStatus } from "./push.server";
+import { notifyOrderStatus, notifySellerNewSale } from "./push.server";
 
 
 const ABACATE_BASE = "https://api.abacatepay.com/v2";
@@ -171,7 +171,7 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select("id, user_id, product_id, amount, status, abacate_billing_id")
+      .select("id, user_id, product_id, amount, status, abacate_billing_id, customer_name")
       .eq("id", data.orderId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -216,6 +216,7 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
             fee_amount: fee,
             net_amount: net,
           });
+          await notifySellerNewSale(order.user_id, gross, order.customer_name);
         }
         await notifyOrderStatus(order.id, newStatus);
         return { status: newStatus };

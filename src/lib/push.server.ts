@@ -68,3 +68,54 @@ export async function notifyOrderStatus(
     }),
   );
 }
+
+export async function notifySellerNewSale(
+  sellerUserId: string,
+  amount: number,
+  customerName?: string | null,
+) {
+  try {
+    ensureConfigured();
+  } catch (e) {
+    console.error("[push] config error", e);
+    return;
+  }
+
+  const { data: subs } = await supabaseAdmin
+    .from("push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("user_id", sellerUserId)
+    .is("order_id", null);
+
+  if (!subs || subs.length === 0) return;
+
+  const brl = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(amount || 0);
+  const payload = JSON.stringify({
+    title: "💰 Nova venda aprovada!",
+    body: `${brl}${customerName ? ` — ${customerName}` : ""}`,
+    url: `/app/dashboard`,
+    tag: `sale-${Date.now()}`,
+  });
+
+  await Promise.all(
+    subs.map(async (s) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          payload,
+        );
+      } catch (err) {
+        const code = (err as { statusCode?: number }).statusCode;
+        if (code === 404 || code === 410) {
+          await supabaseAdmin.from("push_subscriptions").delete().eq("id", s.id);
+        } else {
+          console.error("[push] send error", err);
+        }
+      }
+    }),
+  );
+}
+

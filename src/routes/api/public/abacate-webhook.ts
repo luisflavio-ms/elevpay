@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { notifyOrderStatus } from "@/lib/push.server";
+import { notifyOrderStatus, notifySellerNewSale } from "@/lib/push.server";
 
 
 /**
@@ -70,7 +70,7 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
 
         const { data: order, error: findErr } = await supabaseAdmin
           .from("orders")
-          .select("id, user_id, product_id, amount, status")
+          .select("id, user_id, product_id, amount, status, customer_name")
           .eq("abacate_billing_id", billingId)
           .maybeSingle();
 
@@ -105,6 +105,8 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
             fee_amount: fee,
             net_amount: net,
           });
+          // Notifica o vendedor (admin) da nova venda
+          await notifySellerNewSale(order.user_id, gross, order.customer_name);
         }
 
         // Notifica cliente via push (se inscrito)

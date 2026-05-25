@@ -17,6 +17,7 @@ import { RevenueChart } from "@/components/RevenueChart";
 import { SalesFunnel } from "@/components/SalesFunnel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { EnableAdminPush } from "@/components/EnableAdminPush";
 
 export const Route = createFileRoute("/app/dashboard")({
   component: Dashboard,
@@ -114,6 +115,10 @@ function Dashboard() {
           </Button>
         </Link>
       </div>
+
+      <EnableAdminPush />
+
+
 
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
