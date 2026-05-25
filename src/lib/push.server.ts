@@ -54,10 +54,9 @@ async function handlePushSendError(
 ) {
   const e = err as { statusCode?: number; body?: string; endpoint?: string };
   const body = e.body ?? "";
-  const shouldDelete =
-    e.statusCode === 404 ||
-    e.statusCode === 410 ||
-    (e.statusCode === 403 && subscription.endpoint.includes("web.push.apple.com") && body.includes("BadJwtToken"));
+  const isAppleBadJwt =
+    e.statusCode === 403 && subscription.endpoint.includes("web.push.apple.com") && body.includes("BadJwtToken");
+  const shouldDelete = e.statusCode === 404 || e.statusCode === 410;
 
   if (shouldDelete) {
     await supabaseAdmin.from("push_subscriptions").delete().eq("id", subscription.id);
@@ -65,6 +64,16 @@ async function handlePushSendError(
       statusCode: e.statusCode,
       body,
       endpoint: subscription.endpoint.slice(0, 80),
+    });
+    return;
+  }
+
+  if (isAppleBadJwt) {
+    console.error(`[push] VAPID auth error (${context})`, {
+      statusCode: e.statusCode,
+      body,
+      endpoint: subscription.endpoint.slice(0, 80),
+      hint: "Reative a assinatura para usar a chave pública derivada da VAPID_PRIVATE_KEY atual.",
     });
     return;
   }
