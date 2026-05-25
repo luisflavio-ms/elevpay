@@ -216,6 +216,7 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
             fee_amount: fee,
             net_amount: net,
           });
+          await notifySellerNewSale(order.user_id, gross, order.customer_name);
         }
         await notifyOrderStatus(order.id, newStatus);
         return { status: newStatus };
