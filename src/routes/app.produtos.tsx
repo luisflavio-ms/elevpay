@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Package, Copy, Search, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -23,21 +24,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { brl, db, seedIfNeeded, uid } from "@/lib/store";
-import type { Product, ProductType } from "@/lib/types";
+import { brl } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import type { ProductType } from "@/lib/types";
 
 export const Route = createFileRoute("/app/produtos")({
   component: ProdutosPage,
 });
 
-const empty: Product = {
+type ProductRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string | null;
+  type: ProductType;
+  delivery_url: string | null;
+};
+
+type DraftProduct = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  type: ProductType;
+  delivery_url: string;
+};
+
+const empty: DraftProduct = {
   id: "",
   name: "",
   description: "",
   price: 0,
   image: "",
   type: "digital",
-  deliveryUrl: "",
+  delivery_url: "",
 };
 
 const typeLabel: Record<ProductType, string> = {
@@ -47,69 +71,128 @@ const typeLabel: Record<ProductType, string> = {
 };
 
 function ProdutosPage() {
-  const [items, setItems] = useState<Product[]>([]);
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Product>(empty);
+  const [draft, setDraft] = useState<DraftProduct>(empty);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    seedIfNeeded();
-    setItems(db.getProducts());
-  }, []);
+  const productsQ = useQuery({
+    queryKey: ["products"],
+    queryFn: async (): Promise<ProductRow[]> => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id,user_id,name,description,price,image,type,delivery_url")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as ProductRow[];
+    },
+  });
 
-  const orders = useMemo(() => db.getOrders(), [items]);
-  const checkouts = useMemo(() => db.getCheckouts(), [items]);
+  const checkoutsQ = useQuery({
+    queryKey: ["checkouts", "slug-by-product"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checkouts")
+        .select("product_id,slug")
+        .eq("active", true);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const salesQ = useQuery({
+    queryKey: ["orders", "approved-count-by-product"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("product_id,status")
+        .eq("status", "aprovado");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const items = productsQ.data ?? [];
 
   const salesByProduct = useMemo(() => {
     const map = new Map<string, number>();
-    for (const o of orders) {
-      if (o.status === "aprovado") map.set(o.productId, (map.get(o.productId) ?? 0) + 1);
+    for (const o of salesQ.data ?? []) {
+      if (!o.product_id) continue;
+      map.set(o.product_id, (map.get(o.product_id) ?? 0) + 1);
     }
     return map;
-  }, [orders]);
+  }, [salesQ.data]);
 
   const slugByProduct = useMemo(() => {
     const map = new Map<string, string>();
-    for (const c of checkouts) if (!map.has(c.productId)) map.set(c.productId, c.slug);
+    for (const c of checkoutsQ.data ?? []) {
+      if (c.product_id && !map.has(c.product_id)) map.set(c.product_id, c.slug);
+    }
     return map;
-  }, [checkouts]);
+  }, [checkoutsQ.data]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return items;
-    return items.filter((p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
+    return items.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q),
+    );
   }, [items, query]);
 
-  const persist = (next: Product[]) => {
-    setItems(next);
-    db.setProducts(next);
-  };
+  const upsertM = useMutation({
+    mutationFn: async (d: DraftProduct) => {
+      if (!user) throw new Error("Não autenticado");
+      const payload = {
+        user_id: user.id,
+        name: d.name,
+        description: d.description,
+        price: d.price,
+        image: d.image || null,
+        type: d.type,
+        delivery_url: d.delivery_url || null,
+      };
+      if (d.id) {
+        const { error } = await supabase
+          .from("products")
+          .update(payload)
+          .eq("id", d.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("products").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["products"] });
+      setOpen(false);
+      toast.success(v.id ? "Produto atualizado" : "Produto criado");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteM = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("products").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, ids) => {
+      qc.invalidateQueries({ queryKey: ["products"] });
+      setSelected((s) => {
+        const n = new Set(s);
+        ids.forEach((id) => n.delete(id));
+        return n;
+      });
+      toast.success(ids.length > 1 ? `${ids.length} produtos excluídos` : "Produto excluído");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const save = () => {
     if (!draft.name.trim()) return toast.error("Nome é obrigatório");
-    const isNew = !draft.id;
-    const item = isNew ? { ...draft, id: uid("p") } : draft;
-    const next = isNew ? [...items, item] : items.map((p) => (p.id === item.id ? item : p));
-    persist(next);
-    setOpen(false);
-    toast.success(isNew ? "Produto criado" : "Produto atualizado");
-  };
-
-  const remove = (id: string) => {
-    persist(items.filter((p) => p.id !== id));
-    setSelected((s) => {
-      const n = new Set(s);
-      n.delete(id);
-      return n;
-    });
-    toast.success("Produto excluído");
-  };
-
-  const removeMany = () => {
-    persist(items.filter((p) => !selected.has(p.id)));
-    toast.success(`${selected.size} produtos excluídos`);
-    setSelected(new Set());
+    upsertM.mutate(draft);
   };
 
   const toggle = (id: string) =>
@@ -120,14 +203,24 @@ function ProdutosPage() {
     });
 
   const toggleAll = () =>
-    setSelected((s) => (s.size === filtered.length ? new Set() : new Set(filtered.map((p) => p.id))));
+    setSelected((s) =>
+      s.size === filtered.length ? new Set() : new Set(filtered.map((p) => p.id)),
+    );
 
   const openNew = () => {
     setDraft(empty);
     setOpen(true);
   };
-  const openEdit = (p: Product) => {
-    setDraft(p);
+  const openEdit = (p: ProductRow) => {
+    setDraft({
+      id: p.id,
+      name: p.name,
+      description: p.description ?? "",
+      price: Number(p.price),
+      image: p.image ?? "",
+      type: p.type,
+      delivery_url: p.delivery_url ?? "",
+    });
     setOpen(true);
   };
 
@@ -138,6 +231,28 @@ function ProdutosPage() {
   };
 
   const allSelected = filtered.length > 0 && selected.size === filtered.length;
+
+  if (productsQ.isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Produtos</h1>
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (productsQ.error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Produtos</h1>
+          <p className="text-sm text-destructive">Erro: {(productsQ.error as Error).message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -193,12 +308,14 @@ function ProdutosPage() {
                 <Input value={draft.image} onChange={(e) => setDraft({ ...draft, image: e.target.value })} />
               </Field>
               <Field label="URL de entrega">
-                <Input value={draft.deliveryUrl} onChange={(e) => setDraft({ ...draft, deliveryUrl: e.target.value })} />
+                <Input value={draft.delivery_url} onChange={(e) => setDraft({ ...draft, delivery_url: e.target.value })} />
               </Field>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={save}>Salvar</Button>
+              <Button onClick={save} disabled={upsertM.isPending}>
+                {upsertM.isPending ? "Salvando..." : "Salvar"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -215,7 +332,7 @@ function ProdutosPage() {
           />
         </div>
         {selected.size > 0 && (
-          <Button variant="outline" onClick={removeMany} className="text-destructive">
+          <Button variant="outline" onClick={() => deleteM.mutate(Array.from(selected))} className="text-destructive">
             <Trash2 className="h-4 w-4 mr-2" /> Excluir ({selected.size})
           </Button>
         )}
@@ -225,7 +342,6 @@ function ProdutosPage() {
         <EmptyState onAction={openNew} />
       ) : (
         <Card className="rounded-2xl bg-card/60 backdrop-blur border-border/60 overflow-hidden">
-          {/* Header */}
           <div className="hidden md:grid grid-cols-[40px_minmax(0,3fr)_120px_110px_80px_minmax(0,1.5fr)_120px] gap-4 px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border/60 bg-background/40">
             <button
               onClick={toggleAll}
@@ -258,7 +374,6 @@ function ProdutosPage() {
                     className={`h-4 w-4 rounded border transition ${isSel ? "bg-primary border-primary" : "border-muted-foreground/40 hover:border-primary"}`}
                   />
 
-                  {/* Product cell */}
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-11 w-11 rounded-lg bg-muted overflow-hidden flex items-center justify-center shrink-0 ring-1 ring-border/60">
                       {p.image ? (
@@ -280,9 +395,8 @@ function ProdutosPage() {
                     </div>
                   </div>
 
-                  {/* Mobile-only block */}
                   <div className="md:hidden col-span-2 flex flex-wrap items-center gap-2 pt-1">
-                    <span className="font-semibold text-primary">{brl(p.price)}</span>
+                    <span className="font-semibold text-primary">{brl(Number(p.price))}</span>
                     <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10">Ativo</Badge>
                     <span className="text-xs text-muted-foreground">{sales} vendas</span>
                     <div className="ml-auto flex gap-1">
@@ -294,14 +408,13 @@ function ProdutosPage() {
                       <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
                         <Pencil className="h-4 w-4 text-primary" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => remove(p.id)}>
+                      <Button size="icon" variant="ghost" onClick={() => deleteM.mutate([p.id])}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   </div>
 
-                  {/* Desktop columns */}
-                  <div className="hidden md:block font-semibold text-primary tabular-nums">{brl(p.price)}</div>
+                  <div className="hidden md:block font-semibold text-primary tabular-nums">{brl(Number(p.price))}</div>
                   <div className="hidden md:block">
                     <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Ativo
@@ -344,7 +457,7 @@ function ProdutosPage() {
                       <Copy className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => remove(p.id)}
+                      onClick={() => deleteM.mutate([p.id])}
                       className="h-8 w-8 grid place-items-center rounded-md text-destructive hover:bg-destructive/10 transition"
                       aria-label="Excluir"
                     >
