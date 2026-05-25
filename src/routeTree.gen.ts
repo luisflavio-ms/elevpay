@@ -9,38 +9,169 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as CheckoutSlugRouteImport } from './routes/checkout.$slug'
+import { Route as AppWebhooksRouteImport } from './routes/app.webhooks'
+import { Route as AppProdutosRouteImport } from './routes/app.produtos'
+import { Route as AppPedidosRouteImport } from './routes/app.pedidos'
+import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
+import { Route as AppConfiguracoesRouteImport } from './routes/app.configuracoes'
+import { Route as AppCheckoutsRouteImport } from './routes/app.checkouts'
+import { Route as AppCheckoutsIdRouteImport } from './routes/app.checkouts.$id'
 
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const CheckoutSlugRoute = CheckoutSlugRouteImport.update({
+  id: '/checkout/$slug',
+  path: '/checkout/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppWebhooksRoute = AppWebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProdutosRoute = AppProdutosRouteImport.update({
+  id: '/produtos',
+  path: '/produtos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPedidosRoute = AppPedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCheckoutsRoute = AppCheckoutsRouteImport.update({
+  id: '/checkouts',
+  path: '/checkouts',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCheckoutsIdRoute = AppCheckoutsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppCheckoutsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/checkouts': typeof AppCheckoutsRouteWithChildren
+  '/app/configuracoes': typeof AppConfiguracoesRoute
+  '/app/dashboard': typeof AppDashboardRoute
+  '/app/pedidos': typeof AppPedidosRoute
+  '/app/produtos': typeof AppProdutosRoute
+  '/app/webhooks': typeof AppWebhooksRoute
+  '/checkout/$slug': typeof CheckoutSlugRoute
+  '/app/': typeof AppIndexRoute
+  '/app/checkouts/$id': typeof AppCheckoutsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/checkouts': typeof AppCheckoutsRouteWithChildren
+  '/app/configuracoes': typeof AppConfiguracoesRoute
+  '/app/dashboard': typeof AppDashboardRoute
+  '/app/pedidos': typeof AppPedidosRoute
+  '/app/produtos': typeof AppProdutosRoute
+  '/app/webhooks': typeof AppWebhooksRoute
+  '/checkout/$slug': typeof CheckoutSlugRoute
+  '/app': typeof AppIndexRoute
+  '/app/checkouts/$id': typeof AppCheckoutsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/checkouts': typeof AppCheckoutsRouteWithChildren
+  '/app/configuracoes': typeof AppConfiguracoesRoute
+  '/app/dashboard': typeof AppDashboardRoute
+  '/app/pedidos': typeof AppPedidosRoute
+  '/app/produtos': typeof AppProdutosRoute
+  '/app/webhooks': typeof AppWebhooksRoute
+  '/checkout/$slug': typeof CheckoutSlugRoute
+  '/app/': typeof AppIndexRoute
+  '/app/checkouts/$id': typeof AppCheckoutsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/checkouts'
+    | '/app/configuracoes'
+    | '/app/dashboard'
+    | '/app/pedidos'
+    | '/app/produtos'
+    | '/app/webhooks'
+    | '/checkout/$slug'
+    | '/app/'
+    | '/app/checkouts/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/app/checkouts'
+    | '/app/configuracoes'
+    | '/app/dashboard'
+    | '/app/pedidos'
+    | '/app/produtos'
+    | '/app/webhooks'
+    | '/checkout/$slug'
+    | '/app'
+    | '/app/checkouts/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/checkouts'
+    | '/app/configuracoes'
+    | '/app/dashboard'
+    | '/app/pedidos'
+    | '/app/produtos'
+    | '/app/webhooks'
+    | '/checkout/$slug'
+    | '/app/'
+    | '/app/checkouts/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  CheckoutSlugRoute: typeof CheckoutSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +179,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/checkout/$slug': {
+      id: '/checkout/$slug'
+      path: '/checkout/$slug'
+      fullPath: '/checkout/$slug'
+      preLoaderRoute: typeof CheckoutSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/webhooks': {
+      id: '/app/webhooks'
+      path: '/webhooks'
+      fullPath: '/app/webhooks'
+      preLoaderRoute: typeof AppWebhooksRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/produtos': {
+      id: '/app/produtos'
+      path: '/produtos'
+      fullPath: '/app/produtos'
+      preLoaderRoute: typeof AppProdutosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/pedidos': {
+      id: '/app/pedidos'
+      path: '/pedidos'
+      fullPath: '/app/pedidos'
+      preLoaderRoute: typeof AppPedidosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/dashboard': {
+      id: '/app/dashboard'
+      path: '/dashboard'
+      fullPath: '/app/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/configuracoes': {
+      id: '/app/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/app/configuracoes'
+      preLoaderRoute: typeof AppConfiguracoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/checkouts': {
+      id: '/app/checkouts'
+      path: '/checkouts'
+      fullPath: '/app/checkouts'
+      preLoaderRoute: typeof AppCheckoutsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/checkouts/$id': {
+      id: '/app/checkouts/$id'
+      path: '/$id'
+      fullPath: '/app/checkouts/$id'
+      preLoaderRoute: typeof AppCheckoutsIdRouteImport
+      parentRoute: typeof AppCheckoutsRoute
+    }
   }
 }
 
+interface AppCheckoutsRouteChildren {
+  AppCheckoutsIdRoute: typeof AppCheckoutsIdRoute
+}
+
+const AppCheckoutsRouteChildren: AppCheckoutsRouteChildren = {
+  AppCheckoutsIdRoute: AppCheckoutsIdRoute,
+}
+
+const AppCheckoutsRouteWithChildren = AppCheckoutsRoute._addFileChildren(
+  AppCheckoutsRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppCheckoutsRoute: typeof AppCheckoutsRouteWithChildren
+  AppConfiguracoesRoute: typeof AppConfiguracoesRoute
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppPedidosRoute: typeof AppPedidosRoute
+  AppProdutosRoute: typeof AppProdutosRoute
+  AppWebhooksRoute: typeof AppWebhooksRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppCheckoutsRoute: AppCheckoutsRouteWithChildren,
+  AppConfiguracoesRoute: AppConfiguracoesRoute,
+  AppDashboardRoute: AppDashboardRoute,
+  AppPedidosRoute: AppPedidosRoute,
+  AppProdutosRoute: AppProdutosRoute,
+  AppWebhooksRoute: AppWebhooksRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  CheckoutSlugRoute: CheckoutSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
