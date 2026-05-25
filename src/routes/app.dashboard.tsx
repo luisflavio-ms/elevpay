@@ -171,6 +171,22 @@ function Dashboard() {
   );
 }
 
+function topProducts(orders: Order[], products: Product[]) {
+  const acc = new Map<string, { count: number; total: number }>();
+  for (const o of orders) {
+    if (o.status !== "aprovado") continue;
+    const cur = acc.get(o.productId) ?? { count: 0, total: 0 };
+    cur.count += 1;
+    cur.total += o.amount;
+    acc.set(o.productId, cur);
+  }
+  return products
+    .map((p) => ({ ...p, ...(acc.get(p.id) ?? { count: 0, total: 0 }) }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 4);
+}
+
+
 function StatusBadge({ status }: { status: Order["status"] }) {
   const map: Record<Order["status"], string> = {
     aprovado: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
