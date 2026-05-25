@@ -192,7 +192,7 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
         REFUNDED: "reembolsado",
       };
       const newStatus = remoteStatus ? map[remoteStatus] : undefined;
-      if (newStatus && newStatus !== order.status) {
+      if (newStatus) {
         await supabaseAdmin.from("orders").update({ status: newStatus }).eq("id", order.id);
         if (newStatus === "aprovado") {
           const gross = Number(order.amount);
