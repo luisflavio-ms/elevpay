@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Bell, BellOff, Check, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
-import { subscribeAdminPush, sendTestPush } from "@/lib/push.functions";
-import { VAPID_PUBLIC_KEY, urlBase64ToUint8Array } from "@/lib/push-config";
+import { getVapidPublicKey, subscribeAdminPush, sendTestPush } from "@/lib/push.functions";
+import { urlBase64ToUint8Array } from "@/lib/push-config";
 import { toast } from "sonner";
 
 type Status = "loading" | "unsupported" | "iframe" | "denied" | "default" | "granted";
@@ -15,6 +15,7 @@ export function EnableAdminPush() {
   const [lastError, setLastError] = useState<string | null>(null);
   const subscribeFn = useServerFn(subscribeAdminPush);
   const testFn = useServerFn(sendTestPush);
+  const getVapidKeyFn = useServerFn(getVapidPublicKey);
   const canEnable = status === "default" || status === "granted";
 
   const handleTest = async () => {
@@ -76,9 +77,10 @@ export function EnableAdminPush() {
       }
 
       step = "subscribe";
+      const { publicKey } = await getVapidKeyFn();
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+        applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
       });
       const json = sub.toJSON();
       if (!json.keys?.p256dh || !json.keys?.auth) {

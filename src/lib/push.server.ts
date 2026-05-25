@@ -1,4 +1,5 @@
 // Server-only helper. Never import from client/components.
+import { createECDH } from "crypto";
 import webpush from "web-push";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -7,6 +8,25 @@ let configured = false;
 const VAPID_PUBLIC_KEY =
   "BBiX5A6AsFCSf4QxqZF0eyQc8jn86nLKHjpg2zo0GEiDDK8x9eMU2RTSnCjxxAAUzI71c0ddUj0SElrGItD9PZw";
 const DEFAULT_VAPID_SUBJECT = "https://elevpay.lovable.app";
+
+function base64UrlToBuffer(value: string) {
+  const normalized = value.trim().replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+  return Buffer.from(padded, "base64");
+}
+
+function bufferToBase64Url(value: Buffer) {
+  return value.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+export function getCurrentVapidPublicKey() {
+  const priv = process.env.VAPID_PRIVATE_KEY?.trim();
+  if (!priv) return VAPID_PUBLIC_KEY;
+
+  const ecdh = createECDH("prime256v1");
+  ecdh.setPrivateKey(base64UrlToBuffer(priv));
+  return bufferToBase64Url(ecdh.getPublicKey());
+}
 
 function normalizeVapidSubject(raw?: string) {
   const subject = (raw || "").trim();
@@ -34,10 +54,9 @@ async function handlePushSendError(
 ) {
   const e = err as { statusCode?: number; body?: string; endpoint?: string };
   const body = e.body ?? "";
-  const shouldDelete =
-    e.statusCode === 404 ||
-    e.statusCode === 410 ||
-    (e.statusCode === 403 && subscription.endpoint.includes("web.push.apple.com") && body.includes("BadJwtToken"));
+  const isAppleBadJwt =
+    e.statusCode === 403 && subscription.endpoint.includes("web.push.apple.com") && body.includes("BadJwtToken");
+  const shouldDelete = e.statusCode === 404 || e.statusCode === 410;
 
   if (shouldDelete) {
     await supabaseAdmin.from("push_subscriptions").delete().eq("id", subscription.id);
@@ -45,6 +64,16 @@ async function handlePushSendError(
       statusCode: e.statusCode,
       body,
       endpoint: subscription.endpoint.slice(0, 80),
+    });
+    return;
+  }
+
+  if (isAppleBadJwt) {
+    console.error(`[push] VAPID auth error (${context})`, {
+      statusCode: e.statusCode,
+      body,
+      endpoint: subscription.endpoint.slice(0, 80),
+      hint: "Reative a assinatura para usar a chave pública derivada da VAPID_PRIVATE_KEY atual.",
     });
     return;
   }
@@ -61,7 +90,7 @@ function ensureConfigured() {
   const priv = process.env.VAPID_PRIVATE_KEY;
   const subject = normalizeVapidSubject(process.env.VAPID_SUBJECT);
   if (!priv) throw new Error("VAPID_PRIVATE_KEY not configured");
-  webpush.setVapidDetails(subject, VAPID_PUBLIC_KEY, priv);
+  webpush.setVapidDetails(subject, getCurrentVapidPublicKey(), priv.trim());
   configured = true;
 }
 

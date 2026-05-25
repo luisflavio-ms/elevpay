@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import webpush from "web-push";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-const VAPID_PUBLIC_KEY =
-  "BBiX5A6AsFCSf4QxqZF0eyQc8jn86nLKHjpg2zo0GEiDDK8x9eMU2RTSnCjxxAAUzI71c0ddUj0SElrGItD9PZw";
+import { getCurrentVapidPublicKey } from "@/lib/push.server";
 
 function normalizeSubject(raw?: string) {
   const s = (raw || "").trim();
@@ -38,7 +36,7 @@ export const Route = createFileRoute("/api/public/test-push")({
         const subject = normalizeSubject(process.env.VAPID_SUBJECT);
         const priv = process.env.VAPID_PRIVATE_KEY;
         if (!priv) return Response.json({ ok: false, error: "VAPID_PRIVATE_KEY missing" }, { status: 500 });
-        webpush.setVapidDetails(subject, VAPID_PUBLIC_KEY, priv);
+        webpush.setVapidDetails(subject, getCurrentVapidPublicKey(), priv.trim());
 
         const payload = JSON.stringify({
           title: "🔔 Teste ElevPay",

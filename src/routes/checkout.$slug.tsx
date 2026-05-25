@@ -7,8 +7,8 @@ import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import { createPixPayment, checkOrderStatus, simulatePixPayment } from "@/lib/abacate.functions";
-import { subscribePush } from "@/lib/push.functions";
-import { VAPID_PUBLIC_KEY, urlBase64ToUint8Array } from "@/lib/push-config";
+import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
+import { urlBase64ToUint8Array } from "@/lib/push-config";
 
 
 export const Route = createFileRoute("/checkout/$slug")({
@@ -37,6 +37,7 @@ function PublicCheckout() {
   const checkStatus = useServerFn(checkOrderStatus);
   const simulatePix = useServerFn(simulatePixPayment);
   const subscribePushFn = useServerFn(subscribePush);
+  const getVapidKeyFn = useServerFn(getVapidPublicKey);
 
   const enablePushForOrder = async (orderId: string) => {
     try {
@@ -77,9 +78,10 @@ function PublicCheckout() {
 
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
+        const { publicKey } = await getVapidKeyFn();
         sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+          applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
         });
       }
 
