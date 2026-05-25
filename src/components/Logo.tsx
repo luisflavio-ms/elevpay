@@ -1,29 +1,16 @@
+import logoMark from "@/assets/logo-mark.png";
+import logoFull from "@/assets/logo-full.png";
+
 export function LogoMark({ size = 28, className = "" }: { size?: number; className?: string }) {
   return (
-    <svg
+    <img
+      src={logoMark}
+      alt="ElevPay"
       width={size}
       height={size}
-      viewBox="0 0 48 48"
-      fill="none"
       className={className}
-      aria-hidden
-    >
-      <defs>
-        <linearGradient id="elev-mark" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="oklch(0.58 0.24 295)" />
-          <stop offset="100%" stopColor="oklch(0.68 0.22 300)" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M14 8 L40 8 L40 18 L24 18 L34 24 L8 24 Z"
-        fill="url(#elev-mark)"
-      />
-      <path
-        d="M8 24 L34 24 L24 30 L40 30 L40 40 L14 40 Z"
-        fill="url(#elev-mark)"
-        opacity="0.85"
-      />
-    </svg>
+      style={{ width: size, height: size, objectFit: "contain" }}
+    />
   );
 }
 
@@ -41,5 +28,16 @@ export function Logo({ size = 28, className = "" }: { size?: number; className?:
       <LogoMark size={size} />
       <Wordmark />
     </span>
+  );
+}
+
+export function LogoFull({ height = 32, className = "" }: { height?: number; className?: string }) {
+  return (
+    <img
+      src={logoFull}
+      alt="ElevPay"
+      className={className}
+      style={{ height, width: "auto", objectFit: "contain" }}
+    />
   );
 }
