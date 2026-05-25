@@ -112,11 +112,15 @@ export async function notifySellerNewSale(
           payload,
         );
       } catch (err) {
-        const code = (err as { statusCode?: number }).statusCode;
-        if (code === 404 || code === 410) {
+        const e = err as { statusCode?: number; body?: string; endpoint?: string };
+        if (e.statusCode === 404 || e.statusCode === 410) {
           await supabaseAdmin.from("push_subscriptions").delete().eq("id", s.id);
         } else {
-          console.error("[push] send error", err);
+          console.error("[push] send error (seller)", {
+            statusCode: e.statusCode,
+            body: e.body,
+            endpoint: s.endpoint.slice(0, 80),
+          });
         }
       }
     }),
