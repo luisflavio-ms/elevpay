@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { seedIfNeeded } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Logo, LogoMark, Wordmark } from "@/components/Logo";
+import { AppHeader } from "@/components/AppHeader";
 
 
 const nav = [
@@ -78,6 +79,7 @@ export function AppLayout() {
       )}
 
       <main className="lg:pl-64">
+        <AppHeader />
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           <Outlet />
         </div>
