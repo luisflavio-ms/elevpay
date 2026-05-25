@@ -87,6 +87,58 @@ function Dashboard() {
         ))}
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="rounded-2xl lg:col-span-2 bg-card/60 border-border">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Faturamento</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Últimos 7 dias</p>
+            </div>
+            <Badge variant="secondary" className="bg-primary/15 text-primary border-0">Diário</Badge>
+          </CardHeader>
+          <CardContent>
+            <RevenueChart orders={orders} />
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl bg-card/60 border-border">
+          <CardHeader>
+            <CardTitle>Top produtos</CardTitle>
+            <p className="text-xs text-muted-foreground">Mais vendidos no período</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {topProducts(orders, products).map((p, i) => (
+              <div key={p.id} className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-muted overflow-hidden shrink-0">
+                  {p.image && (
+                    <img src={p.image} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate">{p.name}</div>
+                  <div className="text-xs text-muted-foreground">{p.count} vendas</div>
+                </div>
+                <span className="text-sm font-semibold tabular-nums">{brl(p.total)}</span>
+              </div>
+            ))}
+            {orders.length === 0 && (
+              <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="rounded-2xl bg-card/60 border-border">
+        <CardHeader>
+          <CardTitle>Funil de vendas</CardTitle>
+          <p className="text-xs text-muted-foreground">Jornada do visitante até a venda confirmada</p>
+        </CardHeader>
+        <CardContent>
+          <SalesFunnel orders={orders} />
+        </CardContent>
+      </Card>
+
+
 
       <Card className="rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between">
