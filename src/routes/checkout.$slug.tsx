@@ -7,6 +7,9 @@ import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import { createPixPayment, checkOrderStatus, simulatePixPayment } from "@/lib/abacate.functions";
+import { subscribePush } from "@/lib/push.functions";
+import { VAPID_PUBLIC_KEY, urlBase64ToUint8Array } from "@/lib/push-config";
+
 
 export const Route = createFileRoute("/checkout/$slug")({
   component: PublicCheckout,
@@ -33,6 +36,40 @@ function PublicCheckout() {
   const createPix = useServerFn(createPixPayment);
   const checkStatus = useServerFn(checkOrderStatus);
   const simulatePix = useServerFn(simulatePixPayment);
+  const subscribePushFn = useServerFn(subscribePush);
+
+  const enablePushForOrder = async (orderId: string) => {
+    try {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        setPayError("Seu navegador não suporta notificações push");
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") return;
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+        });
+      }
+
+      const json = sub.toJSON();
+      await subscribePushFn({
+        data: {
+          orderId,
+          endpoint: sub.endpoint,
+          p256dh: json.keys?.p256dh ?? "",
+          auth: json.keys?.auth ?? "",
+          userAgent: navigator.userAgent.slice(0, 500),
+        },
+      });
+    } catch (err) {
+      setPayError((err as Error).message);
+    }
+  };
+
 
   useEffect(() => {
     let cancelled = false;
@@ -393,8 +430,13 @@ function PublicCheckout() {
               setPayError((err as Error).message);
             }
           }}
+          onEnablePush={async () => {
+            if (!pix) return;
+            await enablePushForOrder(pix.orderId);
+          }}
         />
       )}
+
     </div>
   );
 }
@@ -452,6 +494,7 @@ function SuccessModal({
   pix,
   paid,
   onSimulate,
+  onEnablePush,
 }: {
   method: PaymentMethod;
   amount: number;
@@ -460,7 +503,9 @@ function SuccessModal({
   pix: { orderId: string; qr: string; copy: string; amount: number } | null;
   paid: boolean;
   onSimulate: () => void;
+  onEnablePush: () => void;
 }) {
+
   return (
     <div
       style={{
@@ -500,6 +545,13 @@ function SuccessModal({
             </p>
             <button
               type="button"
+              onClick={onEnablePush}
+              style={{ width: "100%", marginTop: 10, padding: 12, background: "#ede9fe", color: "#5b21b6", border: "1px solid #c4b5fd", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+            >
+              🔔 Receber notificação quando aprovar
+            </button>
+            <button
+              type="button"
               onClick={onSimulate}
               style={{ width: "100%", marginTop: 10, padding: 10, background: "#fef3c7", color: "#92400e", border: "1px dashed #f59e0b", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
             >
@@ -507,6 +559,7 @@ function SuccessModal({
             </button>
           </>
         )}
+
         {method === "pix" && paid && (
           <>
             <div style={{ fontSize: 48, textAlign: "center" }}>✅</div>

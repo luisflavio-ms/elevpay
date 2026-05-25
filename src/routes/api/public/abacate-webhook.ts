@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { notifyOrderStatus } from "@/lib/push.server";
+
 
 /**
  * Webhook do AbacatePay.
@@ -105,7 +107,11 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
           });
         }
 
+        // Notifica cliente via push (se inscrito)
+        await notifyOrderStatus(order.id, newStatus);
+
         return new Response("ok", { status: 200 });
+
       },
     },
   },
