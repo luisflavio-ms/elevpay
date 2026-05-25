@@ -32,6 +32,7 @@ function PublicCheckout() {
 
   const createPix = useServerFn(createPixPayment);
   const checkStatus = useServerFn(checkOrderStatus);
+  const simulatePix = useServerFn(simulatePixPayment);
 
   useEffect(() => {
     let cancelled = false;
