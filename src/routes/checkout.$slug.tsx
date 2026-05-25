@@ -6,7 +6,7 @@ import { brl } from "@/lib/store";
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
-import { createPixPayment, checkOrderStatus } from "@/lib/abacate.functions";
+import { createPixPayment, checkOrderStatus, simulatePixPayment } from "@/lib/abacate.functions";
 
 export const Route = createFileRoute("/checkout/$slug")({
   component: PublicCheckout,
@@ -32,6 +32,7 @@ function PublicCheckout() {
 
   const createPix = useServerFn(createPixPayment);
   const checkStatus = useServerFn(checkOrderStatus);
+  const simulatePix = useServerFn(simulatePixPayment);
 
   useEffect(() => {
     let cancelled = false;
@@ -349,6 +350,14 @@ function PublicCheckout() {
           redirect={c.redirectUrl}
           pix={pix}
           paid={paid}
+          onSimulate={async () => {
+            if (!pix) return;
+            try {
+              await simulatePix({ data: { orderId: pix.orderId } });
+            } catch (err) {
+              setPayError((err as Error).message);
+            }
+          }}
         />
       )}
     </div>
@@ -407,6 +416,7 @@ function SuccessModal({
   redirect,
   pix,
   paid,
+  onSimulate,
 }: {
   method: PaymentMethod;
   amount: number;
@@ -414,6 +424,7 @@ function SuccessModal({
   redirect: string;
   pix: { orderId: string; qr: string; copy: string; amount: number } | null;
   paid: boolean;
+  onSimulate: () => void;
 }) {
   return (
     <div
@@ -452,6 +463,13 @@ function SuccessModal({
             <p style={{ textAlign: "center", fontSize: 12, color: "#64748b", marginTop: 8 }}>
               Valor: <b>{brl(pix.amount)}</b>
             </p>
+            <button
+              type="button"
+              onClick={onSimulate}
+              style={{ width: "100%", marginTop: 10, padding: 10, background: "#fef3c7", color: "#92400e", border: "1px dashed #f59e0b", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+            >
+              🧪 Simular pagamento (modo teste)
+            </button>
           </>
         )}
         {method === "pix" && paid && (
