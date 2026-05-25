@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sendTestPushToUser } from "./push.server";
+import { getCurrentVapidPublicKey, sendTestPushToUser } from "./push.server";
 
 const SubscribeSchema = z.object({
   orderId: z.string().uuid(),
@@ -74,4 +74,8 @@ export const sendTestPush = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     return sendTestPushToUser(context.userId);
   });
+
+export const getVapidPublicKey = createServerFn({ method: "GET" }).handler(async () => ({
+  publicKey: getCurrentVapidPublicKey(),
+}));
 
