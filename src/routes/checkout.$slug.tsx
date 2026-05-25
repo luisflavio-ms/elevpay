@@ -40,13 +40,41 @@ function PublicCheckout() {
 
   const enablePushForOrder = async (orderId: string) => {
     try {
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-        setPayError("Seu navegador não suporta notificações push");
+      // Detecta iframe (preview do Lovable bloqueia Notification API)
+      const inIframe = (() => {
+        try { return window.self !== window.top; } catch { return true; }
+      })();
+      if (inIframe) {
+        setPayError("Notificações só funcionam no app publicado (abra em https://elevpay.lovable.app), não no preview do editor.");
         return;
       }
+      if (typeof Notification === "undefined") {
+        setPayError("Seu navegador não suporta notificações.");
+        return;
+      }
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        setPayError("Seu navegador não suporta notificações push.");
+        return;
+      }
+
+      // IMPORTANTE: requestPermission precisa ser chamado direto no gesto do usuário,
+      // sem awaits antes. Por isso é a primeira chamada async.
       const perm = await Notification.requestPermission();
-      if (perm !== "granted") return;
-      const reg = await navigator.serviceWorker.ready;
+      if (perm === "denied") {
+        setPayError("Permissão negada. Habilite notificações nas configurações do navegador.");
+        return;
+      }
+      if (perm !== "granted") {
+        setPayError("Permissão não concedida.");
+        return;
+      }
+
+      let reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) {
+        reg = await navigator.serviceWorker.register("/sw.js");
+      }
+      reg = await navigator.serviceWorker.ready;
+
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
         sub = await reg.pushManager.subscribe({
@@ -65,8 +93,9 @@ function PublicCheckout() {
           userAgent: navigator.userAgent.slice(0, 500),
         },
       });
+      setPayError("✅ Notificações ativadas! Você será avisado quando o pagamento for aprovado.");
     } catch (err) {
-      setPayError((err as Error).message);
+      setPayError("Erro ao ativar notificações: " + (err as Error).message);
     }
   };
 
