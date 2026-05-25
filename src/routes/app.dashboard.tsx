@@ -17,6 +17,7 @@ import { RevenueChart } from "@/components/RevenueChart";
 import { SalesFunnel } from "@/components/SalesFunnel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { EnableAdminPush } from "@/components/EnableAdminPush";
 
 export const Route = createFileRoute("/app/dashboard")({
   component: Dashboard,
