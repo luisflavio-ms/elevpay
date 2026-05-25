@@ -144,17 +144,17 @@ function Builder() {
         </Tabs>
       </div>
 
-      {/* Desktop 3 columns */}
-      <div className="hidden lg:grid grid-cols-12 gap-4">
-        <div className="col-span-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-2">
-          <ConfigPanel checkout={checkout} update={update} products={products} bumps={bumps} />
-        </div>
-        <div className="col-span-5">
-          <PreviewPanel checkout={checkout} products={products} bumps={bumps} />
-        </div>
-        <div className="col-span-3">
-          <PublishPanel checkout={checkout} onCopy={copyLink} onRemove={remove} onPublish={publish} />
-        </div>
+      {/* Desktop 3 columns - palette / preview / editor */}
+      <div className="hidden lg:block">
+        <DesktopBuilder
+          checkout={checkout}
+          update={update}
+          products={products}
+          bumps={bumps}
+          onCopy={copyLink}
+          onRemove={remove}
+          onPublish={publish}
+        />
       </div>
     </div>
   );
