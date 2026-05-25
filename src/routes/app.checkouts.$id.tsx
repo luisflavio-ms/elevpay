@@ -27,7 +27,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { brl, db, seedIfNeeded, slugify } from "@/lib/store";
-import type { Checkout, Product, OrderBump } from "@/lib/types";
+import type { Checkout, Product, OrderBump, CheckoutBlock } from "@/lib/types";
+import { BlockBuilder } from "@/components/checkout/BlockBuilder";
+import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 
 export const Route = createFileRoute("/app/checkouts/$id")({
   component: Builder,
