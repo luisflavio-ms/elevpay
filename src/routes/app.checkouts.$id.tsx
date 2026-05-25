@@ -27,7 +27,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { brl, db, seedIfNeeded, slugify } from "@/lib/store";
-import type { Checkout, Product, OrderBump } from "@/lib/types";
+import type { Checkout, Product, OrderBump, CheckoutBlock } from "@/lib/types";
+import { BlockBuilder } from "@/components/checkout/BlockBuilder";
+import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 
 export const Route = createFileRoute("/app/checkouts/$id")({
   component: Builder,
@@ -184,7 +186,15 @@ function ConfigPanel({
         </F>
       </Section>
 
+      <Section title="Blocos do checkout (arraste para reordenar)">
+        <BlockBuilder
+          blocks={checkout.blocks ?? []}
+          onChange={(b: CheckoutBlock[]) => update("blocks", b)}
+        />
+      </Section>
+
       <Section title="Conteúdo">
+
         <F label="Headline"><Input value={checkout.headline} onChange={(e) => update("headline", e.target.value)} /></F>
         <F label="Subheadline"><Input value={checkout.subheadline} onChange={(e) => update("subheadline", e.target.value)} /></F>
         <F label="Imagem (URL)"><Input value={checkout.image} onChange={(e) => update("image", e.target.value)} /></F>
@@ -309,6 +319,13 @@ function PreviewPanel({
           Preview do checkout
         </div>
         <div className="bg-white text-slate-900 p-4 max-h-[700px] overflow-y-auto">
+          {(checkout.blocks ?? []).length > 0 && (
+            <div className="space-y-3 mb-3">
+              {(checkout.blocks ?? []).map((b) => (
+                <BlockRenderer key={b.id} block={b} color={checkout.primaryColor} />
+              ))}
+            </div>
+          )}
           {checkout.scarcityTimerMinutes > 0 && (
             <div className="text-center text-xs py-2 px-3 mb-3 rounded-lg" style={{ background: checkout.primaryColor + "20", color: checkout.primaryColor }}>
               <Clock className="inline h-3 w-3 mr-1" />

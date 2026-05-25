@@ -47,7 +47,67 @@ export interface Checkout {
   active: boolean;
   conversion: number;
   revenue: number;
+  blocks?: CheckoutBlock[];
 }
+
+export type CheckoutBlockType =
+  | "image"
+  | "text"
+  | "html"
+  | "timer"
+  | "guarantee"
+  | "notifications";
+
+export interface CheckoutBlockBase {
+  id: string;
+  type: CheckoutBlockType;
+}
+export interface ImageBlock extends CheckoutBlockBase {
+  type: "image";
+  src: string;
+  alt: string;
+  rounded: boolean;
+}
+export interface TextBlock extends CheckoutBlockBase {
+  type: "text";
+  content: string;
+  size: "sm" | "md" | "lg" | "xl";
+  align: "left" | "center" | "right";
+  bold: boolean;
+}
+export interface HtmlBlock extends CheckoutBlockBase {
+  type: "html";
+  code: string;
+}
+export interface TimerBlock extends CheckoutBlockBase {
+  type: "timer";
+  minutes: number;
+  label: string;
+}
+export interface GuaranteeBlock extends CheckoutBlockBase {
+  type: "guarantee";
+  days: number;
+  title: string;
+  text: string;
+}
+export interface PurchaseNotification {
+  name: string;
+  product: string;
+  city: string;
+  ago: string;
+}
+export interface NotificationsBlock extends CheckoutBlockBase {
+  type: "notifications";
+  items: PurchaseNotification[];
+  intervalSec: number;
+}
+export type CheckoutBlock =
+  | ImageBlock
+  | TextBlock
+  | HtmlBlock
+  | TimerBlock
+  | GuaranteeBlock
+  | NotificationsBlock;
 
 export type OrderStatus = "aprovado" | "pendente" | "recusado" | "reembolsado";
 export type PaymentMethod = "pix" | "cartao" | "boleto";

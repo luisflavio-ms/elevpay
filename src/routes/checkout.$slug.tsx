@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
+import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 
 export const Route = createFileRoute("/checkout/$slug")({
   component: PublicCheckout,
@@ -119,6 +120,15 @@ function PublicCheckout() {
             {c.urgencyMessage}
           </div>
         )}
+
+        {(c.blocks ?? []).length > 0 && (
+          <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
+            {(c.blocks ?? []).map((b) => (
+              <BlockRenderer key={b.id} block={b} color={color} />
+            ))}
+          </div>
+        )}
+
 
         {c.image && (
           <img
