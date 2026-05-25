@@ -1,11 +1,15 @@
 import { useState } from "react";
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   PointerSensor,
+  useDraggable,
+  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -37,12 +41,51 @@ interface Props {
 
 const TYPES: CheckoutBlockType[] = ["image", "text", "html", "timer", "guarantee", "notifications"];
 
+const CANVAS_ID = "checkout-canvas";
+
 export function BlockBuilder({ blocks, onChange }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const [activeDrag, setActiveDrag] = useState<
+    | { kind: "palette"; type: CheckoutBlockType }
+    | { kind: "sort"; id: string }
+    | null
+  >(null);
+
+  const onDragStart = (e: DragStartEvent) => {
+    const data = e.active.data.current as { source?: string; type?: CheckoutBlockType } | undefined;
+    if (data?.source === "palette" && data.type) {
+      setActiveDrag({ kind: "palette", type: data.type });
+    } else {
+      setActiveDrag({ kind: "sort", id: String(e.active.id) });
+    }
+  };
 
   const onDragEnd = (e: DragEndEvent) => {
+    setActiveDrag(null);
     const { active, over } = e;
-    if (!over || active.id === over.id) return;
+    if (!over) return;
+    const data = active.data.current as { source?: string; type?: CheckoutBlockType } | undefined;
+
+    // From palette → drop into canvas / on a block
+    if (data?.source === "palette" && data.type) {
+      const newBlock = createBlock(data.type);
+      if (over.id === CANVAS_ID) {
+        onChange([...blocks, newBlock]);
+        return;
+      }
+      const idx = blocks.findIndex((b) => b.id === over.id);
+      if (idx < 0) {
+        onChange([...blocks, newBlock]);
+      } else {
+        const next = [...blocks];
+        next.splice(idx, 0, newBlock);
+        onChange(next);
+      }
+      return;
+    }
+
+    // Sort existing
+    if (active.id === over.id) return;
     const oldIdx = blocks.findIndex((b) => b.id === active.id);
     const newIdx = blocks.findIndex((b) => b.id === over.id);
     if (oldIdx < 0 || newIdx < 0) return;
@@ -62,48 +105,105 @@ export function BlockBuilder({ blocks, onChange }: Props) {
   };
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-2xl border border-border/60 bg-card/40 p-3">
-        <p className="text-xs font-semibold text-muted-foreground mb-2">Adicionar bloco</p>
-        <div className="grid grid-cols-3 gap-2">
-          {TYPES.map((t) => (
-            <button
-              key={t}
-              onClick={() => add(t)}
-              className="group flex flex-col items-center gap-1 rounded-lg border border-border/60 bg-background/40 hover:border-primary/60 hover:bg-primary/10 px-2 py-3 text-[11px] font-medium text-foreground/80 transition"
-            >
-              <span className="text-lg">{BLOCK_ICONS[t]}</span>
-              {BLOCK_LABELS[t]}
-            </button>
-          ))}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => setActiveDrag(null)}
+    >
+      <div className="grid grid-cols-[160px_1fr] gap-3">
+        {/* PALETTE (LEFT) */}
+        <div className="rounded-2xl border border-border/60 bg-card/40 p-2 h-fit sticky top-2">
+          <p className="text-[11px] font-semibold text-muted-foreground mb-2 px-1">
+            Arraste para o canvas
+          </p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {TYPES.map((t) => (
+              <PaletteItem key={t} type={t} onClick={() => add(t)} />
+            ))}
+          </div>
         </div>
+
+        {/* CANVAS (MIDDLE) */}
+        <CanvasDroppable hasBlocks={blocks.length > 0} isOver={activeDrag?.kind === "palette"}>
+          {blocks.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center text-xs text-muted-foreground min-h-[180px] flex flex-col items-center justify-center">
+              <Plus className="h-5 w-5 mb-2 opacity-60" />
+              Arraste blocos da esquerda<br />
+              ou clique para adicionar.
+            </div>
+          ) : (
+            <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {blocks.map((b, i) => (
+                  <SortableItem
+                    key={b.id}
+                    block={b}
+                    onUpdate={(patch) => update(b.id, patch)}
+                    onRemove={() => remove(b.id)}
+                    onMoveUp={() => move(b.id, -1)}
+                    onMoveDown={() => move(b.id, 1)}
+                    isFirst={i === 0}
+                    isLast={i === blocks.length - 1}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          )}
+        </CanvasDroppable>
       </div>
 
-      {blocks.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/60 p-8 text-center text-xs text-muted-foreground">
-          Nenhum bloco adicionado. Clique acima para começar.
-          <br />Os blocos aparecerão no topo do seu checkout.
-        </div>
-      ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">
-              {blocks.map((b, i) => (
-                <SortableItem
-                  key={b.id}
-                  block={b}
-                  onUpdate={(patch) => update(b.id, patch)}
-                  onRemove={() => remove(b.id)}
-                  onMoveUp={() => move(b.id, -1)}
-                  onMoveDown={() => move(b.id, 1)}
-                  isFirst={i === 0}
-                  isLast={i === blocks.length - 1}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      )}
+      <DragOverlay>
+        {activeDrag?.kind === "palette" ? (
+          <div className="rounded-lg border border-primary/60 bg-primary/10 px-3 py-2 text-xs font-medium flex items-center gap-2 shadow-lg">
+            {(() => {
+              const Icon = BLOCK_ICONS[activeDrag.type];
+              return <Icon className="h-4 w-4" />;
+            })()}
+            {BLOCK_LABELS[activeDrag.type]}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+function PaletteItem({ type, onClick }: { type: CheckoutBlockType; onClick: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `palette-${type}`,
+    data: { source: "palette", type },
+  });
+  const Icon = BLOCK_ICONS[type];
+  return (
+    <button
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+      style={{ touchAction: "none", opacity: isDragging ? 0.4 : 1 }}
+      className="group flex flex-col items-center justify-center gap-1 rounded-lg border border-border/60 bg-background/40 hover:border-primary/60 hover:bg-primary/10 px-1 py-2.5 text-[10px] font-medium text-foreground/80 transition cursor-grab active:cursor-grabbing"
+    >
+      <Icon className="h-4 w-4 text-primary/80 group-hover:text-primary" />
+      {BLOCK_LABELS[type]}
+    </button>
+  );
+}
+
+function CanvasDroppable({
+  children, hasBlocks, isOver,
+}: { children: React.ReactNode; hasBlocks: boolean; isOver: boolean }) {
+  const { setNodeRef, isOver: over } = useDroppable({ id: CANVAS_ID });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-2xl transition ${
+        isOver || over
+          ? "ring-2 ring-primary/60 bg-primary/5"
+          : ""
+      } ${hasBlocks ? "p-1" : ""}`}
+    >
+      {children}
     </div>
   );
 }
@@ -131,6 +231,7 @@ function SortableItem({
     zIndex: isDragging ? 50 : "auto",
     position: "relative" as const,
   };
+  const Icon = BLOCK_ICONS[block.type];
 
   return (
     <div
@@ -149,7 +250,7 @@ function SortableItem({
         >
           <GripVertical className="h-4 w-4" />
         </button>
-        <span className="text-base">{BLOCK_ICONS[block.type]}</span>
+        <Icon className="h-4 w-4 text-primary/80" />
         <span className="text-sm font-medium flex-1 truncate">{BLOCK_LABELS[block.type]}</span>
         <button onClick={onMoveUp} disabled={isFirst} className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30">
           <ChevronUp className="h-4 w-4" />
