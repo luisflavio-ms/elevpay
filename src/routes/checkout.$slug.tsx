@@ -333,7 +333,21 @@ function PublicCheckout() {
         </footer>
       </div>
 
-      {done && <SuccessModal method={method} amount={total} onClose={() => setDone(false)} redirect={c.redirectUrl} />}
+      {payError && (
+        <div style={{ position: "fixed", bottom: 16, left: 16, right: 16, background: "#fee2e2", color: "#991b1b", padding: 12, borderRadius: 8, fontSize: 13, textAlign: "center", maxWidth: 528, margin: "0 auto" }}>
+          {payError}
+        </div>
+      )}
+      {done && (
+        <SuccessModal
+          method={method}
+          amount={total}
+          onClose={() => setDone(false)}
+          redirect={c.redirectUrl}
+          pix={pix}
+          paid={paid}
+        />
+      )}
     </div>
   );
 }
