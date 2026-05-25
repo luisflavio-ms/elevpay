@@ -284,7 +284,7 @@ function SortableItem({
   );
 }
 
-function BlockEditor({
+export function BlockEditor({
   block, onUpdate,
 }: { block: CheckoutBlock; onUpdate: (patch: Partial<CheckoutBlock>) => void }) {
   if (block.type === "image") {
