@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl, db, seedIfNeeded } from "@/lib/store";
 import type { Order, Checkout, Product } from "@/lib/types";
+import { RevenueChart } from "@/components/RevenueChart";
+import { SalesFunnel } from "@/components/SalesFunnel";
+
 
 export const Route = createFileRoute("/app/dashboard")({
   component: Dashboard,
