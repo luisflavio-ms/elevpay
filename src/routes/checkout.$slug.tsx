@@ -545,6 +545,13 @@ function SuccessModal({
             </p>
             <button
               type="button"
+              onClick={onEnablePush}
+              style={{ width: "100%", marginTop: 10, padding: 12, background: "#ede9fe", color: "#5b21b6", border: "1px solid #c4b5fd", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+            >
+              🔔 Receber notificação quando aprovar
+            </button>
+            <button
+              type="button"
               onClick={onSimulate}
               style={{ width: "100%", marginTop: 10, padding: 10, background: "#fef3c7", color: "#92400e", border: "1px dashed #f59e0b", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
             >
@@ -552,6 +559,7 @@ function SuccessModal({
             </button>
           </>
         )}
+
         {method === "pix" && paid && (
           <>
             <div style={{ fontSize: 48, textAlign: "center" }}>✅</div>
