@@ -80,6 +80,14 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const cellphone = data.customer.phone.replace(/\D/g, "");
     const taxId = data.customer.cpf.replace(/\D/g, "");
 
+    if (taxId.length !== 11 && taxId.length !== 14) {
+      throw new Error("CPF/CNPJ inválido. Informe 11 dígitos (CPF) ou 14 (CNPJ).");
+    }
+    if (cellphone.length < 10 || cellphone.length > 11) {
+      throw new Error("Telefone inválido. Informe DDD + número.");
+    }
+
+
     const res = await fetch(`${ABACATE_BASE}/transparents/create`, {
       method: "POST",
       headers: {
