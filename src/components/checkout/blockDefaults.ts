@@ -1,3 +1,4 @@
+import { Image as ImageIcon, Type, Code2, Timer, ShieldCheck, Bell, type LucideIcon } from "lucide-react";
 import type { CheckoutBlock, CheckoutBlockType } from "@/lib/types";
 
 export const BLOCK_LABELS: Record<CheckoutBlockType, string> = {
@@ -6,16 +7,16 @@ export const BLOCK_LABELS: Record<CheckoutBlockType, string> = {
   html: "HTML",
   timer: "Cronômetro",
   guarantee: "Garantia",
-  notifications: "Notificações de compra",
+  notifications: "Notificações",
 };
 
-export const BLOCK_ICONS: Record<CheckoutBlockType, string> = {
-  image: "🖼️",
-  text: "📝",
-  html: "</>",
-  timer: "⏱️",
-  guarantee: "🛡️",
-  notifications: "🔔",
+export const BLOCK_ICONS: Record<CheckoutBlockType, LucideIcon> = {
+  image: ImageIcon,
+  text: Type,
+  html: Code2,
+  timer: Timer,
+  guarantee: ShieldCheck,
+  notifications: Bell,
 };
 
 let n = 0;
