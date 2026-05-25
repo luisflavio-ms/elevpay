@@ -75,7 +75,7 @@ function Builder() {
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
-      return data ? rowToCheckout(data as CheckoutRow) : null;
+      return data ? rowToCheckout(data as unknown as CheckoutRow) : null;
     },
   });
 
