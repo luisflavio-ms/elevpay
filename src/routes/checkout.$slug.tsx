@@ -350,6 +350,14 @@ function PublicCheckout() {
           redirect={c.redirectUrl}
           pix={pix}
           paid={paid}
+          onSimulate={async () => {
+            if (!pix) return;
+            try {
+              await simulatePix({ data: { orderId: pix.orderId } });
+            } catch (err) {
+              setPayError((err as Error).message);
+            }
+          }}
         />
       )}
     </div>
