@@ -50,7 +50,7 @@ export function AppLayout() {
 
 
       {/* Sidebar desktop */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-background border-r flex-col">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-sidebar border-r border-sidebar-border flex-col">
         <SidebarContent />
       </aside>
 
@@ -58,13 +58,13 @@ export function AppLayout() {
       {open && (
         <div className="lg:hidden fixed inset-0 z-50">
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 w-72 bg-background flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b">
-              <Link to="/app/dashboard" className="flex items-center gap-2 font-bold">
-                <Zap className="h-5 w-5 text-primary" /> ElevPay
+          <aside className="absolute inset-y-0 left-0 w-72 bg-sidebar flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+              <Link to="/app/dashboard" aria-label="ElevPay">
+                <Logo size={22} />
               </Link>
               <button onClick={() => setOpen(false)}>
                 <X className="h-5 w-5" />
@@ -86,10 +86,11 @@ export function AppLayout() {
   function SidebarContent() {
     return (
       <>
-        <div className="hidden lg:flex items-center gap-2 px-6 h-16 border-b font-bold text-lg">
-          <Zap className="h-6 w-6 text-primary" />
-          ElevPay
+        <div className="hidden lg:flex items-center gap-2 px-6 h-16 border-b border-sidebar-border">
+          <LogoMark size={26} />
+          <Wordmark className="text-lg" />
         </div>
+
         <nav className="flex-1 px-3 py-4 space-y-1">
           {nav.map((item) => {
             const active = loc.pathname.startsWith(item.to);
