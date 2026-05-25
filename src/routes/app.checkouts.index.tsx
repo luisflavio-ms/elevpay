@@ -93,7 +93,7 @@ function ChecksList() {
         subheadline: c.subheadline,
         image: c.image || null,
         benefits: c.benefits,
-        testimonials: c.testimonials,
+        testimonials: c.testimonials as never,
         guarantee: c.guarantee,
         primary_color: c.primaryColor,
         button_text: c.buttonText,
