@@ -319,6 +319,13 @@ function PreviewPanel({
           Preview do checkout
         </div>
         <div className="bg-white text-slate-900 p-4 max-h-[700px] overflow-y-auto">
+          {(checkout.blocks ?? []).length > 0 && (
+            <div className="space-y-3 mb-3">
+              {(checkout.blocks ?? []).map((b) => (
+                <BlockRenderer key={b.id} block={b} color={checkout.primaryColor} />
+              ))}
+            </div>
+          )}
           {checkout.scarcityTimerMinutes > 0 && (
             <div className="text-center text-xs py-2 px-3 mb-3 rounded-lg" style={{ background: checkout.primaryColor + "20", color: checkout.primaryColor }}>
               <Clock className="inline h-3 w-3 mr-1" />
