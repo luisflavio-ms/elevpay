@@ -3,19 +3,65 @@ import webpush from "web-push";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 let configured = false;
+
+const VAPID_PUBLIC_KEY =
+  "BBiX5A6AsFCSf4QxqZF0eyQc8jn86nLKHjpg2zo0GEiDDK8x9eMU2RTSnCjxxAAUzI71c0ddUj0SElrGItD9PZw";
+const DEFAULT_VAPID_SUBJECT = "https://elevpay.lovable.app";
+
+function normalizeVapidSubject(raw?: string) {
+  const subject = (raw || "").trim();
+  if (!subject) return DEFAULT_VAPID_SUBJECT;
+
+  const asMailto = subject.startsWith("mailto:") ? subject : subject.includes("@") ? `mailto:${subject}` : null;
+  if (asMailto && /^mailto:[^\s@]+@[^\s@]+\.[^\s@]+$/.test(asMailto)) return asMailto;
+
+  const asUrl = subject.startsWith("http://") || subject.startsWith("https://") ? subject : `https://${subject}`;
+  try {
+    const url = new URL(asUrl);
+    if (url.protocol === "https:" && url.hostname.includes(".")) return url.origin;
+  } catch {
+    // Falls back below.
+  }
+
+  console.warn("[push] invalid VAPID_SUBJECT, using default subject");
+  return DEFAULT_VAPID_SUBJECT;
+}
+
+async function handlePushSendError(
+  context: string,
+  subscription: { id: string; endpoint: string },
+  err: unknown,
+) {
+  const e = err as { statusCode?: number; body?: string; endpoint?: string };
+  const body = e.body ?? "";
+  const shouldDelete =
+    e.statusCode === 404 ||
+    e.statusCode === 410 ||
+    (e.statusCode === 403 && subscription.endpoint.includes("web.push.apple.com") && body.includes("BadJwtToken"));
+
+  if (shouldDelete) {
+    await supabaseAdmin.from("push_subscriptions").delete().eq("id", subscription.id);
+    console.warn(`[push] removed invalid subscription (${context})`, {
+      statusCode: e.statusCode,
+      body,
+      endpoint: subscription.endpoint.slice(0, 80),
+    });
+    return;
+  }
+
+  console.error(`[push] send error (${context})`, {
+    statusCode: e.statusCode,
+    body,
+    endpoint: subscription.endpoint.slice(0, 80),
+  });
+}
+
 function ensureConfigured() {
   if (configured) return;
-  const pub = "BBiX5A6AsFCSf4QxqZF0eyQc8jn86nLKHjpg2zo0GEiDDK8x9eMU2RTSnCjxxAAUzI71c0ddUj0SElrGItD9PZw";
   const priv = process.env.VAPID_PRIVATE_KEY;
-  let subject = (process.env.VAPID_SUBJECT || "").trim();
-  // Apple exige mailto: ou https:// no subject. Normaliza se vier sem prefixo.
-  if (!subject) {
-    subject = "mailto:contato@elevpay.com";
-  } else if (!subject.startsWith("mailto:") && !subject.startsWith("https://")) {
-    subject = subject.includes("@") ? `mailto:${subject}` : `https://${subject}`;
-  }
+  const subject = normalizeVapidSubject(process.env.VAPID_SUBJECT);
   if (!priv) throw new Error("VAPID_PRIVATE_KEY not configured");
-  webpush.setVapidDetails(subject, pub, priv);
+  webpush.setVapidDetails(subject, VAPID_PUBLIC_KEY, priv);
   configured = true;
 }
 
@@ -64,16 +110,7 @@ export async function notifyOrderStatus(
           payload,
         );
       } catch (err) {
-        const e = err as { statusCode?: number; body?: string; headers?: unknown; endpoint?: string };
-        if (e.statusCode === 404 || e.statusCode === 410) {
-          await supabaseAdmin.from("push_subscriptions").delete().eq("id", s.id);
-        } else {
-          console.error("[push] send error", {
-            statusCode: e.statusCode,
-            body: e.body,
-            endpoint: s.endpoint.slice(0, 80),
-          });
-        }
+        await handlePushSendError("order", s, err);
       }
     }),
   );
@@ -118,16 +155,7 @@ export async function notifySellerNewSale(
           payload,
         );
       } catch (err) {
-        const e = err as { statusCode?: number; body?: string; endpoint?: string };
-        if (e.statusCode === 404 || e.statusCode === 410) {
-          await supabaseAdmin.from("push_subscriptions").delete().eq("id", s.id);
-        } else {
-          console.error("[push] send error (seller)", {
-            statusCode: e.statusCode,
-            body: e.body,
-            endpoint: s.endpoint.slice(0, 80),
-          });
-        }
+        await handlePushSendError("seller", s, err);
       }
     }),
   );
@@ -172,16 +200,7 @@ export async function notifySellerPendingSale(
           payload,
         );
       } catch (err) {
-        const e = err as { statusCode?: number; body?: string; endpoint?: string };
-        if (e.statusCode === 404 || e.statusCode === 410) {
-          await supabaseAdmin.from("push_subscriptions").delete().eq("id", s.id);
-        } else {
-          console.error("[push] send error (pending)", {
-            statusCode: e.statusCode,
-            body: e.body,
-            endpoint: s.endpoint.slice(0, 80),
-          });
-        }
+        await handlePushSendError("pending", s, err);
       }
     }),
   );
