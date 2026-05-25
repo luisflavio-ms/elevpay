@@ -12,6 +12,7 @@ export function EnableAdminPush() {
   const [status, setStatus] = useState<Status>("loading");
   const [busy, setBusy] = useState(false);
   const subscribeFn = useServerFn(subscribeAdminPush);
+  const canEnable = status === "default" || status === "granted";
 
   useEffect(() => {
     const inIframe = (() => {
@@ -43,13 +44,13 @@ export function EnableAdminPush() {
       if (!reg) reg = await navigator.serviceWorker.register("/sw.js");
       reg = await navigator.serviceWorker.ready;
 
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
-        });
-      }
+      const existingSub = await reg.pushManager.getSubscription();
+      if (existingSub) await existingSub.unsubscribe();
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+      });
       const json = sub.toJSON();
       await subscribeFn({
         data: {
@@ -59,6 +60,7 @@ export function EnableAdminPush() {
           userAgent: navigator.userAgent.slice(0, 500),
         },
       });
+      setStatus("granted");
       toast.success("Notificações ativadas! Você será avisado a cada nova venda.");
     } catch (err) {
       toast.error("Erro: " + (err as Error).message);
@@ -84,9 +86,14 @@ export function EnableAdminPush() {
   }
   if (status === "granted") {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-400">
-        <Check className="h-4 w-4" />
-        Notificações de novas vendas ativadas
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-400">
+        <div className="flex items-center gap-2">
+          <Check className="h-4 w-4" />
+          <span>Notificações de novas vendas ativadas</span>
+        </div>
+        <Button size="sm" variant="outline" onClick={enable} disabled={busy}>
+          {busy ? "Atualizando..." : "Atualizar"}
+        </Button>
       </div>
     );
   }
@@ -104,7 +111,7 @@ export function EnableAdminPush() {
         <Bell className="h-4 w-4 text-primary" />
         <span>Ative as notificações para ser avisado de cada nova venda</span>
       </div>
-      <Button size="sm" onClick={enable} disabled={busy}>
+      <Button size="sm" onClick={enable} disabled={busy || !canEnable}>
         {busy ? "Ativando..." : "Ativar"}
       </Button>
     </div>
