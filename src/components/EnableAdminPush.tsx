@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Bell, BellOff, Check } from "lucide-react";
+import { Bell, BellOff, Check, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
-import { subscribeAdminPush } from "@/lib/push.functions";
+import { subscribeAdminPush, sendTestPush } from "@/lib/push.functions";
 import { VAPID_PUBLIC_KEY, urlBase64ToUint8Array } from "@/lib/push-config";
 import { toast } from "sonner";
 
@@ -11,9 +11,29 @@ type Status = "loading" | "unsupported" | "iframe" | "denied" | "default" | "gra
 export function EnableAdminPush() {
   const [status, setStatus] = useState<Status>("loading");
   const [busy, setBusy] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const subscribeFn = useServerFn(subscribeAdminPush);
+  const testFn = useServerFn(sendTestPush);
   const canEnable = status === "default" || status === "granted";
+
+  const handleTest = async () => {
+    setTesting(true);
+    try {
+      const res = await testFn({ data: undefined });
+      if (res.ok) {
+        toast.success(`Enviado para ${res.sent}/${res.total} dispositivo(s)`);
+      } else {
+        toast.error(`Falhou: ${res.error || JSON.stringify(res.results)}`);
+        console.warn("[push] test result", res);
+      }
+    } catch (e) {
+      toast.error("Erro: " + (e as Error).message);
+    } finally {
+      setTesting(false);
+    }
+  };
+
 
   useEffect(() => {
     const inIframe = (() => {
