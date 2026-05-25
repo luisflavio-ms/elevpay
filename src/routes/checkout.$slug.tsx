@@ -113,6 +113,23 @@ function PublicCheckout() {
     return () => clearInterval(i);
   }, [secondsLeft]);
 
+  // Polling do status do pedido PIX (precisa ficar antes dos early returns)
+  useEffect(() => {
+    if (!pix || paid) return;
+    const interval = setInterval(async () => {
+      try {
+        const { status } = await checkStatus({ data: { orderId: pix.orderId } });
+        if (status === "aprovado") {
+          setPaid(true);
+          clearInterval(interval);
+        }
+      } catch {
+        /* ignore */
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [pix, paid, checkStatus]);
+
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", background: "#f8fafc", padding: 16 }}>
