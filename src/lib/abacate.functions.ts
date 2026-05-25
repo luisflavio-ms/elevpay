@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const ABACATE_BASE = "https://api.abacatepay.com/v1";
+const ABACATE_BASE = "https://api.abacatepay.com/v2";
 
 const createPixInput = z.object({
   slug: z.string().min(1).max(120),
@@ -80,21 +80,24 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const cellphone = data.customer.phone.replace(/\D/g, "");
     const taxId = data.customer.cpf.replace(/\D/g, "");
 
-    const res = await fetch(`${ABACATE_BASE}/pixQrCode/create`, {
+    const res = await fetch(`${ABACATE_BASE}/transparents/create`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: amountCents,
-        expiresIn: 3600,
-        description: pRow?.name ?? "Pagamento",
-        customer: {
-          name: data.customer.name,
-          cellphone,
-          email: data.customer.email,
-          taxId,
+        method: "PIX",
+        data: {
+          amount: amountCents,
+          expiresIn: 3600,
+          description: pRow?.name ?? "Pagamento",
+          customer: {
+            name: data.customer.name,
+            cellphone,
+            email: data.customer.email,
+            taxId,
+          },
         },
       }),
     });
