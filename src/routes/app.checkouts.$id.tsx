@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -10,7 +10,27 @@ import {
   Plus,
   ShieldCheck,
   Clock,
+  X,
+  GripVertical,
 } from "lucide-react";
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,9 +47,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { brl, db, seedIfNeeded, slugify } from "@/lib/store";
-import type { Checkout, Product, OrderBump, CheckoutBlock } from "@/lib/types";
-import { BlockBuilder } from "@/components/checkout/BlockBuilder";
+import type { Checkout, Product, OrderBump, CheckoutBlock, CheckoutBlockType } from "@/lib/types";
+import { BlockBuilder, Palette, BlockEditor, CANVAS_ID } from "@/components/checkout/BlockBuilder";
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
+import { BLOCK_ICONS, BLOCK_LABELS, createBlock } from "@/components/checkout/blockDefaults";
 
 export const Route = createFileRoute("/app/checkouts/$id")({
   component: Builder,
