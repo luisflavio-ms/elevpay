@@ -121,6 +121,15 @@ function PublicCheckout() {
           </div>
         )}
 
+        {(c.blocks ?? []).length > 0 && (
+          <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
+            {(c.blocks ?? []).map((b) => (
+              <BlockRenderer key={b.id} block={b} color={color} />
+            ))}
+          </div>
+        )}
+
+
         {c.image && (
           <img
             src={c.image}
