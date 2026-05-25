@@ -179,7 +179,7 @@ export function BlockBuilder({ blocks, onChange }: Props) {
   );
 }
 
-function PaletteItem({ type, onClick }: { type: CheckoutBlockType; onClick: () => void }) {
+export function PaletteItem({ type, onClick }: { type: CheckoutBlockType; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `palette-${type}`,
     data: { source: "palette", type },
