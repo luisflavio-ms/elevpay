@@ -3,15 +3,16 @@ import { useEffect, useState } from "react";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
+import { supabase } from "@/integrations/supabase/client";
+import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 
 export const Route = createFileRoute("/checkout/$slug")({
   component: PublicCheckout,
 });
 
 /**
- * Public checkout — intentionally lightweight.
- * - No shadcn imports, no icon library, minimal CSS, lazy images.
- * - Reads data directly from localStorage (no router context).
+ * Public checkout — busca diretamente do Supabase (RLS permite anon
+ * quando o checkout está active = true e o produto/bump referenciado).
  */
 function PublicCheckout() {
   const { slug } = Route.useParams();
@@ -25,25 +26,77 @@ function PublicCheckout() {
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
 
   useEffect(() => {
-    const t = setTimeout(() => {
+    let cancelled = false;
+    (async () => {
       try {
-        const checkouts: Checkout[] = JSON.parse(localStorage.getItem("elevpay:checkouts") || "[]");
-        const products: Product[] = JSON.parse(localStorage.getItem("elevpay:products") || "[]");
-        const bumps: OrderBump[] = JSON.parse(localStorage.getItem("elevpay:bumps") || "[]");
-        const c = checkouts.find((x) => x.slug === slug);
-        if (c) {
-          const p = products.find((x) => x.id === c.productId);
-          const b = bumps.find((x) => x.id === c.orderBumpId);
-          setData({ c, p, b });
-          // pick first allowed method
-          const first: PaymentMethod = c.paymentMethods.pix ? "pix" : c.paymentMethods.card ? "cartao" : "boleto";
-          setMethod(first);
-          if (c.scarcityTimerMinutes > 0) setSecondsLeft(c.scarcityTimerMinutes * 60);
+        const { data: ckRow } = await supabase
+          .from("checkouts")
+          .select("*")
+          .eq("slug", slug)
+          .eq("active", true)
+          .maybeSingle();
+        if (!ckRow) {
+          if (!cancelled) setLoading(false);
+          return;
         }
-      } catch {}
-      setLoading(false);
-    }, 250);
-    return () => clearTimeout(t);
+        const c = rowToCheckout(ckRow as CheckoutRow);
+
+        const [{ data: pRow }, { data: bRow }] = await Promise.all([
+          c.productId
+            ? supabase
+                .from("products")
+                .select("id,name,description,price,image,type,delivery_url")
+                .eq("id", c.productId)
+                .maybeSingle()
+            : Promise.resolve({ data: null }),
+          c.orderBumpId
+            ? supabase
+                .from("order_bumps")
+                .select("id,title,description,price")
+                .eq("id", c.orderBumpId)
+                .maybeSingle()
+            : Promise.resolve({ data: null }),
+        ]);
+
+        const p: Product | undefined = pRow
+          ? {
+              id: pRow.id as string,
+              name: pRow.name as string,
+              description: (pRow.description as string) ?? "",
+              price: Number(pRow.price),
+              image: (pRow.image as string) ?? "",
+              type: pRow.type as Product["type"],
+              deliveryUrl: (pRow.delivery_url as string) ?? "",
+            }
+          : undefined;
+
+        const b: OrderBump | undefined = bRow
+          ? {
+              id: bRow.id as string,
+              title: bRow.title as string,
+              description: (bRow.description as string) ?? "",
+              price: Number(bRow.price),
+            }
+          : undefined;
+
+        if (cancelled) return;
+        setData({ c, p, b });
+        const first: PaymentMethod = c.paymentMethods.pix
+          ? "pix"
+          : c.paymentMethods.card
+            ? "cartao"
+            : "boleto";
+        setMethod(first);
+        if (c.scarcityTimerMinutes > 0) setSecondsLeft(c.scarcityTimerMinutes * 60);
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   useEffect(() => {
