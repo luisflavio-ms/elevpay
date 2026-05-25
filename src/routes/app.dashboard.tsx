@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   DollarSign,
   ShoppingBag,
@@ -11,45 +11,95 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { brl, db, seedIfNeeded } from "@/lib/store";
-import type { Order, Checkout, Product } from "@/lib/types";
+import { brl } from "@/lib/store";
+import type { Order, Product } from "@/lib/types";
 import { RevenueChart } from "@/components/RevenueChart";
 import { SalesFunnel } from "@/components/SalesFunnel";
-
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/app/dashboard")({
   component: Dashboard,
 });
 
 function Dashboard() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [checkouts, setCheckouts] = useState<Checkout[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const { user } = useAuth();
+  const uid = user?.id;
 
-  useEffect(() => {
-    seedIfNeeded();
-    setOrders(db.getOrders());
-    setCheckouts(db.getCheckouts());
-    setProducts(db.getProducts());
-  }, []);
+  const ordersQ = useQuery({
+    queryKey: ["dash-orders", uid],
+    enabled: !!uid,
+    queryFn: async (): Promise<Order[]> => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("id,product_id,customer_name,amount,status,method,created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        id: r.id,
+        customer: r.customer_name ?? "—",
+        productId: r.product_id ?? "",
+        amount: Number(r.amount ?? 0),
+        status: (r.status ?? "pendente") as Order["status"],
+        method: (r.method ?? "pix") as Order["method"],
+        date: r.created_at ?? new Date().toISOString(),
+      }));
+    },
+  });
+
+  const productsQ = useQuery({
+    queryKey: ["dash-products", uid],
+    enabled: !!uid,
+    queryFn: async (): Promise<Product[]> => {
+      const { data, error } = await supabase.from("products").select("*");
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        id: r.id,
+        name: r.name ?? "—",
+        description: r.description ?? "",
+        price: Number(r.price ?? 0),
+        image: r.image ?? "",
+        type: (r.type ?? "digital") as Product["type"],
+        deliveryUrl: r.delivery_url ?? "",
+      }));
+    },
+  });
+
+  const checkoutsQ = useQuery({
+    queryKey: ["dash-checkouts", uid],
+    enabled: !!uid,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checkouts")
+        .select("id,active,conversion");
+      if (error) throw error;
+      return (data ?? []) as { id: string; active: boolean | null; conversion: number | null }[];
+    },
+  });
+
+  const orders = ordersQ.data ?? [];
+  const products = productsQ.data ?? [];
+  const checkouts = checkoutsQ.data ?? [];
 
   const approved = orders.filter((o) => o.status === "aprovado");
   const revenue = approved.reduce((s, o) => s + o.amount, 0);
   const conv = checkouts.length
     ? (
-        checkouts.reduce((s, c) => s + c.conversion, 0) / checkouts.length
+        checkouts.reduce((s, c) => s + Number(c.conversion ?? 0), 0) /
+        checkouts.length
       ).toFixed(1)
     : "0";
   const activeCheckouts = checkouts.filter((c) => c.active).length;
 
   const stats = [
-    { label: "Faturamento", value: brl(revenue), icon: DollarSign, hint: "+12% vs mês anterior" },
+    { label: "Faturamento", value: brl(revenue), icon: DollarSign, hint: `${approved.length} vendas aprovadas` },
     { label: "Vendas", value: approved.length, icon: ShoppingBag, hint: `${orders.length} pedidos no total` },
-    { label: "Conversão média", value: `${conv}%`, icon: TrendingUp, hint: "Acima da média do mercado" },
+    { label: "Conversão média", value: `${conv}%`, icon: TrendingUp, hint: "Média dos checkouts" },
     { label: "Checkouts ativos", value: activeCheckouts, icon: Zap, hint: `${checkouts.length} no total` },
   ];
 
   const productName = (id: string) => products.find((p) => p.id === id)?.name ?? "—";
+  const loading = ordersQ.isLoading || productsQ.isLoading || checkoutsQ.isLoading;
 
   return (
     <div className="space-y-6">
@@ -107,7 +157,7 @@ function Dashboard() {
             <p className="text-xs text-muted-foreground">Mais vendidos no período</p>
           </CardHeader>
           <CardContent className="space-y-3">
-            {topProducts(orders, products).map((p, i) => (
+            {topProducts(orders, products).map((p) => (
               <div key={p.id} className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-lg bg-muted overflow-hidden shrink-0">
                   {p.image && (
@@ -121,7 +171,7 @@ function Dashboard() {
                 <span className="text-sm font-semibold tabular-nums">{brl(p.total)}</span>
               </div>
             ))}
-            {orders.length === 0 && (
+            {!loading && orders.length === 0 && (
               <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
             )}
           </CardContent>
@@ -160,14 +210,13 @@ function Dashboard() {
                   </div>
                 </div>
               ))}
-              {orders.length === 0 && (
+              {!loading && orders.length === 0 && (
                 <div className="p-6 text-sm text-muted-foreground">Sem pedidos ainda.</div>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
-
     </div>
   );
 }
@@ -186,7 +235,6 @@ function topProducts(orders: Order[], products: Product[]) {
     .sort((a, b) => b.total - a.total)
     .slice(0, 4);
 }
-
 
 function StatusBadge({ status }: { status: Order["status"] }) {
   const map: Record<Order["status"], string> = {
