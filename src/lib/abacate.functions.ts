@@ -148,6 +148,11 @@ export const createPixPayment = createServerFn({ method: "POST" })
 
     if (orderErr) throw new Error(orderErr.message);
 
+    // Dispara push pra o vendedor avisando da venda pendente (não bloqueia).
+    notifySellerPendingSale(ckRow.user_id, total, data.customer.name).catch(
+      (e) => console.error("[push] pending notify failed", e),
+    );
+
     return {
       orderId: order.id,
       billingId: billing.id,
