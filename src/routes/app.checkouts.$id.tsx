@@ -162,12 +162,13 @@ function Builder() {
 
 /* ----------------- Config ----------------- */
 function ConfigPanel({
-  checkout, update, products, bumps,
+  checkout, update, products, bumps, compact = false,
 }: {
   checkout: Checkout;
   update: <K extends keyof Checkout>(k: K, v: Checkout[K]) => void;
   products: Product[];
   bumps: OrderBump[];
+  compact?: boolean;
 }) {
   const setBenefit = (i: number, v: string) => {
     const next = [...checkout.benefits];
