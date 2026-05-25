@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { notifyOrderStatus, notifySellerNewSale } from "./push.server";
+import { notifyOrderStatus, notifySellerNewSale, notifySellerPendingSale } from "./push.server";
 
 
 const ABACATE_BASE = "https://api.abacatepay.com/v2";
@@ -147,6 +147,11 @@ export const createPixPayment = createServerFn({ method: "POST" })
       .single();
 
     if (orderErr) throw new Error(orderErr.message);
+
+    // Dispara push pra o vendedor avisando da venda pendente (não bloqueia).
+    notifySellerPendingSale(ckRow.user_id, total, data.customer.name).catch(
+      (e) => console.error("[push] pending notify failed", e),
+    );
 
     return {
       orderId: order.id,

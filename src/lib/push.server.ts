@@ -133,3 +133,58 @@ export async function notifySellerNewSale(
   );
 }
 
+export async function notifySellerPendingSale(
+  sellerUserId: string,
+  amount: number,
+  customerName?: string | null,
+) {
+  try {
+    ensureConfigured();
+  } catch (e) {
+    console.error("[push] config error", e);
+    return;
+  }
+
+  const { data: subs } = await supabaseAdmin
+    .from("push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("user_id", sellerUserId)
+    .is("order_id", null);
+
+  if (!subs || subs.length === 0) return;
+
+  const brl = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(amount || 0);
+  const payload = JSON.stringify({
+    title: "⏳ Nova venda pendente",
+    body: `${brl}${customerName ? ` — ${customerName}` : ""} aguardando pagamento`,
+    url: `/app/dashboard`,
+    tag: `pending-${Date.now()}`,
+  });
+
+  await Promise.all(
+    subs.map(async (s) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          payload,
+        );
+      } catch (err) {
+        const e = err as { statusCode?: number; body?: string; endpoint?: string };
+        if (e.statusCode === 404 || e.statusCode === 410) {
+          await supabaseAdmin.from("push_subscriptions").delete().eq("id", s.id);
+        } else {
+          console.error("[push] send error (pending)", {
+            statusCode: e.statusCode,
+            body: e.body,
+            endpoint: s.endpoint.slice(0, 80),
+          });
+        }
+      }
+    }),
+  );
+}
+
+
