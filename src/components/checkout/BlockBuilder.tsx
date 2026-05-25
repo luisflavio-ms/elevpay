@@ -119,12 +119,17 @@ function SortableItem({
   isFirst: boolean;
   isLast: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
+  const {
+    attributes, listeners, setNodeRef, setActivatorNodeRef,
+    transform, transition, isDragging,
+  } = useSortable({ id: block.id });
   const [open, setOpen] = useState(false);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.6 : 1,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : "auto",
+    position: "relative" as const,
   };
 
   return (
@@ -135,8 +140,10 @@ function SortableItem({
     >
       <div className="flex items-center gap-2 px-2 py-2">
         <button
+          ref={setActivatorNodeRef}
           {...attributes}
           {...listeners}
+          style={{ touchAction: "none" }}
           className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1"
           aria-label="Arrastar"
         >
