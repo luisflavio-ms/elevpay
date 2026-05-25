@@ -141,17 +141,60 @@ function PublicCheckout() {
   const total = (p?.price ?? 0) + (bumpOn && b ? b.price : 0);
   const color = c.primaryColor;
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email) return;
+    if (!form.name || !form.email || !form.cpf || !form.whatsapp) return;
     setSubmitting(true);
-    // Simulação de processamento. O registro real de orders/sales
-    // será feito quando integrarmos um gateway de pagamento.
-    setTimeout(() => {
+    setPayError(null);
+    try {
+      if (method === "pix") {
+        const result = await createPix({
+          data: {
+            slug,
+            customer: {
+              name: form.name,
+              email: form.email,
+              cpf: form.cpf,
+              phone: form.whatsapp,
+            },
+            bumpOn,
+          },
+        });
+        setPix({
+          orderId: result.orderId,
+          qr: result.qrCodeBase64,
+          copy: result.copyPaste,
+          amount: result.amount,
+        });
+        setDone(true);
+      } else {
+        // cartão/boleto: placeholder — apenas PIX está integrado
+        setDone(true);
+      }
+    } catch (err) {
+      setPayError((err as Error).message ?? "Erro ao gerar pagamento");
+    } finally {
       setSubmitting(false);
-      setDone(true);
-    }, 900);
+    }
   };
+
+  // Polling do status do pedido PIX
+  useEffect(() => {
+    if (!pix || paid) return;
+    const interval = setInterval(async () => {
+      try {
+        const { status } = await checkStatus({ data: { orderId: pix.orderId } });
+        if (status === "aprovado") {
+          setPaid(true);
+          clearInterval(interval);
+        }
+      } catch {
+        /* ignore */
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [pix, paid, checkStatus]);
+
 
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
