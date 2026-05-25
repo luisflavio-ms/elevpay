@@ -26,6 +26,12 @@ function PublicCheckout() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
+  const [pix, setPix] = useState<{ orderId: string; qr: string; copy: string; amount: number } | null>(null);
+  const [paid, setPaid] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+
+  const createPix = useServerFn(createPixPayment);
+  const checkStatus = useServerFn(checkOrderStatus);
 
   useEffect(() => {
     let cancelled = false;
