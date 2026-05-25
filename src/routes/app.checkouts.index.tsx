@@ -1,11 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Copy, ExternalLink, Pencil, Files, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { brl, db, seedIfNeeded, slugify, uid } from "@/lib/store";
+import { brl, slugify } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import type { Checkout } from "@/lib/types";
 
 export const Route = createFileRoute("/app/checkouts/")({
@@ -13,68 +16,118 @@ export const Route = createFileRoute("/app/checkouts/")({
 });
 
 function ChecksList() {
-  const [items, setItems] = useState<Checkout[]>([]);
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const nav = useNavigate();
 
-  useEffect(() => {
-    seedIfNeeded();
-    setItems(db.getCheckouts());
-  }, []);
+  const q = useQuery({
+    queryKey: ["checkouts"],
+    queryFn: async (): Promise<Checkout[]> => {
+      const { data, error } = await supabase
+        .from("checkouts")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r) => rowToCheckout(r as CheckoutRow));
+    },
+  });
 
-  const persist = (next: Checkout[]) => {
-    setItems(next);
-    db.setCheckouts(next);
-  };
+  const items = q.data ?? [];
 
-  const createNew = () => {
-    const products = db.getProducts();
-    const product = products[0];
-    if (!product) {
-      toast.error("Crie um produto antes");
-      return;
-    }
-    const id = uid("c");
-    const c: Checkout = {
-      id,
-      slug: slugify(`novo-checkout-${id.slice(-4)}`),
-      name: "Novo checkout",
-      productId: product.id,
-      headline: product.name,
-      subheadline: "",
-      image: product.image,
-      benefits: ["Acesso imediato", "Suporte dedicado"],
-      testimonials: [],
-      guarantee: "7 dias de garantia",
-      primaryColor: "#16a34a",
-      buttonText: "Comprar agora",
-      paymentMethods: { pix: true, card: true, boleto: true },
-      pixelMeta: "",
-      pixelGoogle: "",
-      webhookUrl: "",
-      redirectUrl: "",
-      scarcityTimerMinutes: 0,
-      secureSeal: true,
-      urgencyMessage: "",
-      active: false,
-      conversion: 0,
-      revenue: 0,
-    };
-    persist([...items, c]);
-    nav({ to: "/app/checkouts/$id", params: { id } });
-  };
+  const createM = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Não autenticado");
+      const { data: products, error: pErr } = await supabase
+        .from("products")
+        .select("id,name,image")
+        .limit(1);
+      if (pErr) throw pErr;
+      const product = products?.[0];
+      if (!product) throw new Error("Crie um produto antes");
 
-  const duplicate = (c: Checkout) => {
-    const id = uid("c");
-    const dup: Checkout = { ...c, id, slug: `${c.slug}-copia`, name: `${c.name} (cópia)`, revenue: 0, conversion: 0, active: false };
-    persist([...items, dup]);
-    toast.success("Checkout duplicado");
-  };
+      const slug = slugify(`novo-checkout-${Math.random().toString(36).slice(2, 6)}`);
+      const { data, error } = await supabase
+        .from("checkouts")
+        .insert({
+          user_id: user.id,
+          product_id: product.id,
+          slug,
+          name: "Novo checkout",
+          headline: product.name,
+          subheadline: "",
+          image: product.image,
+          benefits: ["Acesso imediato", "Suporte dedicado"],
+          testimonials: [],
+          guarantee: "7 dias de garantia",
+          primary_color: "#16a34a",
+          button_text: "Comprar agora",
+          payment_methods: { pix: true, card: true, boleto: true },
+          scarcity_timer_minutes: 0,
+          secure_seal: true,
+          urgency_message: "",
+          active: false,
+          blocks: [],
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
+    },
+    onSuccess: (id) => {
+      qc.invalidateQueries({ queryKey: ["checkouts"] });
+      nav({ to: "/app/checkouts/$id", params: { id } });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const duplicateM = useMutation({
+    mutationFn: async (c: Checkout) => {
+      if (!user) throw new Error("Não autenticado");
+      const { error } = await supabase.from("checkouts").insert({
+        user_id: user.id,
+        product_id: c.productId || null,
+        order_bump_id: c.orderBumpId ?? null,
+        slug: `${c.slug}-copia-${Math.random().toString(36).slice(2, 5)}`,
+        name: `${c.name} (cópia)`,
+        headline: c.headline,
+        subheadline: c.subheadline,
+        image: c.image || null,
+        benefits: c.benefits,
+        testimonials: c.testimonials,
+        guarantee: c.guarantee,
+        primary_color: c.primaryColor,
+        button_text: c.buttonText,
+        payment_methods: c.paymentMethods,
+        pixel_meta: c.pixelMeta || null,
+        pixel_google: c.pixelGoogle || null,
+        webhook_url: c.webhookUrl || null,
+        redirect_url: c.redirectUrl || null,
+        scarcity_timer_minutes: c.scarcityTimerMinutes,
+        secure_seal: c.secureSeal,
+        urgency_message: c.urgencyMessage,
+        active: false,
+        blocks: c.blocks ?? [],
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checkouts"] });
+      toast.success("Checkout duplicado");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const copyLink = (slug: string) => {
-    const url = `${window.location.origin}/checkout/${slug}`;
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(`${window.location.origin}/checkout/${slug}`);
     toast.success("Link copiado");
   };
+
+  if (q.isLoading) {
+    return <div className="text-sm text-muted-foreground">Carregando...</div>;
+  }
+  if (q.error) {
+    return <div className="text-sm text-destructive">Erro: {(q.error as Error).message}</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -83,7 +136,7 @@ function ChecksList() {
           <h1 className="text-2xl font-bold">Checkouts</h1>
           <p className="text-sm text-muted-foreground">Suas páginas de venda</p>
         </div>
-        <Button onClick={createNew}>
+        <Button onClick={() => createM.mutate()} disabled={createM.isPending}>
           <Plus className="h-4 w-4 mr-2" /> Criar checkout
         </Button>
       </div>
@@ -94,7 +147,9 @@ function ChecksList() {
             <ShoppingCart className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
             <h3 className="font-semibold">Nenhum checkout ainda</h3>
             <p className="text-sm text-muted-foreground mt-1 mb-4">Crie seu primeiro checkout otimizado.</p>
-            <Button onClick={createNew}><Plus className="h-4 w-4 mr-2" />Criar checkout</Button>
+            <Button onClick={() => createM.mutate()} disabled={createM.isPending}>
+              <Plus className="h-4 w-4 mr-2" />Criar checkout
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -124,7 +179,7 @@ function ChecksList() {
                       <ExternalLink className="h-4 w-4 mr-1" /> Abrir
                     </Button>
                   </Link>
-                  <Button size="sm" variant="outline" onClick={() => duplicate(c)}>
+                  <Button size="sm" variant="outline" onClick={() => duplicateM.mutate(c)} disabled={duplicateM.isPending}>
                     <Files className="h-4 w-4 mr-1" /> Duplicar
                   </Button>
                   <Link to="/app/checkouts/$id" params={{ id: c.id }}>
