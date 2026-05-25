@@ -70,7 +70,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icon-512.png" },
+    ],
+
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -89,6 +94,20 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
+    const isPreview =
+      window.location.hostname.includes("id-preview--") ||
+      window.location.hostname.includes("lovableproject.com");
+    if (inIframe || isPreview) {
+      navigator.serviceWorker?.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()));
+      return;
+    }
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch((e) => console.error("[sw]", e));
+    }
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
@@ -97,6 +116,7 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
 
 function AuthSync() {
   const router = useRouter();
