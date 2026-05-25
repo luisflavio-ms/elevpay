@@ -70,7 +70,7 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
 
         const { data: order, error: findErr } = await supabaseAdmin
           .from("orders")
-          .select("id, user_id, product_id, amount, status")
+          .select("id, user_id, product_id, amount, status, customer_name")
           .eq("abacate_billing_id", billingId)
           .maybeSingle();
 
