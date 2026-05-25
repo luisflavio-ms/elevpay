@@ -7,6 +7,9 @@ import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import { createPixPayment, checkOrderStatus, simulatePixPayment } from "@/lib/abacate.functions";
+import { subscribePush } from "@/lib/push.functions";
+import { VAPID_PUBLIC_KEY, urlBase64ToUint8Array } from "@/lib/push-config";
+
 
 export const Route = createFileRoute("/checkout/$slug")({
   component: PublicCheckout,
