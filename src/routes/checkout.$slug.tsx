@@ -463,6 +463,13 @@ function SuccessModal({
             <p style={{ textAlign: "center", fontSize: 12, color: "#64748b", marginTop: 8 }}>
               Valor: <b>{brl(pix.amount)}</b>
             </p>
+            <button
+              type="button"
+              onClick={onSimulate}
+              style={{ width: "100%", marginTop: 10, padding: 10, background: "#fef3c7", color: "#92400e", border: "1px dashed #f59e0b", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+            >
+              🧪 Simular pagamento (modo teste)
+            </button>
           </>
         )}
         {method === "pix" && paid && (
