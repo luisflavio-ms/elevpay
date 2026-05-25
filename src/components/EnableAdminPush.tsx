@@ -136,9 +136,15 @@ export function EnableAdminPush() {
             <Check className="h-4 w-4" />
             <span>Notificações de novas vendas ativadas</span>
           </div>
-          <Button size="sm" variant="outline" onClick={enable} disabled={busy}>
-            {busy ? "Atualizando..." : "Atualizar"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handleTest} disabled={testing}>
+              <Send className="mr-1 h-3 w-3" />
+              {testing ? "Enviando..." : "Enviar teste"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={enable} disabled={busy}>
+              {busy ? "Atualizando..." : "Atualizar"}
+            </Button>
+          </div>
         </div>
         {errorBox}
       </div>
