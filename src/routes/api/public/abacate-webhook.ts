@@ -4,7 +4,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 /**
  * Webhook do AbacatePay.
  * Configurar URL: https://<seu-dominio>/api/public/abacate-webhook?webhookSecret=<ABACATE_WEBHOOK_SECRET>
- * Eventos: billing.paid, billing.expired, billing.cancelled, billing.refunded
+ *
+ * Eventos reais do AbacatePay:
+ *  - checkout.completed     → pagamento concluído via Checkout Link
+ *  - transparent.completed  → pagamento concluído via API (PIX QR Code transparente)
+ *  - payout.completed       → saque concluído (não relacionado a vendas, ignorado)
+ *  - billing.expired / billing.cancelled / billing.refunded → suportados se existirem
  */
 export const Route = createFileRoute("/api/public/abacate-webhook")({
   server: {
@@ -21,19 +26,32 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
           return new Response("Unauthorized", { status: 401 });
         }
 
-        let body: { event?: string; data?: { id?: string; status?: string } };
+        let body: {
+          event?: string;
+          data?: {
+            id?: string;
+            status?: string;
+            billing?: { id?: string };
+            pixQrCode?: { id?: string };
+          };
+        };
         try {
           body = (await request.json()) as typeof body;
         } catch {
           return new Response("Invalid JSON", { status: 400 });
         }
 
-        const billingId = body?.data?.id;
         const event = body?.event ?? "";
-        if (!billingId) return new Response("Missing billing id", { status: 400 });
+        // O id pode vir em data.id, data.billing.id ou data.pixQrCode.id dependendo do evento
+        const billingId =
+          body?.data?.id ??
+          body?.data?.billing?.id ??
+          body?.data?.pixQrCode?.id;
 
         // Mapeia evento → status interno
         const statusMap: Record<string, "aprovado" | "recusado" | "reembolsado" | "pendente"> = {
+          "checkout.completed": "aprovado",
+          "transparent.completed": "aprovado",
           "billing.paid": "aprovado",
           "billing.expired": "recusado",
           "billing.cancelled": "recusado",
@@ -41,9 +59,12 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
         };
         const newStatus = statusMap[event];
         if (!newStatus) {
-          // Evento desconhecido: ignorar, mas responder 200 para não retry
+          // payout.completed e outros: ignora mas responde 200 para evitar retry
+          console.log("[abacate-webhook] ignored event", event);
           return new Response("ok", { status: 200 });
         }
+
+        if (!billingId) return new Response("Missing billing id", { status: 400 });
 
         const { data: order, error: findErr } = await supabaseAdmin
           .from("orders")
