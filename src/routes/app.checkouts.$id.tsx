@@ -443,3 +443,256 @@ function PublishPanel({
     </div>
   );
 }
+
+/* ----------------- Desktop Builder (DnD) ----------------- */
+function DesktopBuilder({
+  checkout, update, products, bumps, onCopy, onRemove, onPublish,
+}: {
+  checkout: Checkout;
+  update: <K extends keyof Checkout>(k: K, v: Checkout[K]) => void;
+  products: Product[];
+  bumps: OrderBump[];
+  onCopy: () => void;
+  onRemove: () => void;
+  onPublish: () => void;
+}) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [activeDrag, setActiveDrag] = useState<
+    | { kind: "palette"; type: CheckoutBlockType }
+    | { kind: "sort"; id: string }
+    | null
+  >(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const blocks = checkout.blocks ?? [];
+  const selected = blocks.find((b) => b.id === selectedId) ?? null;
+
+  const setBlocks = (b: CheckoutBlock[]) => update("blocks", b);
+  const updateBlock = (id: string, patch: Partial<CheckoutBlock>) =>
+    setBlocks(blocks.map((b) => (b.id === id ? ({ ...b, ...patch } as CheckoutBlock) : b)));
+  const removeBlock = (id: string) => {
+    setBlocks(blocks.filter((b) => b.id !== id));
+    if (selectedId === id) setSelectedId(null);
+  };
+  const addBlock = (t: CheckoutBlockType, atIndex?: number) => {
+    const nb = createBlock(t);
+    if (atIndex == null || atIndex >= blocks.length) {
+      setBlocks([...blocks, nb]);
+    } else {
+      const next = [...blocks];
+      next.splice(Math.max(0, atIndex), 0, nb);
+      setBlocks(next);
+    }
+    setSelectedId(nb.id);
+  };
+
+  const onDragStart = (e: DragStartEvent) => {
+    const data = e.active.data.current as { source?: string; type?: CheckoutBlockType } | undefined;
+    if (data?.source === "palette" && data.type) {
+      setActiveDrag({ kind: "palette", type: data.type });
+    } else {
+      setActiveDrag({ kind: "sort", id: String(e.active.id) });
+    }
+  };
+
+  const onDragEnd = (e: DragEndEvent) => {
+    setActiveDrag(null);
+    const { active, over } = e;
+    if (!over) return;
+    const data = active.data.current as { source?: string; type?: CheckoutBlockType } | undefined;
+
+    if (data?.source === "palette" && data.type) {
+      if (over.id === CANVAS_ID) {
+        addBlock(data.type);
+        return;
+      }
+      const idx = blocks.findIndex((b) => b.id === over.id);
+      addBlock(data.type, idx < 0 ? undefined : idx);
+      return;
+    }
+
+    if (active.id === over.id) return;
+    const oldIdx = blocks.findIndex((b) => b.id === active.id);
+    const newIdx = blocks.findIndex((b) => b.id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    setBlocks(arrayMove(blocks, oldIdx, newIdx));
+  };
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragCancel={() => setActiveDrag(null)}
+    >
+      <div className="grid grid-cols-12 gap-4">
+        {/* LEFT - Palette */}
+        <div className="col-span-2">
+          <Card className="rounded-2xl sticky top-4">
+            <CardContent className="p-3">
+              <p className="text-[11px] font-semibold text-muted-foreground mb-2 px-1">
+                Arraste para o preview
+              </p>
+              <Palette onAdd={(t) => addBlock(t)} orientation="stack" />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* MIDDLE - Preview with selectable blocks */}
+        <div className="col-span-6">
+          <PreviewPanel
+            checkout={checkout}
+            products={products}
+            bumps={bumps}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onRemoveBlock={removeBlock}
+            isDraggingPalette={activeDrag?.kind === "palette"}
+          />
+        </div>
+
+        {/* RIGHT - Editor or Config */}
+        <div className="col-span-4 max-h-[calc(100vh-150px)] overflow-y-auto pr-2">
+          {selected ? (
+            <Card className="rounded-2xl sticky top-4">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const Icon = BLOCK_ICONS[selected.type];
+                      return <Icon className="h-4 w-4 text-primary" />;
+                    })()}
+                    <h3 className="font-semibold text-sm">Editar — {BLOCK_LABELS[selected.type]}</h3>
+                  </div>
+                  <button onClick={() => setSelectedId(null)} className="p-1 text-muted-foreground hover:text-foreground">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <BlockEditor block={selected} onUpdate={(patch) => updateBlock(selected.id, patch)} />
+                </div>
+                <Button variant="ghost" size="sm" className="w-full text-destructive hover:text-destructive" onClick={() => removeBlock(selected.id)}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Remover bloco
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              <ConfigPanel checkout={checkout} update={update} products={products} bumps={bumps} compact />
+              <PublishPanel checkout={checkout} onCopy={onCopy} onRemove={onRemove} onPublish={onPublish} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <DragOverlay>
+        {activeDrag?.kind === "palette" ? (
+          <div className="rounded-lg border border-primary/60 bg-primary/10 px-3 py-2 text-xs font-medium flex items-center gap-2 shadow-lg">
+            {(() => {
+              const Icon = BLOCK_ICONS[activeDrag.type];
+              return <Icon className="h-4 w-4" />;
+            })()}
+            {BLOCK_LABELS[activeDrag.type]}
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+/* Sortable + selectable wrapper around a preview block */
+function PreviewBlockWrap({
+  block, color, selected, onSelect, onRemove,
+}: {
+  block: CheckoutBlock;
+  color: string;
+  selected: boolean;
+  onSelect: () => void;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
+    useSortable({ id: block.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    position: "relative" as const,
+    zIndex: isDragging ? 50 : "auto",
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onSelect}
+      className={`group relative rounded-lg cursor-pointer transition outline outline-2 outline-offset-2 ${
+        selected ? "outline-primary" : "outline-transparent hover:outline-primary/40"
+      }`}
+    >
+      <BlockRenderer block={block} color={color} />
+      <div className="absolute -top-2 -right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+        <button
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          style={{ touchAction: "none" }}
+          className="h-6 w-6 rounded-full bg-slate-900 text-white flex items-center justify-center shadow cursor-grab active:cursor-grabbing"
+          aria-label="Mover"
+        >
+          <GripVertical className="h-3 w-3" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          className="h-6 w-6 rounded-full bg-destructive text-white flex items-center justify-center shadow"
+          aria-label="Remover"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* Droppable canvas wrapper for the preview blocks area */
+function PreviewBlocksDrop({
+  blocks, color, selectedId, onSelect, onRemoveBlock, isDraggingPalette,
+}: {
+  blocks: CheckoutBlock[];
+  color: string;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onRemoveBlock: (id: string) => void;
+  isDraggingPalette: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: CANVAS_ID });
+  const highlight = isDraggingPalette || isOver;
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-lg transition ${
+        highlight ? "ring-2 ring-primary/60 bg-primary/5" : ""
+      } ${blocks.length === 0 && isDraggingPalette ? "min-h-[120px] border-2 border-dashed border-primary/50 flex items-center justify-center text-xs text-primary" : ""}`}
+    >
+      {blocks.length === 0 ? (
+        isDraggingPalette ? <span>Solte aqui para adicionar</span> : null
+      ) : (
+        <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {blocks.map((b) => (
+              <PreviewBlockWrap
+                key={b.id}
+                block={b}
+                color={color}
+                selected={selectedId === b.id}
+                onSelect={() => onSelect(b.id)}
+                onRemove={() => onRemoveBlock(b.id)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      )}
+    </div>
+  );
+}
+
