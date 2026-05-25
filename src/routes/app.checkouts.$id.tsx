@@ -208,12 +208,14 @@ function ConfigPanel({
         </F>
       </Section>
 
-      <Section title="Blocos do checkout (arraste para reordenar)">
-        <BlockBuilder
-          blocks={checkout.blocks ?? []}
-          onChange={(b: CheckoutBlock[]) => update("blocks", b)}
-        />
-      </Section>
+      {!compact && (
+        <Section title="Blocos do checkout (arraste para reordenar)">
+          <BlockBuilder
+            blocks={checkout.blocks ?? []}
+            onChange={(b: CheckoutBlock[]) => update("blocks", b)}
+          />
+        </Section>
+      )}
 
       <Section title="Conteúdo">
 
