@@ -206,4 +206,56 @@ export async function notifySellerPendingSale(
   );
 }
 
+export async function sendTestPushToUser(userId: string) {
+  try {
+    ensureConfigured();
+  } catch (e) {
+    return { ok: false, error: (e as Error).message, sent: 0, results: [] };
+  }
+
+  const { data: subs, error } = await supabaseAdmin
+    .from("push_subscriptions")
+    .select("id, endpoint, p256dh, auth")
+    .eq("user_id", userId);
+
+  if (error) return { ok: false, error: error.message, sent: 0, results: [] };
+  if (!subs || subs.length === 0) {
+    return { ok: false, error: "Nenhuma assinatura encontrada para esse usuário", sent: 0, results: [] };
+  }
+
+  const payload = JSON.stringify({
+    title: "🔔 Teste ElevPay",
+    body: "Notificação de teste — se você está vendo, está tudo certo!",
+    url: "/app/dashboard",
+    tag: `test-${Date.now()}`,
+  });
+
+  const results = await Promise.all(
+    subs.map(async (s) => {
+      try {
+        const r = await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          payload,
+        );
+        return { id: s.id, ok: true, statusCode: r.statusCode, host: new URL(s.endpoint).host };
+      } catch (err) {
+        const e = err as { statusCode?: number; body?: string; message?: string };
+        await handlePushSendError("test", s, err);
+        return {
+          id: s.id,
+          ok: false,
+          statusCode: e.statusCode,
+          body: e.body,
+          message: e.message,
+          host: new URL(s.endpoint).host,
+        };
+      }
+    }),
+  );
+
+  const sent = results.filter((r) => r.ok).length;
+  return { ok: sent > 0, sent, total: subs.length, results };
+}
+
+
 
