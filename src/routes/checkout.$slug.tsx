@@ -159,9 +159,43 @@ function PublicCheckout() {
   const total = (p?.price ?? 0) + (bumpOn && b ? b.price : 0);
   const color = c.primaryColor;
 
+  const maskPhone = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return d.length ? `(${d}` : "";
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  };
+  const maskCpf = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 3) return d;
+    if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
+    if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
+    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+  };
+  const isValidCpf = (v: string) => {
+    const c = v.replace(/\D/g, "");
+    if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+    let s = 0;
+    for (let i = 0; i < 9; i++) s += parseInt(c[i]) * (10 - i);
+    let r = (s * 10) % 11; if (r === 10) r = 0;
+    if (r !== parseInt(c[9])) return false;
+    s = 0;
+    for (let i = 0; i < 10; i++) s += parseInt(c[i]) * (11 - i);
+    r = (s * 10) % 11; if (r === 10) r = 0;
+    return r === parseInt(c[10]);
+  };
+  const isValidPhone = (v: string) => {
+    const d = v.replace(/\D/g, "");
+    return d.length === 10 || d.length === 11;
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.cpf || !form.whatsapp) return;
+    if (!isValidCpf(form.cpf)) { setPayError("CPF inválido"); return; }
+    if (!isValidPhone(form.whatsapp)) { setPayError("WhatsApp inválido"); return; }
+
     setSubmitting(true);
     setPayError(null);
     try {
@@ -259,8 +293,9 @@ function PublicCheckout() {
           <h3 style={{ fontSize: 14, margin: "0 0 10px", fontWeight: 600 }}>Seus dados</h3>
           <Input placeholder="Nome completo" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
           <Input placeholder="E-mail" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
-          <Input placeholder="WhatsApp" value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: v })} />
-          <Input placeholder="CPF" value={form.cpf} onChange={(v) => setForm({ ...form, cpf: v })} />
+          <Input placeholder="WhatsApp" value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: maskPhone(v) })} />
+          <Input placeholder="CPF" value={form.cpf} onChange={(v) => setForm({ ...form, cpf: maskCpf(v) })} />
+
 
           <h3 style={{ fontSize: 14, margin: "14px 0 8px", fontWeight: 600 }}>Pagamento</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
