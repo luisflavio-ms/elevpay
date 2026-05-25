@@ -107,7 +107,11 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
           });
         }
 
+        // Notifica cliente via push (se inscrito)
+        await notifyOrderStatus(order.id, newStatus);
+
         return new Response("ok", { status: 200 });
+
       },
     },
   },
