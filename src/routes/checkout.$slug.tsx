@@ -396,8 +396,13 @@ function PublicCheckout() {
               setPayError((err as Error).message);
             }
           }}
+          onEnablePush={async () => {
+            if (!pix) return;
+            await enablePushForOrder(pix.orderId);
+          }}
         />
       )}
+
     </div>
   );
 }
