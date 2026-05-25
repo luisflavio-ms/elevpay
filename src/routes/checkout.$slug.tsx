@@ -195,22 +195,8 @@ function PublicCheckout() {
     }
   };
 
-  // Polling do status do pedido PIX
-  useEffect(() => {
-    if (!pix || paid) return;
-    const interval = setInterval(async () => {
-      try {
-        const { status } = await checkStatus({ data: { orderId: pix.orderId } });
-        if (status === "aprovado") {
-          setPaid(true);
-          clearInterval(interval);
-        }
-      } catch {
-        /* ignore */
-      }
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [pix, paid, checkStatus]);
+
+
 
 
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
