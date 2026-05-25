@@ -1,0 +1,1 @@
+ALTER TABLE public.push_subscriptions ALTER COLUMN order_id DROP NOT NULL;
