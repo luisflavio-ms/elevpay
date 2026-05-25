@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { brl, db, seedIfNeeded, slugify, uid } from "@/lib/store";
 import type { Checkout } from "@/lib/types";
 
-export const Route = createFileRoute("/app/checkouts")({
+export const Route = createFileRoute("/app/checkouts/")({
   component: ChecksList,
 });
 

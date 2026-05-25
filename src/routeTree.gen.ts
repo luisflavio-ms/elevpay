@@ -18,7 +18,7 @@ import { Route as AppProdutosRouteImport } from './routes/app.produtos'
 import { Route as AppPedidosRouteImport } from './routes/app.pedidos'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppConfiguracoesRouteImport } from './routes/app.configuracoes'
-import { Route as AppCheckoutsRouteImport } from './routes/app.checkouts'
+import { Route as AppCheckoutsIndexRouteImport } from './routes/app.checkouts.index'
 import { Route as AppCheckoutsIdRouteImport } from './routes/app.checkouts.$id'
 
 const AppRoute = AppRouteImport.update({
@@ -66,21 +66,20 @@ const AppConfiguracoesRoute = AppConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCheckoutsRoute = AppCheckoutsRouteImport.update({
-  id: '/checkouts',
-  path: '/checkouts',
+const AppCheckoutsIndexRoute = AppCheckoutsIndexRouteImport.update({
+  id: '/checkouts/',
+  path: '/checkouts/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCheckoutsIdRoute = AppCheckoutsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppCheckoutsRoute,
+  id: '/checkouts/$id',
+  path: '/checkouts/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/app/checkouts': typeof AppCheckoutsRouteWithChildren
   '/app/configuracoes': typeof AppConfiguracoesRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/pedidos': typeof AppPedidosRoute
@@ -89,10 +88,10 @@ export interface FileRoutesByFullPath {
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
+  '/app/checkouts/': typeof AppCheckoutsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app/checkouts': typeof AppCheckoutsRouteWithChildren
   '/app/configuracoes': typeof AppConfiguracoesRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/pedidos': typeof AppPedidosRoute
@@ -101,12 +100,12 @@ export interface FileRoutesByTo {
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app': typeof AppIndexRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
+  '/app/checkouts': typeof AppCheckoutsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/app/checkouts': typeof AppCheckoutsRouteWithChildren
   '/app/configuracoes': typeof AppConfiguracoesRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/pedidos': typeof AppPedidosRoute
@@ -115,13 +114,13 @@ export interface FileRoutesById {
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app/': typeof AppIndexRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
+  '/app/checkouts/': typeof AppCheckoutsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/app'
-    | '/app/checkouts'
     | '/app/configuracoes'
     | '/app/dashboard'
     | '/app/pedidos'
@@ -130,10 +129,10 @@ export interface FileRouteTypes {
     | '/checkout/$slug'
     | '/app/'
     | '/app/checkouts/$id'
+    | '/app/checkouts/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app/checkouts'
     | '/app/configuracoes'
     | '/app/dashboard'
     | '/app/pedidos'
@@ -142,11 +141,11 @@ export interface FileRouteTypes {
     | '/checkout/$slug'
     | '/app'
     | '/app/checkouts/$id'
+    | '/app/checkouts'
   id:
     | '__root__'
     | '/'
     | '/app'
-    | '/app/checkouts'
     | '/app/configuracoes'
     | '/app/dashboard'
     | '/app/pedidos'
@@ -155,6 +154,7 @@ export interface FileRouteTypes {
     | '/checkout/$slug'
     | '/app/'
     | '/app/checkouts/$id'
+    | '/app/checkouts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -228,53 +228,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfiguracoesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/checkouts': {
-      id: '/app/checkouts'
+    '/app/checkouts/': {
+      id: '/app/checkouts/'
       path: '/checkouts'
-      fullPath: '/app/checkouts'
-      preLoaderRoute: typeof AppCheckoutsRouteImport
+      fullPath: '/app/checkouts/'
+      preLoaderRoute: typeof AppCheckoutsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/checkouts/$id': {
       id: '/app/checkouts/$id'
-      path: '/$id'
+      path: '/checkouts/$id'
       fullPath: '/app/checkouts/$id'
       preLoaderRoute: typeof AppCheckoutsIdRouteImport
-      parentRoute: typeof AppCheckoutsRoute
+      parentRoute: typeof AppRoute
     }
   }
 }
 
-interface AppCheckoutsRouteChildren {
-  AppCheckoutsIdRoute: typeof AppCheckoutsIdRoute
-}
-
-const AppCheckoutsRouteChildren: AppCheckoutsRouteChildren = {
-  AppCheckoutsIdRoute: AppCheckoutsIdRoute,
-}
-
-const AppCheckoutsRouteWithChildren = AppCheckoutsRoute._addFileChildren(
-  AppCheckoutsRouteChildren,
-)
-
 interface AppRouteChildren {
-  AppCheckoutsRoute: typeof AppCheckoutsRouteWithChildren
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppPedidosRoute: typeof AppPedidosRoute
   AppProdutosRoute: typeof AppProdutosRoute
   AppWebhooksRoute: typeof AppWebhooksRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppCheckoutsIdRoute: typeof AppCheckoutsIdRoute
+  AppCheckoutsIndexRoute: typeof AppCheckoutsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppCheckoutsRoute: AppCheckoutsRouteWithChildren,
   AppConfiguracoesRoute: AppConfiguracoesRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppPedidosRoute: AppPedidosRoute,
   AppProdutosRoute: AppProdutosRoute,
   AppWebhooksRoute: AppWebhooksRoute,
   AppIndexRoute: AppIndexRoute,
+  AppCheckoutsIdRoute: AppCheckoutsIdRoute,
+  AppCheckoutsIndexRoute: AppCheckoutsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -287,3 +277,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
