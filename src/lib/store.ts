@@ -100,23 +100,7 @@ const SEED_CHECKOUTS: Checkout[] = [
     active: true,
     conversion: 4.8,
     revenue: 24850,
-    blocks: [
-      { id: "blk_seed_1", type: "timer", minutes: 15, label: "Esta oferta expira em" },
-      { id: "blk_seed_2", type: "text", content: "Última turma com bônus exclusivos", size: "lg", align: "center", bold: true },
-      {
-        id: "blk_seed_3", type: "notifications", intervalSec: 5,
-        items: [
-          { name: "Maria S.", product: "acabou de comprar", city: "São Paulo, SP", ago: "há 2 min" },
-          { name: "João P.", product: "acabou de comprar", city: "Rio de Janeiro, RJ", ago: "há 4 min" },
-          { name: "Ana L.", product: "acabou de comprar", city: "Belo Horizonte, MG", ago: "há 7 min" },
-        ],
-      },
-      {
-        id: "blk_seed_4", type: "guarantee", days: 7,
-        title: "Garantia incondicional de 7 dias",
-        text: "Se não gostar, devolvemos 100% do seu dinheiro. Sem perguntas.",
-      },
-    ],
+    blocks: [],
   },
   {
     id: "c2",
