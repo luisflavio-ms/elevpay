@@ -151,17 +151,69 @@ export const createPixPayment = createServerFn({ method: "POST" })
 
 const checkStatusInput = z.object({ orderId: z.string().uuid() });
 
-/** Consulta o status atual do pedido (polling do checkout). */
+/**
+ * Consulta o status atual do pedido (polling do checkout).
+ * Se ainda estiver pendente, consulta a AbacatePay diretamente e sincroniza
+ * — útil quando o webhook não foi entregue (ambiente dev, URL/secret errado, etc.).
+ */
 export const checkOrderStatus = createServerFn({ method: "POST" })
   .inputValidator((input) => checkStatusInput.parse(input))
   .handler(async ({ data }) => {
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select("status")
+      .select("id, user_id, product_id, amount, status, abacate_billing_id")
       .eq("id", data.orderId)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return { status: order?.status ?? "pendente" };
+    if (!order) return { status: "pendente" as const };
+
+    if (order.status !== "pendente" || !order.abacate_billing_id) {
+      return { status: order.status };
+    }
+
+    const apiKey = process.env.ABACATE_API_KEY;
+    if (!apiKey) return { status: order.status };
+
+    // Consulta AbacatePay diretamente
+    try {
+      const res = await fetch(
+        `https://api.abacatepay.com/v2/transparents/check?id=${encodeURIComponent(order.abacate_billing_id)}`,
+        { headers: { Authorization: `Bearer ${apiKey}` } },
+      );
+      const json = (await res.json().catch(() => ({}))) as {
+        data?: { status?: string };
+      };
+      const remoteStatus = json.data?.status?.toUpperCase();
+      // AbacatePay retorna PAID quando pago, EXPIRED, CANCELLED, REFUNDED, PENDING
+      const map: Record<string, "aprovado" | "recusado" | "reembolsado"> = {
+        PAID: "aprovado",
+        EXPIRED: "recusado",
+        CANCELLED: "recusado",
+        REFUNDED: "reembolsado",
+      };
+      const newStatus = remoteStatus ? map[remoteStatus] : undefined;
+      if (newStatus) {
+        await supabaseAdmin.from("orders").update({ status: newStatus }).eq("id", order.id);
+        if (newStatus === "aprovado") {
+          const gross = Number(order.amount);
+          const fee = Math.round(gross * 0.0499 * 100) / 100;
+          const net = Math.round((gross - fee) * 100) / 100;
+          await supabaseAdmin.from("sales").insert({
+            user_id: order.user_id,
+            order_id: order.id,
+            product_id: order.product_id,
+            gross_amount: gross,
+            fee_amount: fee,
+            net_amount: net,
+          });
+        }
+        return { status: newStatus };
+      }
+    } catch (err) {
+      console.error("[checkOrderStatus] abacate check failed", err);
+    }
+
+    return { status: order.status };
   });
 
 const simulateInput = z.object({ orderId: z.string().uuid() });
