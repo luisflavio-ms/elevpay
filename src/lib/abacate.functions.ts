@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const ABACATE_BASE = "https://api.abacatepay.com/v1";
+const ABACATE_BASE = "https://api.abacatepay.com/v2";
 
 const createPixInput = z.object({
   slug: z.string().min(1).max(120),
