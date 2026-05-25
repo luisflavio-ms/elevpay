@@ -39,9 +39,19 @@ interface Props {
   onChange: (b: CheckoutBlock[]) => void;
 }
 
-const TYPES: CheckoutBlockType[] = ["image", "text", "html", "timer", "guarantee", "notifications"];
+export const TYPES: CheckoutBlockType[] = ["image", "text", "html", "timer", "guarantee", "notifications"];
 
-const CANVAS_ID = "checkout-canvas";
+export const CANVAS_ID = "checkout-canvas";
+
+export function Palette({ onAdd, orientation = "grid" }: { onAdd: (t: CheckoutBlockType) => void; orientation?: "grid" | "stack" }) {
+  return (
+    <div className={orientation === "stack" ? "flex flex-col gap-1.5" : "grid grid-cols-2 gap-1.5"}>
+      {TYPES.map((t) => (
+        <PaletteItem key={t} type={t} onClick={() => onAdd(t)} />
+      ))}
+    </div>
+  );
+}
 
 export function BlockBuilder({ blocks, onChange }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
