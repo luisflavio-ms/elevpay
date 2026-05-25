@@ -1,0 +1,161 @@
+import { useEffect, useState } from "react";
+import type { CheckoutBlock } from "@/lib/types";
+
+interface Props {
+  block: CheckoutBlock;
+  color: string;
+}
+
+export function BlockRenderer({ block, color }: Props) {
+  switch (block.type) {
+    case "image":
+      return block.src ? (
+        <img
+          src={block.src}
+          alt={block.alt}
+          loading="lazy"
+          style={{
+            width: "100%",
+            display: "block",
+            borderRadius: block.rounded ? 12 : 0,
+          }}
+        />
+      ) : null;
+
+    case "text": {
+      const sizes = { sm: 12, md: 14, lg: 18, xl: 24 } as const;
+      return (
+        <div
+          style={{
+            fontSize: sizes[block.size],
+            textAlign: block.align,
+            fontWeight: block.bold ? 700 : 400,
+            lineHeight: 1.45,
+            color: "#0f172a",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {block.content}
+        </div>
+      );
+    }
+
+    case "html":
+      return <div dangerouslySetInnerHTML={{ __html: block.code }} />;
+
+    case "timer":
+      return <Timer minutes={block.minutes} label={block.label} color={color} />;
+
+    case "guarantee":
+      return (
+        <div
+          style={{
+            border: `1px solid ${color}40`,
+            background: `${color}08`,
+            borderRadius: 12,
+            padding: 14,
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 48, height: 48, borderRadius: "50%",
+              background: color, color: "#fff",
+              display: "grid", placeItems: "center",
+              fontWeight: 800, fontSize: 13, flexShrink: 0,
+            }}
+          >
+            {block.days}d
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>{block.title}</div>
+            <div style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>{block.text}</div>
+          </div>
+        </div>
+      );
+
+    case "notifications":
+      return <Notifications block={block} color={color} />;
+  }
+}
+
+function Timer({ minutes, label, color }: { minutes: number; label: string; color: string }) {
+  const [s, setS] = useState(minutes * 60);
+  useEffect(() => {
+    setS(minutes * 60);
+  }, [minutes]);
+  useEffect(() => {
+    if (s <= 0) return;
+    const t = setInterval(() => setS((v) => Math.max(0, v - 1)), 1000);
+    return () => clearInterval(t);
+  }, [s]);
+  const m = String(Math.floor(s / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return (
+    <div
+      style={{
+        background: color, color: "#fff", borderRadius: 12,
+        padding: "12px 14px", textAlign: "center",
+      }}
+    >
+      <div style={{ fontSize: 12, opacity: 0.9 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 800, fontVariantNumeric: "tabular-nums", letterSpacing: 1 }}>
+        {m}:{ss}
+      </div>
+    </div>
+  );
+}
+
+function Notifications({
+  block, color,
+}: { block: Extract<CheckoutBlock, { type: "notifications" }>; color: string }) {
+  const [i, setI] = useState(0);
+  const [show, setShow] = useState(true);
+  useEffect(() => {
+    if (block.items.length === 0) return;
+    const t = setInterval(() => {
+      setShow(false);
+      setTimeout(() => {
+        setI((v) => (v + 1) % block.items.length);
+        setShow(true);
+      }, 250);
+    }, Math.max(2, block.intervalSec) * 1000);
+    return () => clearInterval(t);
+  }, [block.items.length, block.intervalSec]);
+
+  if (block.items.length === 0) return null;
+  const it = block.items[i];
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid #e2e8f0",
+        borderRadius: 12,
+        padding: "10px 12px",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        boxShadow: "0 4px 14px rgba(15,23,42,0.06)",
+        opacity: show ? 1 : 0,
+        transform: show ? "translateY(0)" : "translateY(4px)",
+        transition: "opacity .25s, transform .25s",
+      }}
+    >
+      <div
+        style={{
+          width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+          background: color, color: "#fff",
+          display: "grid", placeItems: "center", fontWeight: 700, fontSize: 14,
+        }}
+      >
+        {it.name.charAt(0)}
+      </div>
+      <div style={{ fontSize: 13, lineHeight: 1.3 }}>
+        <div><b>{it.name}</b> {it.product}</div>
+        <div style={{ fontSize: 11, color: "#64748b" }}>{it.city} • {it.ago}</div>
+      </div>
+    </div>
+  );
+}
