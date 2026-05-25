@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { notifyOrderStatus } from "@/lib/push.server";
+import { notifyOrderStatus, notifySellerNewSale } from "@/lib/push.server";
 
 
 /**
