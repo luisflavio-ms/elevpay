@@ -105,6 +105,8 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
             fee_amount: fee,
             net_amount: net,
           });
+          // Notifica o vendedor (admin) da nova venda
+          await notifySellerNewSale(order.user_id, gross, order.customer_name);
         }
 
         // Notifica cliente via push (se inscrito)
