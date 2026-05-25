@@ -397,7 +397,21 @@ function skeleton(h: number): React.CSSProperties {
   };
 }
 
-function SuccessModal({ method, amount, onClose, redirect }: { method: PaymentMethod; amount: number; onClose: () => void; redirect: string }) {
+function SuccessModal({
+  method,
+  amount,
+  onClose,
+  redirect,
+  pix,
+  paid,
+}: {
+  method: PaymentMethod;
+  amount: number;
+  onClose: () => void;
+  redirect: string;
+  pix: { orderId: string; qr: string; copy: string; amount: number } | null;
+  paid: boolean;
+}) {
   return (
     <div
       style={{
@@ -410,27 +424,40 @@ function SuccessModal({ method, amount, onClose, redirect }: { method: PaymentMe
         onClick={(e) => e.stopPropagation()}
         style={{ background: "#fff", borderRadius: 16, padding: 24, maxWidth: 420, width: "100%" }}
       >
-        {method === "pix" && (
+        {method === "pix" && pix && !paid && (
           <>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Pague com Pix</h2>
             <p style={{ color: "#64748b", fontSize: 14, marginTop: 4 }}>
-              Escaneie o QR Code ou copie o código abaixo.
+              Escaneie o QR Code ou copie o código abaixo. Aguardando confirmação...
             </p>
-            <div style={{ width: 200, height: 200, margin: "16px auto", background: "#0f172a", padding: 10, borderRadius: 10 }}>
-              <div style={{
-                width: "100%", height: "100%",
-                background: "repeating-conic-gradient(#fff 0% 25%, #0f172a 0% 50%) 50% / 14px 14px",
-              }} />
+            <div style={{ width: 220, height: 220, margin: "16px auto", background: "#fff", padding: 8, borderRadius: 10, border: "1px solid #e2e8f0" }}>
+              <img
+                src={pix.qr.startsWith("data:") ? pix.qr : `data:image/png;base64,${pix.qr}`}
+                alt="QR Code Pix"
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              />
             </div>
             <div style={{ background: "#f1f5f9", borderRadius: 8, padding: 10, fontFamily: "monospace", fontSize: 11, wordBreak: "break-all" }}>
-              00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540{amount.toFixed(2)}5802BR5913ElevPay6009Sao+Paulo62070503***6304ABCD
+              {pix.copy}
             </div>
             <button
-              onClick={() => navigator.clipboard.writeText("00020126360014BR.GOV.BCB.PIX...")}
+              onClick={() => navigator.clipboard.writeText(pix.copy)}
               style={{ width: "100%", marginTop: 10, padding: 12, background: "#0f172a", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}
             >
               Copiar código Pix
             </button>
+            <p style={{ textAlign: "center", fontSize: 12, color: "#64748b", marginTop: 8 }}>
+              Valor: <b>{brl(pix.amount)}</b>
+            </p>
+          </>
+        )}
+        {method === "pix" && paid && (
+          <>
+            <div style={{ fontSize: 48, textAlign: "center" }}>✅</div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, textAlign: "center", margin: 0 }}>Pagamento confirmado!</h2>
+            <p style={{ textAlign: "center", color: "#64748b", fontSize: 14, marginTop: 6 }}>
+              Recebemos seu Pix de <b>{brl(amount)}</b>.
+            </p>
           </>
         )}
         {method === "boleto" && (
