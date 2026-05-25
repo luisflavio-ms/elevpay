@@ -494,6 +494,7 @@ function SuccessModal({
   pix,
   paid,
   onSimulate,
+  onEnablePush,
 }: {
   method: PaymentMethod;
   amount: number;
@@ -502,7 +503,9 @@ function SuccessModal({
   pix: { orderId: string; qr: string; copy: string; amount: number } | null;
   paid: boolean;
   onSimulate: () => void;
+  onEnablePush: () => void;
 }) {
+
   return (
     <div
       style={{
