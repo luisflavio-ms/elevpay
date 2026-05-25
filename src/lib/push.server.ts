@@ -7,7 +7,13 @@ function ensureConfigured() {
   if (configured) return;
   const pub = "BBiX5A6AsFCSf4QxqZF0eyQc8jn86nLKHjpg2zo0GEiDDK8x9eMU2RTSnCjxxAAUzI71c0ddUj0SElrGItD9PZw";
   const priv = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT || "mailto:contato@elevpay.app";
+  let subject = (process.env.VAPID_SUBJECT || "").trim();
+  // Apple exige mailto: ou https:// no subject. Normaliza se vier sem prefixo.
+  if (!subject) {
+    subject = "mailto:contato@elevpay.com";
+  } else if (!subject.startsWith("mailto:") && !subject.startsWith("https://")) {
+    subject = subject.includes("@") ? `mailto:${subject}` : `https://${subject}`;
+  }
   if (!priv) throw new Error("VAPID_PRIVATE_KEY not configured");
   webpush.setVapidDetails(subject, pub, priv);
   configured = true;
