@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { notifyOrderStatus } from "./push.server";
+import { notifyOrderStatus, notifySellerNewSale } from "./push.server";
 
 
 const ABACATE_BASE = "https://api.abacatepay.com/v2";
