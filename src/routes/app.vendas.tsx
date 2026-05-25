@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ShoppingCart,
   DollarSign,
@@ -28,35 +29,67 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { brl, db, seedIfNeeded } from "@/lib/store";
-import type { Order, Product } from "@/lib/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/app/vendas")({
   component: VendasPage,
 });
 
 type Period = "hoje" | "7d" | "30d" | "tudo";
+type OrderStatus = "aprovado" | "pendente" | "recusado" | "reembolsado";
+type PaymentMethod = "pix" | "cartao" | "boleto";
+
+type OrderRow = {
+  id: string;
+  product_id: string | null;
+  customer_name: string;
+  customer_email: string | null;
+  amount: number;
+  status: OrderStatus;
+  method: PaymentMethod;
+  created_at: string;
+};
+
+const brl = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 function VendasPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [period, setPeriod] = useState<Period>("tudo");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("todos");
   const [method, setMethod] = useState<string>("todos");
   const [productId, setProductId] = useState<string>("todos");
-  const [open, setOpen] = useState<Order | null>(null);
+  const [open, setOpen] = useState<OrderRow | null>(null);
 
-  useEffect(() => {
-    seedIfNeeded();
-    setOrders(db.getOrders());
-    setProducts(db.getProducts());
-  }, []);
+  const ordersQ = useQuery({
+    queryKey: ["orders"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(
+          "id,product_id,customer_name,customer_email,amount,status,method,created_at",
+        )
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as OrderRow[];
+    },
+  });
 
-  const productName = (id: string) =>
-    products.find((p) => p.id === id)?.name ?? "—";
+  const productsQ = useQuery({
+    queryKey: ["products", "names"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("id,name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const products = productsQ.data ?? [];
+  const productName = (id: string | null) =>
+    (id && products.find((p) => p.id === id)?.name) || "—";
 
   const filtered = useMemo(() => {
+    const orders = ordersQ.data ?? [];
     const now = Date.now();
     const cutoff =
       period === "hoje"
@@ -67,26 +100,26 @@ function VendasPage() {
             ? now - 30 * 24 * 3600 * 1000
             : 0;
     return orders.filter((o) => {
-      if (cutoff && new Date(o.date).getTime() < cutoff) return false;
+      if (cutoff && new Date(o.created_at).getTime() < cutoff) return false;
       if (status !== "todos" && o.status !== status) return false;
       if (method !== "todos" && o.method !== method) return false;
-      if (productId !== "todos" && o.productId !== productId) return false;
+      if (productId !== "todos" && o.product_id !== productId) return false;
       if (search) {
         const q = search.toLowerCase();
         const hit =
           o.id.toLowerCase().includes(q) ||
-          o.customer.toLowerCase().includes(q) ||
-          productName(o.productId).toLowerCase().includes(q);
+          o.customer_name.toLowerCase().includes(q) ||
+          (o.customer_email ?? "").toLowerCase().includes(q) ||
+          productName(o.product_id).toLowerCase().includes(q);
         if (!hit) return false;
       }
       return true;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orders, period, status, method, productId, search, products]);
+  }, [ordersQ.data, period, status, method, productId, search, products]);
 
   const stats = useMemo(() => {
     const aprovadas = filtered.filter((o) => o.status === "aprovado");
-    const liquido = aprovadas.reduce((s, o) => s + o.amount, 0);
+    const liquido = aprovadas.reduce((s, o) => s + Number(o.amount), 0);
     return {
       found: filtered.length,
       liquido,
@@ -107,12 +140,12 @@ function VendasPage() {
     const rows = [
       ["Data", "Pedido", "Cliente", "Produto", "Status", "Valor", "Método"],
       ...filtered.map((o) => [
-        new Date(o.date).toLocaleString("pt-BR"),
+        new Date(o.created_at).toLocaleString("pt-BR"),
         o.id,
-        o.customer,
-        productName(o.productId),
+        o.customer_name,
+        productName(o.product_id),
         o.status,
-        o.amount.toString().replace(".", ","),
+        Number(o.amount).toString().replace(".", ","),
         o.method,
       ]),
     ];
@@ -138,14 +171,12 @@ function VendasPage() {
       </div>
 
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
           <Filter className="h-4 w-4" /> Filtros ativos:
           <ActivePill label={periodLabel(period)} />
           {status !== "todos" && <ActivePill label={status} />}
           {method !== "todos" && <ActivePill label={method} />}
-          {productId !== "todos" && (
-            <ActivePill label={productName(productId)} />
-          )}
+          {productId !== "todos" && <ActivePill label={productName(productId)} />}
         </div>
         <Button variant="outline" size="sm" onClick={exportCsv}>
           <Download className="h-4 w-4 mr-2" /> Exportar
@@ -254,7 +285,6 @@ function VendasPage() {
               <Button variant="ghost" size="sm" onClick={clear}>
                 Limpar
               </Button>
-              <Button size="sm">Filtrar</Button>
             </div>
           </div>
         </CardContent>
@@ -271,7 +301,11 @@ function VendasPage() {
           <div className="col-span-1 text-right">Ações</div>
         </div>
 
-        {filtered.length === 0 ? (
+        {ordersQ.isLoading ? (
+          <div className="py-16 text-center text-sm text-muted-foreground">
+            Carregando vendas…
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
             Nenhuma venda encontrada.
           </div>
@@ -283,9 +317,9 @@ function VendasPage() {
                 className="md:grid md:grid-cols-12 px-6 py-4 hover:bg-muted/30 text-sm items-center"
               >
                 <div className="col-span-2 text-muted-foreground">
-                  <div>{new Date(o.date).toLocaleDateString("pt-BR")}</div>
+                  <div>{new Date(o.created_at).toLocaleDateString("pt-BR")}</div>
                   <div className="text-xs">
-                    {new Date(o.date).toLocaleTimeString("pt-BR", {
+                    {new Date(o.created_at).toLocaleTimeString("pt-BR", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
@@ -296,14 +330,16 @@ function VendasPage() {
                     #{o.id.slice(-8)}
                   </div>
                   <div className="font-medium truncate">
-                    {productName(o.productId)}
+                    {productName(o.product_id)}
                   </div>
                 </div>
-                <div className="col-span-2 truncate">{o.customer}</div>
+                <div className="col-span-2 truncate">{o.customer_name}</div>
                 <div className="col-span-2">
                   <StatusBadge status={o.status} />
                 </div>
-                <div className="col-span-1 font-semibold">{brl(o.amount)}</div>
+                <div className="col-span-1 font-semibold">
+                  {brl(Number(o.amount))}
+                </div>
                 <div className="col-span-1 capitalize text-muted-foreground">
                   {o.method}
                 </div>
@@ -331,12 +367,13 @@ function VendasPage() {
           {open && (
             <div className="space-y-2 text-sm">
               <Row k="ID" v={open.id} />
-              <Row k="Cliente" v={open.customer} />
-              <Row k="Produto" v={productName(open.productId)} />
-              <Row k="Valor" v={brl(open.amount)} />
+              <Row k="Cliente" v={open.customer_name} />
+              {open.customer_email && <Row k="Email" v={open.customer_email} />}
+              <Row k="Produto" v={productName(open.product_id)} />
+              <Row k="Valor" v={brl(Number(open.amount))} />
               <Row k="Método" v={open.method} />
               <Row k="Status" v={open.status} />
-              <Row k="Data" v={new Date(open.date).toLocaleString("pt-BR")} />
+              <Row k="Data" v={new Date(open.created_at).toLocaleString("pt-BR")} />
             </div>
           )}
         </DialogContent>
@@ -365,15 +402,15 @@ function ActivePill({ label }: { label: string }) {
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex justify-between border-b pb-1.5">
-      <span className="text-muted-foreground">{k}</span>
-      <span className="font-medium capitalize">{v}</span>
+    <div className="flex justify-between border-b pb-1.5 gap-4">
+      <span className="text-muted-foreground shrink-0">{k}</span>
+      <span className="font-medium text-right break-all">{v}</span>
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: Order["status"] }) {
-  const map: Record<Order["status"], string> = {
+function StatusBadge({ status }: { status: OrderStatus }) {
+  const map: Record<OrderStatus, string> = {
     aprovado: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
     pendente: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
     recusado: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
