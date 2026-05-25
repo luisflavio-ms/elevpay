@@ -106,7 +106,7 @@ function ChecksList() {
         secure_seal: c.secureSeal,
         urgency_message: c.urgencyMessage,
         active: false,
-        blocks: c.blocks ?? [],
+        blocks: (c.blocks ?? []) as never,
       });
       if (error) throw error;
     },
