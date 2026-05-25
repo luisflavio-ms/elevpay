@@ -128,45 +128,46 @@ function Dashboard() {
         </Card>
       </div>
 
-      <Card className="rounded-2xl bg-card/60 border-border">
-        <CardHeader>
-          <CardTitle>Funil de vendas</CardTitle>
-          <p className="text-xs text-muted-foreground">Jornada do visitante até a venda confirmada</p>
-        </CardHeader>
-        <CardContent>
-          <SalesFunnel orders={orders} />
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="rounded-2xl bg-card/60 border-border">
+          <CardHeader>
+            <CardTitle>Funil de vendas</CardTitle>
+            <p className="text-xs text-muted-foreground">Jornada do visitante até a venda confirmada</p>
+          </CardHeader>
+          <CardContent>
+            <SalesFunnel orders={orders} />
+          </CardContent>
+        </Card>
 
-
-
-      <Card className="rounded-2xl">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Últimos pedidos</CardTitle>
-          <Link to="/app/pedidos" className="text-sm text-primary flex items-center gap-1">
-            Ver todos <ArrowRight className="h-3 w-3" />
-          </Link>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y">
-            {orders.slice(0, 6).map((o) => (
-              <div key={o.id} className="flex items-center justify-between px-6 py-3 text-sm">
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{o.customer}</div>
-                  <div className="text-xs text-muted-foreground truncate">{productName(o.productId)}</div>
+        <Card className="rounded-2xl bg-card/60 border-border">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Últimos pedidos</CardTitle>
+            <Link to="/app/pedidos" className="text-sm text-primary flex items-center gap-1">
+              Ver todos <ArrowRight className="h-3 w-3" />
+            </Link>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {orders.slice(0, 6).map((o) => (
+                <div key={o.id} className="flex items-center justify-between px-6 py-3 text-sm">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{o.customer}</div>
+                    <div className="text-xs text-muted-foreground truncate">{productName(o.productId)}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold">{brl(o.amount)}</span>
+                    <StatusBadge status={o.status} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold">{brl(o.amount)}</span>
-                  <StatusBadge status={o.status} />
-                </div>
-              </div>
-            ))}
-            {orders.length === 0 && (
-              <div className="p-6 text-sm text-muted-foreground">Sem pedidos ainda.</div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+              {orders.length === 0 && (
+                <div className="p-6 text-sm text-muted-foreground">Sem pedidos ainda.</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
     </div>
   );
 }
