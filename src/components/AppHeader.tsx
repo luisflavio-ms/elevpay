@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTheme } from "@/hooks/use-theme";
+import { supabase } from "@/integrations/supabase/client";
 
 const ROUTE_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -172,7 +173,10 @@ export function AppHeader() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer text-destructive focus:text-destructive"
-                onClick={() => router.navigate({ to: "/" })}
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  router.navigate({ to: "/login" });
+                }}
               >
                 <LogOut className="h-4 w-4 mr-2" /> Sair
               </DropdownMenuItem>
