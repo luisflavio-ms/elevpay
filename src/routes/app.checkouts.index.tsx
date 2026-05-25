@@ -28,7 +28,7 @@ function ChecksList() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => rowToCheckout(r as CheckoutRow));
+      return (data ?? []).map((r) => rowToCheckout(r as unknown as CheckoutRow));
     },
   });
 
