@@ -25,6 +25,7 @@ import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppConfiguracoesRouteImport } from './routes/app.configuracoes'
 import { Route as AppCheckoutsIndexRouteImport } from './routes/app.checkouts.index'
 import { Route as AppCheckoutsIdRouteImport } from './routes/app.checkouts.$id'
+import { Route as ApiPublicTestPushRouteImport } from './routes/api/public/test-push'
 import { Route as ApiPublicAbacateWebhookRouteImport } from './routes/api/public/abacate-webhook'
 
 const SignupRoute = SignupRouteImport.update({
@@ -107,6 +108,11 @@ const AppCheckoutsIdRoute = AppCheckoutsIdRouteImport.update({
   path: '/checkouts/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicTestPushRoute = ApiPublicTestPushRouteImport.update({
+  id: '/api/public/test-push',
+  path: '/api/public/test-push',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAbacateWebhookRoute = ApiPublicAbacateWebhookRouteImport.update({
   id: '/api/public/abacate-webhook',
   path: '/api/public/abacate-webhook',
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app/': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
+  '/api/public/test-push': typeof ApiPublicTestPushRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
 }
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
+  '/api/public/test-push': typeof ApiPublicTestPushRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
   '/app/checkouts': typeof AppCheckoutsIndexRoute
 }
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app/': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
+  '/api/public/test-push': typeof ApiPublicTestPushRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
 }
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/checkout/$slug'
     | '/app/'
     | '/api/public/abacate-webhook'
+    | '/api/public/test-push'
     | '/app/checkouts/$id'
     | '/app/checkouts/'
   fileRoutesByTo: FileRoutesByTo
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/checkout/$slug'
     | '/app'
     | '/api/public/abacate-webhook'
+    | '/api/public/test-push'
     | '/app/checkouts/$id'
     | '/app/checkouts'
   id:
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/checkout/$slug'
     | '/app/'
     | '/api/public/abacate-webhook'
+    | '/api/public/test-push'
     | '/app/checkouts/$id'
     | '/app/checkouts/'
   fileRoutesById: FileRoutesById
@@ -238,6 +250,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   CheckoutSlugRoute: typeof CheckoutSlugRoute
   ApiPublicAbacateWebhookRoute: typeof ApiPublicAbacateWebhookRoute
+  ApiPublicTestPushRoute: typeof ApiPublicTestPushRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -354,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCheckoutsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/test-push': {
+      id: '/api/public/test-push'
+      path: '/api/public/test-push'
+      fullPath: '/api/public/test-push'
+      preLoaderRoute: typeof ApiPublicTestPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/abacate-webhook': {
       id: '/api/public/abacate-webhook'
       path: '/api/public/abacate-webhook'
@@ -399,6 +419,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   CheckoutSlugRoute: CheckoutSlugRoute,
   ApiPublicAbacateWebhookRoute: ApiPublicAbacateWebhookRoute,
+  ApiPublicTestPushRoute: ApiPublicTestPushRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
