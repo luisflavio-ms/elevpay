@@ -116,6 +116,10 @@ function Dashboard() {
         </Link>
       </div>
 
+      <EnableAdminPush />
+
+
+
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label} className="rounded-2xl border-border bg-card/60 hover:border-primary/40 transition-colors">
