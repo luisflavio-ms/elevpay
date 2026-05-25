@@ -28,11 +28,9 @@ export function RevenueChart({ orders }: { orders: Order[] }) {
       const k = o.date.slice(0, 10);
       if (map.has(k)) map.set(k, (map.get(k) ?? 0) + o.amount);
     }
-    // Add a bit of mock variance so the line is visually interesting
-    const base = [1200, 2400, 1800, 3200, 2100, 4200, 3600];
-    return days.map((d, i) => ({
+    return days.map((d) => ({
       label: d.label,
-      value: (map.get(d.key) ?? 0) + base[i],
+      value: map.get(d.key) ?? 0,
     }));
   }, [orders]);
 
