@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/popover";
 import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 
 const ROUTE_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -30,8 +32,8 @@ const ROUTE_LABELS: Record<string, string> = {
 
 function useCrumbs() {
   const loc = useLocation();
-  const parts = loc.pathname.split("/").filter(Boolean); // ["app", "vendas", ...]
-  const segments = parts.slice(1); // drop "app"
+  const parts = loc.pathname.split("/").filter(Boolean);
+  const segments = parts.slice(1);
   const crumbs: { label: string; to?: string }[] = [
     { label: "Dashboard", to: "/app/dashboard" },
   ];
@@ -46,17 +48,35 @@ export function AppHeader() {
   const router = useRouter();
   const { theme, toggle } = useTheme();
   const crumbs = useCrumbs();
+  const { user: authUser } = useAuth();
 
-  const user = {
-    name: "Luis Flavio Marinho Silva",
-    email: "luisflavio628@gmail.com",
-    role: "Usuário",
-  };
+  const profileQ = useQuery({
+    queryKey: ["profile", authUser?.id],
+    enabled: !!authUser?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", authUser!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { full_name?: string | null; email?: string | null } | null;
+    },
+  });
+
+  const name =
+    profileQ.data?.full_name ||
+    (authUser?.user_metadata as any)?.full_name ||
+    authUser?.email?.split("@")[0] ||
+    "Usuário";
+  const email = profileQ.data?.email || authUser?.email || "";
+  const user = { name, email, role: "Usuário" };
   const initials = user.name
     .split(" ")
+    .filter(Boolean)
     .slice(0, 2)
-    .map((n) => n[0])
-    .join("");
+    .map((n: string) => n[0]?.toUpperCase() ?? "")
+    .join("") || "U";
 
   return (
     <header className="sticky top-0 z-20 h-16 border-b border-border bg-background/80 backdrop-blur-md">
