@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -46,7 +47,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { brl, db, seedIfNeeded, slugify } from "@/lib/store";
+import { brl, slugify } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { rowToCheckout, checkoutToRow, type CheckoutRow } from "@/lib/checkout-mapper";
 import type { Checkout, Product, OrderBump, CheckoutBlock, CheckoutBlockType } from "@/lib/types";
 import { BlockBuilder, Palette, BlockEditor, CANVAS_ID } from "@/components/checkout/BlockBuilder";
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
@@ -59,17 +63,69 @@ export const Route = createFileRoute("/app/checkouts/$id")({
 function Builder() {
   const { id } = Route.useParams();
   const nav = useNavigate();
+  const { user } = useAuth();
   const [checkout, setCheckout] = useState<Checkout | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [bumps, setBumps] = useState<OrderBump[]>([]);
+
+  const checkoutQ = useQuery({
+    queryKey: ["checkout", id],
+    queryFn: async (): Promise<Checkout | null> => {
+      const { data, error } = await supabase
+        .from("checkouts")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? rowToCheckout(data as CheckoutRow) : null;
+    },
+  });
+
+  const productsQ = useQuery({
+    queryKey: ["products", "all-for-builder"],
+    queryFn: async (): Promise<Product[]> => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id,name,description,price,image,type,delivery_url")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r) => ({
+        id: r.id as string,
+        name: r.name as string,
+        description: (r.description as string) ?? "",
+        price: Number(r.price),
+        image: (r.image as string) ?? "",
+        type: r.type as Product["type"],
+        deliveryUrl: (r.delivery_url as string) ?? "",
+      }));
+    },
+  });
+
+  const bumpsQ = useQuery({
+    queryKey: ["order_bumps"],
+    queryFn: async (): Promise<OrderBump[]> => {
+      const { data, error } = await supabase
+        .from("order_bumps")
+        .select("id,title,description,price")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r) => ({
+        id: r.id as string,
+        title: r.title as string,
+        description: (r.description as string) ?? "",
+        price: Number(r.price),
+      }));
+    },
+  });
 
   useEffect(() => {
-    seedIfNeeded();
-    const c = db.getCheckouts().find((x) => x.id === id) ?? null;
-    setCheckout(c);
-    setProducts(db.getProducts());
-    setBumps(db.getBumps());
-  }, [id]);
+    if (checkoutQ.data) setCheckout(checkoutQ.data);
+  }, [checkoutQ.data]);
+
+  const products = productsQ.data ?? [];
+  const bumps = bumpsQ.data ?? [];
+
+  if (checkoutQ.isLoading) {
+    return <div className="text-sm text-muted-foreground py-10 text-center">Carregando...</div>;
+  }
 
   if (!checkout) {
     return (
@@ -83,20 +139,35 @@ function Builder() {
   const update = <K extends keyof Checkout>(k: K, v: Checkout[K]) =>
     setCheckout({ ...checkout, [k]: v });
 
-  const save = (silent = false) => {
-    const list = db.getCheckouts();
-    const next = list.map((c) => (c.id === checkout.id ? checkout : c));
-    db.setCheckouts(next);
-    if (!silent) toast.success("Checkout salvo");
+  const persistCheckout = async (c: Checkout) => {
+    if (!user) throw new Error("Não autenticado");
+    const row = checkoutToRow(c, user.id);
+    const { id: _ignore, ...payload } = row;
+    const { error } = await supabase
+      .from("checkouts")
+      .update(payload)
+      .eq("id", c.id);
+    if (error) throw error;
   };
 
-  const publish = () => {
-    update("active", true);
-    const next = db.getCheckouts().map((c) =>
-      c.id === checkout.id ? { ...checkout, active: true } : c,
-    );
-    db.setCheckouts(next);
-    toast.success("Checkout publicado!");
+  const save = async (silent = false) => {
+    try {
+      await persistCheckout(checkout);
+      if (!silent) toast.success("Checkout salvo");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const publish = async () => {
+    const next = { ...checkout, active: true };
+    setCheckout(next);
+    try {
+      await persistCheckout(next);
+      toast.success("Checkout publicado!");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   const copyLink = () => {
@@ -104,8 +175,9 @@ function Builder() {
     toast.success("Link copiado");
   };
 
-  const remove = () => {
-    db.setCheckouts(db.getCheckouts().filter((c) => c.id !== checkout.id));
+  const remove = async () => {
+    const { error } = await supabase.from("checkouts").delete().eq("id", checkout.id);
+    if (error) return toast.error(error.message);
     toast.success("Checkout excluído");
     nav({ to: "/app/checkouts" });
   };
