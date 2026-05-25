@@ -332,23 +332,46 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 
 /* ----------------- Preview ----------------- */
 function PreviewPanel({
-  checkout, products, bumps,
-}: { checkout: Checkout; products: Product[]; bumps: OrderBump[] }) {
+  checkout, products, bumps, selectedId, onSelect, onRemoveBlock, isDraggingPalette,
+}: {
+  checkout: Checkout;
+  products: Product[];
+  bumps: OrderBump[];
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
+  onRemoveBlock?: (id: string) => void;
+  isDraggingPalette?: boolean;
+}) {
   const product = products.find((p) => p.id === checkout.productId);
   const bump = bumps.find((b) => b.id === checkout.orderBumpId);
+  const interactive = !!onSelect;
+  const blocks = checkout.blocks ?? [];
   return (
     <Card className="rounded-2xl sticky top-4">
       <CardContent className="p-0 overflow-hidden">
         <div className="bg-muted/40 p-2 text-[10px] text-muted-foreground text-center border-b">
-          Preview do checkout
+          Preview do checkout {interactive && "— clique em um bloco para editar"}
         </div>
         <div className="bg-white text-slate-900 p-4 max-h-[700px] overflow-y-auto">
-          {(checkout.blocks ?? []).length > 0 && (
-            <div className="space-y-3 mb-3">
-              {(checkout.blocks ?? []).map((b) => (
-                <BlockRenderer key={b.id} block={b} color={checkout.primaryColor} />
-              ))}
+          {interactive ? (
+            <div className="mb-3">
+              <PreviewBlocksDrop
+                blocks={blocks}
+                color={checkout.primaryColor}
+                selectedId={selectedId ?? null}
+                onSelect={(id) => onSelect!(id)}
+                onRemoveBlock={(id) => onRemoveBlock?.(id)}
+                isDraggingPalette={!!isDraggingPalette}
+              />
             </div>
+          ) : (
+            blocks.length > 0 && (
+              <div className="space-y-3 mb-3">
+                {blocks.map((b) => (
+                  <BlockRenderer key={b.id} block={b} color={checkout.primaryColor} />
+                ))}
+              </div>
+            )
           )}
           {checkout.scarcityTimerMinutes > 0 && (
             <div className="text-center text-xs py-2 px-3 mb-3 rounded-lg" style={{ background: checkout.primaryColor + "20", color: checkout.primaryColor }}>
