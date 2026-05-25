@@ -75,7 +75,7 @@ export function AppHeader() {
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
-    .map((n) => n[0]?.toUpperCase() ?? "")
+    .map((n: string) => n[0]?.toUpperCase() ?? "")
     .join("") || "U";
 
   return (
