@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { sendTestPushToUser } from "./push.server";
 
 const SubscribeSchema = z.object({
   orderId: z.string().uuid(),
@@ -67,3 +68,10 @@ export const subscribeAdminPush = createServerFn({ method: "POST" })
     if (upErr) throw new Error(upErr.message);
     return { ok: true };
   });
+
+export const sendTestPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    return sendTestPushToUser(context.userId);
+  });
+
