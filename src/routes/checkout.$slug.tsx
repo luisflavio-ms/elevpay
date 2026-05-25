@@ -416,6 +416,7 @@ function SuccessModal({
   redirect,
   pix,
   paid,
+  onSimulate,
 }: {
   method: PaymentMethod;
   amount: number;
@@ -423,6 +424,7 @@ function SuccessModal({
   redirect: string;
   pix: { orderId: string; qr: string; copy: string; amount: number } | null;
   paid: boolean;
+  onSimulate: () => void;
 }) {
   return (
     <div
