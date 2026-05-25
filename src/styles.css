@@ -115,6 +115,42 @@
   /* Same as :root — app is dark-first */
 }
 
+.light {
+  --background: oklch(0.99 0.003 280);
+  --foreground: oklch(0.18 0.01 285);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.01 285);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.01 285);
+
+  --primary: oklch(0.55 0.24 295);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-glow: oklch(0.68 0.22 300);
+
+  --secondary: oklch(0.95 0.01 285);
+  --secondary-foreground: oklch(0.2 0.01 285);
+  --muted: oklch(0.96 0.008 285);
+  --muted-foreground: oklch(0.45 0.02 285);
+  --accent: oklch(0.55 0.24 295 / 12%);
+  --accent-foreground: oklch(0.2 0.01 285);
+
+  --destructive: oklch(0.6 0.23 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.2 0.01 285 / 10%);
+  --input: oklch(0.2 0.01 285 / 12%);
+  --ring: oklch(0.55 0.24 295);
+
+  --sidebar: oklch(0.98 0.005 285);
+  --sidebar-foreground: oklch(0.2 0.01 285);
+  --sidebar-primary: oklch(0.55 0.24 295);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.94 0.015 285);
+  --sidebar-accent-foreground: oklch(0.2 0.01 285);
+  --sidebar-border: oklch(0.2 0.01 285 / 8%);
+  --sidebar-ring: oklch(0.55 0.24 295);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
