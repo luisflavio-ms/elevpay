@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as CheckoutSlugRouteImport } from './routes/checkout.$slug'
 import { Route as AppWebhooksRouteImport } from './routes/app.webhooks'
+import { Route as AppVendasRouteImport } from './routes/app.vendas'
 import { Route as AppProdutosRouteImport } from './routes/app.produtos'
 import { Route as AppPedidosRouteImport } from './routes/app.pedidos'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
@@ -44,6 +45,11 @@ const CheckoutSlugRoute = CheckoutSlugRouteImport.update({
 const AppWebhooksRoute = AppWebhooksRouteImport.update({
   id: '/webhooks',
   path: '/webhooks',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppVendasRoute = AppVendasRouteImport.update({
+  id: '/vendas',
+  path: '/vendas',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProdutosRoute = AppProdutosRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/pedidos': typeof AppPedidosRoute
   '/app/produtos': typeof AppProdutosRoute
+  '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app/': typeof AppIndexRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/pedidos': typeof AppPedidosRoute
   '/app/produtos': typeof AppProdutosRoute
+  '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app': typeof AppIndexRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/app/dashboard': typeof AppDashboardRoute
   '/app/pedidos': typeof AppPedidosRoute
   '/app/produtos': typeof AppProdutosRoute
+  '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$slug': typeof CheckoutSlugRoute
   '/app/': typeof AppIndexRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/pedidos'
     | '/app/produtos'
+    | '/app/vendas'
     | '/app/webhooks'
     | '/checkout/$slug'
     | '/app/'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/pedidos'
     | '/app/produtos'
+    | '/app/vendas'
     | '/app/webhooks'
     | '/checkout/$slug'
     | '/app'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/app/dashboard'
     | '/app/pedidos'
     | '/app/produtos'
+    | '/app/vendas'
     | '/app/webhooks'
     | '/checkout/$slug'
     | '/app/'
@@ -198,6 +210,13 @@ declare module '@tanstack/react-router' {
       path: '/webhooks'
       fullPath: '/app/webhooks'
       preLoaderRoute: typeof AppWebhooksRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/vendas': {
+      id: '/app/vendas'
+      path: '/vendas'
+      fullPath: '/app/vendas'
+      preLoaderRoute: typeof AppVendasRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/produtos': {
@@ -250,6 +269,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppPedidosRoute: typeof AppPedidosRoute
   AppProdutosRoute: typeof AppProdutosRoute
+  AppVendasRoute: typeof AppVendasRoute
   AppWebhooksRoute: typeof AppWebhooksRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCheckoutsIdRoute: typeof AppCheckoutsIdRoute
@@ -261,6 +281,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppPedidosRoute: AppPedidosRoute,
   AppProdutosRoute: AppProdutosRoute,
+  AppVendasRoute: AppVendasRoute,
   AppWebhooksRoute: AppWebhooksRoute,
   AppIndexRoute: AppIndexRoute,
   AppCheckoutsIdRoute: AppCheckoutsIdRoute,
