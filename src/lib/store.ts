@@ -14,7 +14,7 @@ const KEYS = {
   bumps: "elevpay:bumps",
   webhooks: "elevpay:webhooks",
   settings: "elevpay:settings",
-  seeded: "elevpay:seeded",
+  seeded: "elevpay:seeded:v2",
 };
 
 const SEED_PRODUCTS: Product[] = [
