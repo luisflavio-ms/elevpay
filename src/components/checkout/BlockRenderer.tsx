@@ -6,9 +6,10 @@ import secureBadge from "@/assets/secure-badge.png";
 interface Props {
   block: CheckoutBlock;
   color: string;
+  asToast?: boolean;
 }
 
-export function BlockRenderer({ block, color }: Props) {
+export function BlockRenderer({ block, color, asToast }: Props) {
   switch (block.type) {
     case "image":
       return block.src ? (
