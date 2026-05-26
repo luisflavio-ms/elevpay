@@ -170,7 +170,7 @@ function Builder() {
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(`${checkoutOrigin()}/checkout/${checkout.slug}`);
+    navigator.clipboard.writeText(`${checkoutOrigin()}/checkout/${checkout.publicId}`);
     toast.success("Link copiado");
   };
 
