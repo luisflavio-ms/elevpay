@@ -27,6 +27,7 @@ import { Route as AppCheckoutsIndexRouteImport } from './routes/app.checkouts.in
 import { Route as AppProdutosIdRouteImport } from './routes/app.produtos.$id'
 import { Route as AppCheckoutsIdRouteImport } from './routes/app.checkouts.$id'
 import { Route as ApiPublicAbacateWebhookRouteImport } from './routes/api/public/abacate-webhook'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -118,6 +119,12 @@ const ApiPublicAbacateWebhookRoute = ApiPublicAbacateWebhookRouteImport.update({
   path: '/api/public/abacate-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/app/produtos/$id': typeof AppProdutosIdRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
   '/app/produtos/': typeof AppProdutosIndexRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -157,6 +165,7 @@ export interface FileRoutesByTo {
   '/app/produtos/$id': typeof AppProdutosIdRoute
   '/app/checkouts': typeof AppCheckoutsIndexRoute
   '/app/produtos': typeof AppProdutosIndexRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -178,6 +187,7 @@ export interface FileRoutesById {
   '/app/produtos/$id': typeof AppProdutosIdRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
   '/app/produtos/': typeof AppProdutosIndexRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/app/produtos/$id'
     | '/app/checkouts/'
     | '/app/produtos/'
+    | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/app/produtos/$id'
     | '/app/checkouts'
     | '/app/produtos'
+    | '/lovable/email/queue/process'
   id:
     | '__root__'
     | '/'
@@ -239,6 +251,7 @@ export interface FileRouteTypes {
     | '/app/produtos/$id'
     | '/app/checkouts/'
     | '/app/produtos/'
+    | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -250,6 +263,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   CheckoutPublicIdRoute: typeof CheckoutPublicIdRoute
   ApiPublicAbacateWebhookRoute: typeof ApiPublicAbacateWebhookRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -380,6 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAbacateWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -420,6 +441,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   CheckoutPublicIdRoute: CheckoutPublicIdRoute,
   ApiPublicAbacateWebhookRoute: ApiPublicAbacateWebhookRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
