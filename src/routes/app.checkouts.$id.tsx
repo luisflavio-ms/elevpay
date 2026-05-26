@@ -505,7 +505,7 @@ function PublishPanel({
             <Button size="sm" variant="outline" onClick={onCopy}>
               <Copy className="h-4 w-4 mr-1" /> Copiar link
             </Button>
-            <Link to="/checkout/$slug" params={{ slug: checkout.slug }} target="_blank">
+            <Link to="/checkout/$publicId" params={{ publicId: checkout.publicId }} target="_blank">
               <Button size="sm" variant="outline" className="w-full">
                 <ExternalLink className="h-4 w-4 mr-1" /> Abrir checkout
               </Button>
