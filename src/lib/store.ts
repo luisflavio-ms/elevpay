@@ -68,6 +68,7 @@ const SEED_CHECKOUTS: Checkout[] = [
     publicId: "trafegopro",
     name: "Checkout Tráfego Pago",
     productId: "p1",
+    amount: 497,
     headline: "Aprenda a vender todo dia com tráfego pago",
     subheadline: "Método validado por +3.000 alunos",
     image:
