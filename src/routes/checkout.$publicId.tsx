@@ -397,7 +397,7 @@ function PublicCheckout() {
             }}
           >
             <span style={{ fontSize: 14 }}>{p.name}</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color }}>{brl(p.price)}</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color }}>{brl(c.amount)}</span>
           </div>
         )}
 
