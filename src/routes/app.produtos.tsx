@@ -240,58 +240,11 @@ function ProdutosPage() {
           <h1 className="text-2xl font-bold">Produtos</h1>
           <p className="text-sm text-muted-foreground">Gerencie seu catálogo de ofertas</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openNew} className="bg-gradient-to-r from-primary to-[oklch(0.68_0.22_300)]">
-              <Plus className="h-4 w-4 mr-2" /> Novo produto
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{draft.id ? "Editar produto" : "Novo produto"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <Field label="Nome">
-                <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-              </Field>
-              <Field label="Descrição curta">
-                <Textarea
-                  rows={2}
-                  value={draft.description}
-                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                />
-              </Field>
-              <Field label="Tipo">
-                <Select
-                  value={draft.type}
-                  onValueChange={(v) => setDraft({ ...draft, type: v as ProductType })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="digital">Digital</SelectItem>
-                    <SelectItem value="fisico">Físico</SelectItem>
-                    <SelectItem value="assinatura">Assinatura</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <p className="text-xs text-muted-foreground">
-                O preço agora é definido no checkout, permitindo variações de valor.
-              </p>
-              <Field label="URL da imagem">
-                <Input value={draft.image} onChange={(e) => setDraft({ ...draft, image: e.target.value })} />
-              </Field>
-              <Field label="URL de entrega">
-                <Input value={draft.delivery_url} onChange={(e) => setDraft({ ...draft, delivery_url: e.target.value })} />
-              </Field>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={save} disabled={upsertM.isPending}>
-                {upsertM.isPending ? "Salvando..." : "Salvar"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Link to="/app/produtos/$id" params={{ id: "new" }}>
+          <Button className="bg-gradient-to-r from-primary to-[oklch(0.68_0.22_300)]">
+            <Plus className="h-4 w-4 mr-2" /> Novo produto
+          </Button>
+        </Link>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
