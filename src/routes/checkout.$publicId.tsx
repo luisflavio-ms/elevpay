@@ -12,6 +12,65 @@ import { urlBase64ToUint8Array } from "@/lib/push-config";
 
 export const Route = createFileRoute("/checkout/$publicId")({
   component: PublicCheckout,
+  loader: async ({ params }) => {
+    try {
+      const { data: variant } = await supabase
+        .from("checkout_price_variants")
+        .select("checkout_id, amount")
+        .eq("public_id", params.publicId)
+        .maybeSingle();
+      const filter = variant
+        ? { column: "id", value: variant.checkout_id as string }
+        : { column: "public_id", value: params.publicId };
+      const { data: ck } = await supabase
+        .from("checkouts")
+        .select("product_id, amount")
+        .eq(filter.column, filter.value)
+        .eq("active", true)
+        .maybeSingle();
+      if (!ck) return { meta: null };
+      const { data: p } = ck.product_id
+        ? await supabase
+            .from("products")
+            .select("name, description, image")
+            .eq("id", ck.product_id as string)
+            .maybeSingle()
+        : { data: null };
+      const amount = variant ? Number(variant.amount) : Number(ck.amount);
+      return {
+        meta: {
+          name: (p?.name as string) ?? "Finalize sua compra",
+          description: (p?.description as string) ?? "Pagamento seguro via ElevPay",
+          image: (p?.image as string) ?? "",
+          amount,
+        },
+      };
+    } catch {
+      return { meta: null };
+    }
+  },
+  head: ({ loaderData }) => {
+    const m = loaderData?.meta;
+    const title = m ? `Finalize sua compra - ${m.name} - ElevPay` : "Finalize sua compra - ElevPay";
+    const description = m
+      ? `${m.name} por ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(m.amount)} - Pagamento seguro via PIX, cartão ou boleto.`
+      : "Pagamento rápido e seguro via ElevPay.";
+    const image = m?.image || "";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        ...(image ? [{ property: "og:image", content: image }] : []),
+        { name: "twitter:card", content: image ? "summary_large_image" : "summary" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        ...(image ? [{ name: "twitter:image", content: image }] : []),
+      ],
+    };
+  },
 });
 
 /**
