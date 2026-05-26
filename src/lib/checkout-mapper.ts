@@ -68,6 +68,7 @@ export function checkoutToRow(c: Checkout, userId: string): Omit<CheckoutRow, "i
     product_id: c.productId || null,
     order_bump_id: c.orderBumpId ?? null,
     name: c.name,
+    amount: c.amount,
     headline: c.headline,
     subheadline: c.subheadline,
     image: c.image || null,
