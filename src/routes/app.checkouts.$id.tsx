@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -269,6 +269,15 @@ function ConfigPanel({
           <F label="Nome do checkout">
             <Input value={checkout.name} onChange={(e) => update("name", e.target.value)} />
           </F>
+          <F label="Preço (R$)">
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={checkout.amount}
+              onChange={(e) => update("amount", Number(e.target.value) || 0)}
+            />
+          </F>
           <F label="Link público">
             <Input value={`/checkout/${checkout.publicId}`} readOnly />
           </F>
@@ -283,6 +292,8 @@ function ConfigPanel({
             </Select>
           </F>
         </Section>
+
+        <PriceVariantsSection checkoutId={checkout.id} />
 
         <Section title="Pagamento">
           <Toggle label="Pix" checked={checkout.paymentMethods.pix} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, pix: v })} />
@@ -305,6 +316,7 @@ function ConfigPanel({
           </Select>
         </Section>
       </TabsContent>
+
 
 
       <TabsContent value="visual" className="space-y-4 mt-0">
@@ -775,4 +787,101 @@ function PreviewBlocksDrop({
     </div>
   );
 }
+
+/* ----------------- Price Variants ----------------- */
+function PriceVariantsSection({ checkoutId }: { checkoutId: string }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [amount, setAmount] = useState<string>("");
+
+  const variantsQ = useQuery({
+    queryKey: ["price_variants", checkoutId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checkout_price_variants")
+        .select("id,public_id,amount")
+        .eq("checkout_id", checkoutId)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []).map((r) => ({
+        id: r.id as string,
+        publicId: r.public_id as string,
+        amount: Number(r.amount),
+      }));
+    },
+  });
+
+  const variants = variantsQ.data ?? [];
+
+  const add = async () => {
+    if (!user) return;
+    const value = Number(amount);
+    if (!value || value <= 0) {
+      toast.error("Informe um valor válido");
+      return;
+    }
+    const { error } = await supabase.from("checkout_price_variants").insert({
+      checkout_id: checkoutId,
+      user_id: user.id,
+      amount: value,
+    } as never);
+    if (error) return toast.error(error.message);
+    setAmount("");
+    toast.success("Variação criada");
+    qc.invalidateQueries({ queryKey: ["price_variants", checkoutId] });
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("checkout_price_variants").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["price_variants", checkoutId] });
+  };
+
+  const copy = (publicId: string) => {
+    navigator.clipboard.writeText(`${checkoutOrigin()}/checkout/${publicId}`);
+    toast.success("Link copiado");
+  };
+
+  return (
+    <Section title="Variações de preço">
+      <p className="text-[11px] text-muted-foreground -mt-1">
+        Mesmo checkout com valores diferentes. Cada variação gera um link único.
+      </p>
+      <div className="flex gap-2">
+        <Input
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="Valor (R$)"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+        <Button size="sm" onClick={add}>
+          <Plus className="h-4 w-4 mr-1" /> Adicionar
+        </Button>
+      </div>
+      {variants.length > 0 && (
+        <div className="space-y-2">
+          {variants.map((v) => (
+            <div key={v.id} className="flex items-center gap-2 p-2 border rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold">{brl(v.amount)}</p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  /checkout/{v.publicId}
+                </p>
+              </div>
+              <Button size="icon" variant="ghost" onClick={() => copy(v.publicId)} aria-label="Copiar link">
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => remove(v.id)} aria-label="Remover">
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Section>
+  );
+}
+
 

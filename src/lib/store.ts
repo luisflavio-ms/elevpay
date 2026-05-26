@@ -31,7 +31,6 @@ const SEED_PRODUCTS: Product[] = [
     id: "p2",
     name: "Mentoria E-commerce 6 meses",
     description: "Acompanhamento semanal para escalar sua loja.",
-    price: 1997,
     image:
       "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&q=70",
     type: "assinatura",
@@ -41,7 +40,6 @@ const SEED_PRODUCTS: Product[] = [
     id: "p3",
     name: "Kit Camisetas Premium",
     description: "Pack com 3 camisetas algodão peruano.",
-    price: 249,
     image:
       "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=70",
     type: "fisico",
@@ -70,6 +68,7 @@ const SEED_CHECKOUTS: Checkout[] = [
     publicId: "trafegopro",
     name: "Checkout Tráfego Pago",
     productId: "p1",
+    amount: 497,
     headline: "Aprenda a vender todo dia com tráfego pago",
     subheadline: "Método validado por +3.000 alunos",
     image:
@@ -106,6 +105,7 @@ const SEED_CHECKOUTS: Checkout[] = [
     publicId: "mentoriaec",
     name: "Checkout Mentoria",
     productId: "p2",
+    amount: 1997,
     headline: "Escale sua loja com mentoria semanal",
     subheadline: "Acompanhamento direto comigo por 6 meses",
     image:
@@ -139,6 +139,7 @@ const SEED_CHECKOUTS: Checkout[] = [
     publicId: "kitcamisas",
     name: "Checkout Camisetas",
     productId: "p3",
+    amount: 249,
     headline: "Pack 3 camisetas premium com frete grátis",
     subheadline: "Algodão peruano, caimento perfeito",
     image:
