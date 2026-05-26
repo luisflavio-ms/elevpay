@@ -363,11 +363,13 @@ function PublicCheckout() {
           </div>
         )}
 
-        {(c.blocks ?? []).length > 0 && (
+        {(c.blocks ?? []).filter((b) => (b.position ?? "above") === "above").length > 0 && (
           <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
-            {(c.blocks ?? []).map((b) => (
-              <BlockRenderer key={b.id} block={b} color={color} />
-            ))}
+            {(c.blocks ?? [])
+              .filter((b) => (b.position ?? "above") === "above")
+              .map((b) => (
+                <BlockRenderer key={b.id} block={b} color={color} />
+              ))}
           </div>
         )}
 
@@ -538,6 +540,16 @@ function PublicCheckout() {
             <p style={{ textAlign: "center", fontSize: 12, color: "#475569", marginTop: 2 }}>🛡️ {c.guarantee}</p>
           )}
         </form>
+
+        {(c.blocks ?? []).filter((b) => b.position === "below").length > 0 && (
+          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+            {(c.blocks ?? [])
+              .filter((b) => b.position === "below")
+              .map((b) => (
+                <BlockRenderer key={b.id} block={b} color={color} />
+              ))}
+          </div>
+        )}
 
         {c.testimonials.length > 0 && (
           <div style={{ marginTop: 16 }}>
