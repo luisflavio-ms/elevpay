@@ -477,10 +477,8 @@ function PreviewPanel({
           <button className="w-full py-3 rounded-lg text-white font-semibold text-sm" style={{ background: checkout.primaryColor }}>
             {checkout.buttonText}
           </button>
-          {checkout.secureSeal && (
-            <p className="text-xs text-slate-500 text-center mt-3 flex items-center justify-center gap-1">
-              <ShieldCheck className="h-3 w-3" /> Compra 100% segura
-            </p>
+          {checkout.guarantee && (
+            <p className="text-xs text-slate-600 text-center mt-3">🛡️ {checkout.guarantee}</p>
           )}
           {checkout.guarantee && (
             <p className="text-xs text-slate-600 text-center mt-1">🛡️ {checkout.guarantee}</p>
