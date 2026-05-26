@@ -448,7 +448,7 @@ function PublicCheckout() {
           <h3 style={{ fontSize: 14, margin: "14px 0 8px", fontWeight: 600 }}>Pagamento</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {c.paymentMethods.pix && (
-              <PayBtn label="Pix" active={method === "pix"} color={color} onClick={() => setMethod("pix")} />
+              <PayBtn label="Pix" icon={<PixIcon />} active={method === "pix"} color={color} onClick={() => setMethod("pix")} />
             )}
             {c.paymentMethods.card && (
               <PayBtn label="Cartão" active={method === "cartao"} color={color} onClick={() => setMethod("cartao")} />
@@ -457,6 +457,8 @@ function PublicCheckout() {
               <PayBtn label="Boleto" active={method === "boleto"} color={color} onClick={() => setMethod("boleto")} />
             )}
           </div>
+
+          {method === "pix" && !pix && <PixInstructions amount={total} color={color} />}
 
           {method === "cartao" && (
             <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
