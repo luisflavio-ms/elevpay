@@ -17,10 +17,21 @@ export const subscribePush = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select("id, user_id")
+      .select("id, user_id, status, created_at")
       .eq("id", data.orderId)
       .maybeSingle();
     if (error || !order) throw new Error("Pedido não encontrado");
+
+    // Ownership proxy: since buyers are anonymous, restrict push subscription
+    // to pending orders within their active payment window (1 hour). This
+    // limits the risk of an attacker who captures an orderId subscribing to
+    // a stranger's payment notifications outside the buyer's checkout flow.
+    const createdAt = new Date(order.created_at).getTime();
+    const ageMs = Date.now() - createdAt;
+    const ONE_HOUR = 60 * 60 * 1000;
+    if (order.status !== "pendente" || ageMs > ONE_HOUR) {
+      throw new Error("Inscrição de notificações indisponível para este pedido");
+    }
 
     const { error: upErr } = await supabaseAdmin
       .from("push_subscriptions")
