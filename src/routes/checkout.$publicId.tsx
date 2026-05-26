@@ -192,6 +192,13 @@ function PublicCheckout() {
     return () => clearInterval(i);
   }, [secondsLeft]);
 
+  useEffect(() => {
+    const productName = data?.p?.name;
+    document.title = productName
+      ? `Finalize sua compra - ${productName} - ElevPay`
+      : "Finalize sua compra - ElevPay";
+  }, [data?.p?.name]);
+
   // Polling do status do pedido PIX (precisa ficar antes dos early returns)
   useEffect(() => {
     if (!pix || paid) return;
