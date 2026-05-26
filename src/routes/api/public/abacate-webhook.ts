@@ -30,11 +30,13 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
 
         let body: {
           event?: string;
+          apiVersion?: number;
           data?: {
             id?: string;
             status?: string;
             billing?: { id?: string };
             pixQrCode?: { id?: string };
+            transparent?: { id?: string };
           };
         };
         try {
