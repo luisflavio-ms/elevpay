@@ -34,8 +34,6 @@ const typeLabel: Record<ProductType, string> = {
 };
 
 function ProdutosPage() {
-  const _auth = useAuth();
-  void _auth;
   const qc = useQueryClient();
   const nav = useNavigate();
 
