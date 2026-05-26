@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import type { Checkout } from "@/lib/types";
+import { checkoutOrigin } from "@/lib/domains";
 
 export const Route = createFileRoute("/app/checkouts/")({
   component: ChecksList,
