@@ -139,6 +139,7 @@ const SEED_CHECKOUTS: Checkout[] = [
     publicId: "kitcamisas",
     name: "Checkout Camisetas",
     productId: "p3",
+    amount: 249,
     headline: "Pack 3 camisetas premium com frete grátis",
     subheadline: "Algodão peruano, caimento perfeito",
     image:
