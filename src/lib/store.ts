@@ -137,7 +137,7 @@ const SEED_CHECKOUTS: Checkout[] = [
   },
   {
     id: "c3",
-    slug: "kit-camisetas",
+    publicId: "kitcamisas",
     name: "Checkout Camisetas",
     productId: "p3",
     headline: "Pack 3 camisetas premium com frete grátis",
