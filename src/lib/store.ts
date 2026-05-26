@@ -105,6 +105,7 @@ const SEED_CHECKOUTS: Checkout[] = [
     publicId: "mentoriaec",
     name: "Checkout Mentoria",
     productId: "p2",
+    amount: 1997,
     headline: "Escale sua loja com mentoria semanal",
     subheadline: "Acompanhamento direto comigo por 6 meses",
     image:
