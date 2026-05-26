@@ -921,7 +921,7 @@ function PreviewBlockWrap({
         selected ? "outline-primary" : "outline-transparent hover:outline-primary/40"
       }`}
     >
-      <BlockRenderer block={block} color={color} />
+      <BlockRenderer block={block} color={color} preview />
       <div className="absolute -top-2 -right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
         <button
           ref={setActivatorNodeRef}
