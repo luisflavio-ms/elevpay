@@ -50,7 +50,8 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
         const billingId =
           body?.data?.id ??
           body?.data?.billing?.id ??
-          body?.data?.pixQrCode?.id;
+          body?.data?.pixQrCode?.id ??
+          body?.data?.transparent?.id;
 
         // Mapeia evento → status interno
         const statusMap: Record<string, "aprovado" | "recusado" | "reembolsado" | "pendente"> = {
