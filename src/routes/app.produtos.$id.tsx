@@ -93,6 +93,20 @@ function ProductPage() {
     },
   });
 
+  // Auto-create checkout when product exists but has none yet
+  useEffect(() => {
+    if (
+      !isNew &&
+      user &&
+      checkoutQ.isSuccess &&
+      checkoutQ.data === null &&
+      !ensureCheckoutM.isPending
+    ) {
+      ensureCheckoutM.mutate(draft.name || "Produto");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNew, user, checkoutQ.isSuccess, checkoutQ.data]);
+
   const ensureCheckoutM = useMutation({
     mutationFn: async (productName: string) => {
       if (!user) throw new Error("Não autenticado");
@@ -137,9 +151,29 @@ function ProductPage() {
       if (error) throw error;
       return id;
     },
-    onSuccess: (newId) => {
+    onSuccess: async (newId) => {
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["product", newId] });
+
+      // Ensure a checkout exists for this product (auto-create if needed)
+      if (user) {
+        const { data: existing } = await supabase
+          .from("checkouts")
+          .select("id")
+          .eq("product_id", newId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!existing) {
+          await supabase.from("checkouts").insert({
+            user_id: user.id,
+            product_id: newId,
+            name: `Checkout — ${draft.name || "Produto"}`,
+            amount: 0,
+          } as never);
+        }
+        qc.invalidateQueries({ queryKey: ["checkout-for-product", newId] });
+      }
+
       toast.success(isNew ? "Produto criado" : "Produto atualizado");
       if (isNew && newId !== id) {
         nav({ to: "/app/produtos/$id", params: { id: newId }, replace: true });
