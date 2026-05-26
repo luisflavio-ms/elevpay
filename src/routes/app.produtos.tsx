@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+
 import type { ProductType } from "@/lib/types";
 import { checkoutOrigin } from "@/lib/domains";
 
