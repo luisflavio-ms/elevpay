@@ -130,7 +130,7 @@ function ProdutosPage() {
   const slugByProduct = useMemo(() => {
     const map = new Map<string, string>();
     for (const c of checkoutsQ.data ?? []) {
-      if (c.product_id && !map.has(c.product_id)) map.set(c.product_id, c.slug);
+      if (c.product_id && !map.has(c.product_id)) map.set(c.product_id, c.public_id);
     }
     return map;
   }, [checkoutsQ.data]);
