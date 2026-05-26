@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { brl, slugify } from "@/lib/store";
+import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
@@ -46,13 +46,11 @@ function ChecksList() {
       const product = products?.[0];
       if (!product) throw new Error("Crie um produto antes");
 
-      const slug = slugify(`novo-checkout-${Math.random().toString(36).slice(2, 6)}`);
       const { data, error } = await supabase
         .from("checkouts")
         .insert({
           user_id: user.id,
           product_id: product.id,
-          slug,
           name: "Novo checkout",
           headline: product.name,
           subheadline: "",
@@ -88,7 +86,6 @@ function ChecksList() {
         user_id: user.id,
         product_id: c.productId || null,
         order_bump_id: c.orderBumpId ?? null,
-        slug: `${c.slug}-copia-${Math.random().toString(36).slice(2, 5)}`,
         name: `${c.name} (cópia)`,
         headline: c.headline,
         subheadline: c.subheadline,
@@ -165,17 +162,17 @@ function ChecksList() {
                       {c.active ? "Ativo" : "Inativo"}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1 truncate">/checkout/{c.slug}</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">/checkout/{c.publicId}</p>
                   <div className="flex gap-4 mt-2 text-sm">
                     <span className="text-muted-foreground">Conv.: <b className="text-foreground">{c.conversion}%</b></span>
                     <span className="text-muted-foreground">Receita: <b className="text-foreground">{brl(c.revenue)}</b></span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 sm:justify-end">
-                  <Button size="sm" variant="outline" onClick={() => copyLink(c.slug)}>
+                  <Button size="sm" variant="outline" onClick={() => copyLink(c.publicId)}>
                     <Copy className="h-4 w-4 mr-1" /> Link
                   </Button>
-                  <Link to="/checkout/$slug" params={{ slug: c.slug }} target="_blank">
+                  <Link to="/checkout/$publicId" params={{ publicId: c.publicId }} target="_blank">
                     <Button size="sm" variant="outline">
                       <ExternalLink className="h-4 w-4 mr-1" /> Abrir
                     </Button>

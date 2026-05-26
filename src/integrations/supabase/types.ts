@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      checkout_price_variants: {
+        Row: {
+          amount: number
+          checkout_id: string
+          created_at: string
+          id: string
+          public_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          checkout_id: string
+          created_at?: string
+          id?: string
+          public_id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          checkout_id?: string
+          created_at?: string
+          id?: string
+          public_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_price_variants_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: false
+            referencedRelation: "checkouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkouts: {
         Row: {
           active: boolean
@@ -33,11 +71,11 @@ export type Database = {
           pixel_meta: string | null
           primary_color: string
           product_id: string | null
+          public_id: string
           redirect_url: string | null
           revenue: number
           scarcity_timer_minutes: number
           secure_seal: boolean
-          slug: string
           subheadline: string
           testimonials: Json
           updated_at: string
@@ -63,11 +101,11 @@ export type Database = {
           pixel_meta?: string | null
           primary_color?: string
           product_id?: string | null
+          public_id?: string
           redirect_url?: string | null
           revenue?: number
           scarcity_timer_minutes?: number
           secure_seal?: boolean
-          slug: string
           subheadline?: string
           testimonials?: Json
           updated_at?: string
@@ -93,11 +131,11 @@ export type Database = {
           pixel_meta?: string | null
           primary_color?: string
           product_id?: string | null
+          public_id?: string
           redirect_url?: string | null
           revenue?: number
           scarcity_timer_minutes?: number
           secure_seal?: boolean
-          slug?: string
           subheadline?: string
           testimonials?: Json
           updated_at?: string
@@ -543,6 +581,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      gen_short_id: { Args: { len?: number }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

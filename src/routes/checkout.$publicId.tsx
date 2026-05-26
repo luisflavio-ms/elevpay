@@ -10,17 +10,17 @@ import { createPixPayment, checkOrderStatus, simulatePixPayment } from "@/lib/ab
 import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
 import { urlBase64ToUint8Array } from "@/lib/push-config";
 
-export const Route = createFileRoute("/checkout/$slug")({
+export const Route = createFileRoute("/checkout/$publicId")({
   component: PublicCheckout,
 });
 
 /**
- * Public checkout — busca diretamente do Supabase (RLS permite anon
- * quando o checkout está active = true e o produto/bump referenciado).
+ * Public checkout — busca pelo public_id curto (10 chars).
+ * Pode ser o public_id do próprio checkout OU de uma variação de preço.
  */
 function PublicCheckout() {
-  const { slug } = Route.useParams();
-  const [data, setData] = useState<{ c: Checkout; p?: Product; b?: OrderBump } | null>(null);
+  const { publicId } = Route.useParams();
+  const [data, setData] = useState<{ c: Checkout; p?: Product; b?: OrderBump; priceOverride?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [method, setMethod] = useState<PaymentMethod>("pix");
   const [bumpOn, setBumpOn] = useState(false);
@@ -110,10 +110,21 @@ function PublicCheckout() {
     let cancelled = false;
     (async () => {
       try {
+        // 1) Tenta achar uma variação de preço pelo public_id
+        const { data: variant } = await supabase
+          .from("checkout_price_variants")
+          .select("checkout_id, amount")
+          .eq("public_id", publicId)
+          .maybeSingle();
+
+        const checkoutFilter = variant
+          ? { column: "id", value: variant.checkout_id as string }
+          : { column: "public_id", value: publicId };
+
         const { data: ckRow } = await supabase
           .from("checkouts")
           .select("*")
-          .eq("slug", slug)
+          .eq(checkoutFilter.column, checkoutFilter.value)
           .eq("active", true)
           .maybeSingle();
         if (!ckRow) {
@@ -135,12 +146,14 @@ function PublicCheckout() {
             : Promise.resolve({ data: null }),
         ]);
 
+        const priceOverride = variant ? Number(variant.amount) : undefined;
+
         const p: Product | undefined = pRow
           ? {
               id: pRow.id as string,
               name: pRow.name as string,
               description: (pRow.description as string) ?? "",
-              price: Number(pRow.price),
+              price: priceOverride ?? Number(pRow.price),
               image: (pRow.image as string) ?? "",
               type: pRow.type as Product["type"],
               deliveryUrl: (pRow.delivery_url as string) ?? "",
@@ -157,7 +170,7 @@ function PublicCheckout() {
           : undefined;
 
         if (cancelled) return;
-        setData({ c, p, b });
+        setData({ c, p, b, priceOverride });
         const first: PaymentMethod = c.paymentMethods.pix ? "pix" : c.paymentMethods.card ? "cartao" : "boleto";
         setMethod(first);
         if (c.scarcityTimerMinutes > 0) setSecondsLeft(c.scarcityTimerMinutes * 60);
@@ -170,7 +183,7 @@ function PublicCheckout() {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [publicId]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -274,7 +287,7 @@ function PublicCheckout() {
       if (method === "pix") {
         const result = await createPix({
           data: {
-            slug,
+            publicId,
             customer: {
               name: form.name,
               email: form.email,

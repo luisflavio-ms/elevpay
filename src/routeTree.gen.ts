@@ -16,7 +16,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
-import { Route as CheckoutSlugRouteImport } from './routes/checkout.$slug'
+import { Route as CheckoutPublicIdRouteImport } from './routes/checkout.$publicId'
 import { Route as AppWebhooksRouteImport } from './routes/app.webhooks'
 import { Route as AppVendasRouteImport } from './routes/app.vendas'
 import { Route as AppProdutosRouteImport } from './routes/app.produtos'
@@ -63,9 +63,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const CheckoutSlugRoute = CheckoutSlugRouteImport.update({
-  id: '/checkout/$slug',
-  path: '/checkout/$slug',
+const CheckoutPublicIdRoute = CheckoutPublicIdRouteImport.update({
+  id: '/checkout/$publicId',
+  path: '/checkout/$publicId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWebhooksRoute = AppWebhooksRouteImport.update({
@@ -132,7 +132,7 @@ export interface FileRoutesByFullPath {
   '/app/produtos': typeof AppProdutosRoute
   '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
-  '/checkout/$slug': typeof CheckoutSlugRoute
+  '/checkout/$publicId': typeof CheckoutPublicIdRoute
   '/app/': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/api/public/test-push': typeof ApiPublicTestPushRoute
@@ -151,7 +151,7 @@ export interface FileRoutesByTo {
   '/app/produtos': typeof AppProdutosRoute
   '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
-  '/checkout/$slug': typeof CheckoutSlugRoute
+  '/checkout/$publicId': typeof CheckoutPublicIdRoute
   '/app': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/api/public/test-push': typeof ApiPublicTestPushRoute
@@ -172,7 +172,7 @@ export interface FileRoutesById {
   '/app/produtos': typeof AppProdutosRoute
   '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
-  '/checkout/$slug': typeof CheckoutSlugRoute
+  '/checkout/$publicId': typeof CheckoutPublicIdRoute
   '/app/': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/api/public/test-push': typeof ApiPublicTestPushRoute
@@ -194,7 +194,7 @@ export interface FileRouteTypes {
     | '/app/produtos'
     | '/app/vendas'
     | '/app/webhooks'
-    | '/checkout/$slug'
+    | '/checkout/$publicId'
     | '/app/'
     | '/api/public/abacate-webhook'
     | '/api/public/test-push'
@@ -213,7 +213,7 @@ export interface FileRouteTypes {
     | '/app/produtos'
     | '/app/vendas'
     | '/app/webhooks'
-    | '/checkout/$slug'
+    | '/checkout/$publicId'
     | '/app'
     | '/api/public/abacate-webhook'
     | '/api/public/test-push'
@@ -233,7 +233,7 @@ export interface FileRouteTypes {
     | '/app/produtos'
     | '/app/vendas'
     | '/app/webhooks'
-    | '/checkout/$slug'
+    | '/checkout/$publicId'
     | '/app/'
     | '/api/public/abacate-webhook'
     | '/api/public/test-push'
@@ -248,7 +248,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
-  CheckoutSlugRoute: typeof CheckoutSlugRoute
+  CheckoutPublicIdRoute: typeof CheckoutPublicIdRoute
   ApiPublicAbacateWebhookRoute: typeof ApiPublicAbacateWebhookRoute
   ApiPublicTestPushRoute: typeof ApiPublicTestPushRoute
 }
@@ -304,11 +304,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/checkout/$slug': {
-      id: '/checkout/$slug'
-      path: '/checkout/$slug'
-      fullPath: '/checkout/$slug'
-      preLoaderRoute: typeof CheckoutSlugRouteImport
+    '/checkout/$publicId': {
+      id: '/checkout/$publicId'
+      path: '/checkout/$publicId'
+      fullPath: '/checkout/$publicId'
+      preLoaderRoute: typeof CheckoutPublicIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/webhooks': {
@@ -417,7 +417,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
-  CheckoutSlugRoute: CheckoutSlugRoute,
+  CheckoutPublicIdRoute: CheckoutPublicIdRoute,
   ApiPublicAbacateWebhookRoute: ApiPublicAbacateWebhookRoute,
   ApiPublicTestPushRoute: ApiPublicTestPushRoute,
 }

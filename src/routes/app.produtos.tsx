@@ -97,7 +97,7 @@ function ProdutosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("checkouts")
-        .select("product_id,slug")
+        .select("product_id,public_id")
         .eq("active", true);
       if (error) throw error;
       return data ?? [];
@@ -130,7 +130,7 @@ function ProdutosPage() {
   const slugByProduct = useMemo(() => {
     const map = new Map<string, string>();
     for (const c of checkoutsQ.data ?? []) {
-      if (c.product_id && !map.has(c.product_id)) map.set(c.product_id, c.slug);
+      if (c.product_id && !map.has(c.product_id)) map.set(c.product_id, c.public_id);
     }
     return map;
   }, [checkoutsQ.data]);

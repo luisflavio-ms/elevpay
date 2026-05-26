@@ -68,7 +68,7 @@ const SEED_BUMPS: OrderBump[] = [
 const SEED_CHECKOUTS: Checkout[] = [
   {
     id: "c1",
-    slug: "trafego-pago-pro",
+    publicId: "trafegopro",
     name: "Checkout Tráfego Pago",
     productId: "p1",
     headline: "Aprenda a vender todo dia com tráfego pago",
@@ -104,7 +104,7 @@ const SEED_CHECKOUTS: Checkout[] = [
   },
   {
     id: "c2",
-    slug: "mentoria-ecom",
+    publicId: "mentoriaec",
     name: "Checkout Mentoria",
     productId: "p2",
     headline: "Escale sua loja com mentoria semanal",
@@ -137,7 +137,7 @@ const SEED_CHECKOUTS: Checkout[] = [
   },
   {
     id: "c3",
-    slug: "kit-camisetas",
+    publicId: "kitcamisas",
     name: "Checkout Camisetas",
     productId: "p3",
     headline: "Pack 3 camisetas premium com frete grátis",

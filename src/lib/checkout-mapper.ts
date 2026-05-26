@@ -5,7 +5,7 @@ export type CheckoutRow = {
   user_id: string;
   product_id: string | null;
   order_bump_id: string | null;
-  slug: string;
+  public_id: string;
   name: string;
   headline: string;
   subheadline: string;
@@ -32,7 +32,7 @@ export type CheckoutRow = {
 export function rowToCheckout(r: CheckoutRow): Checkout {
   return {
     id: r.id,
-    slug: r.slug,
+    publicId: r.public_id,
     name: r.name,
     productId: r.product_id ?? "",
     headline: r.headline,
@@ -59,13 +59,12 @@ export function rowToCheckout(r: CheckoutRow): Checkout {
   };
 }
 
-export function checkoutToRow(c: Checkout, userId: string): Omit<CheckoutRow, "id"> & { id?: string } {
+export function checkoutToRow(c: Checkout, userId: string): Omit<CheckoutRow, "id" | "public_id"> & { id?: string } {
   return {
     id: c.id || undefined,
     user_id: userId,
     product_id: c.productId || null,
     order_bump_id: c.orderBumpId ?? null,
-    slug: c.slug,
     name: c.name,
     headline: c.headline,
     subheadline: c.subheadline,
