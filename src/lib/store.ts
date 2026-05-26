@@ -68,7 +68,7 @@ const SEED_BUMPS: OrderBump[] = [
 const SEED_CHECKOUTS: Checkout[] = [
   {
     id: "c1",
-    slug: "trafego-pago-pro",
+    publicId: "trafegopro",
     name: "Checkout Tráfego Pago",
     productId: "p1",
     headline: "Aprenda a vender todo dia com tráfego pago",
