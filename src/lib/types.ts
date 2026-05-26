@@ -56,7 +56,8 @@ export type CheckoutBlockType =
   | "html"
   | "timer"
   | "guarantee"
-  | "notifications";
+  | "notifications"
+  | "secureSeal";
 
 export interface CheckoutBlockBase {
   id: string;
@@ -101,13 +102,18 @@ export interface NotificationsBlock extends CheckoutBlockBase {
   items: PurchaseNotification[];
   intervalSec: number;
 }
+export interface SecureSealBlock extends CheckoutBlockBase {
+  type: "secureSeal";
+  text: string;
+}
 export type CheckoutBlock =
   | ImageBlock
   | TextBlock
   | HtmlBlock
   | TimerBlock
   | GuaranteeBlock
-  | NotificationsBlock;
+  | NotificationsBlock
+  | SecureSealBlock;
 
 export type OrderStatus = "aprovado" | "pendente" | "recusado" | "reembolsado";
 export type PaymentMethod = "pix" | "cartao" | "boleto";

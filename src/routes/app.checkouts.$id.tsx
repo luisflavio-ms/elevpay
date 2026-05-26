@@ -9,8 +9,6 @@ import {
   Save,
   Trash2,
   Plus,
-  ShieldCheck,
-  Clock,
   X,
   GripVertical,
 } from "lucide-react";
@@ -307,15 +305,8 @@ function ConfigPanel({
             </SelectContent>
           </Select>
         </Section>
-
-        <Section title="Conversão & Urgência">
-          <F label="Timer de escassez (min)">
-            <Input type="number" value={checkout.scarcityTimerMinutes} onChange={(e) => update("scarcityTimerMinutes", Number(e.target.value))} />
-          </F>
-          <F label="Mensagem de urgência"><Input value={checkout.urgencyMessage} onChange={(e) => update("urgencyMessage", e.target.value)} /></F>
-          <Toggle label="Selo de compra segura" checked={checkout.secureSeal} onChange={(v) => update("secureSeal", v)} />
-        </Section>
       </TabsContent>
+
 
       <TabsContent value="visual" className="space-y-4 mt-0">
         {!compact && (
@@ -440,12 +431,6 @@ function PreviewPanel({
               </div>
             )
           )}
-          {checkout.scarcityTimerMinutes > 0 && (
-            <div className="text-center text-xs py-2 px-3 mb-3 rounded-lg" style={{ background: checkout.primaryColor + "20", color: checkout.primaryColor }}>
-              <Clock className="inline h-3 w-3 mr-1" />
-              Oferta expira em {checkout.scarcityTimerMinutes}:00
-            </div>
-          )}
           {product && (
             <div className="my-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
@@ -490,13 +475,8 @@ function PreviewPanel({
           <button className="w-full py-3 rounded-lg text-white font-semibold text-sm" style={{ background: checkout.primaryColor }}>
             {checkout.buttonText}
           </button>
-          {checkout.secureSeal && (
-            <p className="text-xs text-slate-500 text-center mt-3 flex items-center justify-center gap-1">
-              <ShieldCheck className="h-3 w-3" /> Compra 100% segura
-            </p>
-          )}
           {checkout.guarantee && (
-            <p className="text-xs text-slate-600 text-center mt-1">🛡️ {checkout.guarantee}</p>
+            <p className="text-xs text-slate-600 text-center mt-3">🛡️ {checkout.guarantee}</p>
           )}
         </div>
       </CardContent>

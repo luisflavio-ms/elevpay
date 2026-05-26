@@ -39,7 +39,7 @@ interface Props {
   onChange: (b: CheckoutBlock[]) => void;
 }
 
-export const TYPES: CheckoutBlockType[] = ["image", "text", "html", "timer", "guarantee", "notifications"];
+export const TYPES: CheckoutBlockType[] = ["image", "text", "html", "timer", "guarantee", "notifications", "secureSeal"];
 
 export const CANVAS_ID = "checkout-canvas";
 
@@ -424,6 +424,13 @@ export function BlockEditor({
           </Button>
         </div>
       </>
+    );
+  }
+  if (block.type === "secureSeal") {
+    return (
+      <F label="Texto do selo">
+        <Input value={block.text} onChange={(e) => onUpdate({ text: e.target.value })} />
+      </F>
     );
   }
   return null;
