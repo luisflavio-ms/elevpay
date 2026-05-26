@@ -480,9 +480,6 @@ function PreviewPanel({
           {checkout.guarantee && (
             <p className="text-xs text-slate-600 text-center mt-3">🛡️ {checkout.guarantee}</p>
           )}
-          {checkout.guarantee && (
-            <p className="text-xs text-slate-600 text-center mt-1">🛡️ {checkout.guarantee}</p>
-          )}
         </div>
       </CardContent>
     </Card>
