@@ -93,23 +93,16 @@ function ProductPage() {
     },
   });
 
-  // Auto-create checkout when product exists but has none yet
-  useEffect(() => {
-    if (
-      !isNew &&
-      user &&
-      checkoutQ.isSuccess &&
-      checkoutQ.data === null &&
-      !ensureCheckoutM.isPending
-    ) {
-      ensureCheckoutM.mutate(draft.name || "Produto");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNew, user, checkoutQ.isSuccess, checkoutQ.data]);
-
   const ensureCheckoutM = useMutation({
     mutationFn: async (productName: string) => {
       if (!user) throw new Error("Não autenticado");
+      const { data: existing } = await supabase
+        .from("checkouts")
+        .select("id")
+        .eq("product_id", id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (existing) return existing.id as string;
       const { data, error } = await supabase
         .from("checkouts")
         .insert({
@@ -124,7 +117,22 @@ function ProductPage() {
       return data.id as string;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["checkout-for-product", id] }),
+    onError: (e: Error) => toast.error(`Falha ao criar checkout: ${e.message}`),
   });
+
+  // Auto-create checkout when product exists but has none yet
+  useEffect(() => {
+    if (
+      !isNew &&
+      user &&
+      checkoutQ.isSuccess &&
+      checkoutQ.data === null &&
+      !ensureCheckoutM.isPending
+    ) {
+      ensureCheckoutM.mutate(draft.name || "Produto");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNew, user, checkoutQ.isSuccess, checkoutQ.data]);
 
   const saveProductM = useMutation({
     mutationFn: async () => {
@@ -138,6 +146,7 @@ function ProductPage() {
         type: draft.type,
         delivery_url: draft.delivery_url || null,
       };
+      let productId: string;
       if (isNew) {
         const { data, error } = await supabase
           .from("products")
@@ -145,35 +154,36 @@ function ProductPage() {
           .select("id")
           .single();
         if (error) throw error;
-        return data.id as string;
+        productId = data.id as string;
+      } else {
+        const { error } = await supabase.from("products").update(payload).eq("id", id);
+        if (error) throw error;
+        productId = id;
       }
-      const { error } = await supabase.from("products").update(payload).eq("id", id);
-      if (error) throw error;
-      return id;
+
+      // Ensure checkout exists — fail loudly so the toast surfaces the cause
+      const { data: existing, error: selErr } = await supabase
+        .from("checkouts")
+        .select("id")
+        .eq("product_id", productId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (selErr) throw new Error(`Checkout lookup: ${selErr.message}`);
+      if (!existing) {
+        const { error: insErr } = await supabase.from("checkouts").insert({
+          user_id: user.id,
+          product_id: productId,
+          name: `Checkout — ${draft.name || "Produto"}`,
+          amount: 0,
+        } as never);
+        if (insErr) throw new Error(`Criar checkout: ${insErr.message}`);
+      }
+      return productId;
     },
-    onSuccess: async (newId) => {
+    onSuccess: (newId) => {
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["product", newId] });
-
-      // Ensure a checkout exists for this product (auto-create if needed)
-      if (user) {
-        const { data: existing } = await supabase
-          .from("checkouts")
-          .select("id")
-          .eq("product_id", newId)
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (!existing) {
-          await supabase.from("checkouts").insert({
-            user_id: user.id,
-            product_id: newId,
-            name: `Checkout — ${draft.name || "Produto"}`,
-            amount: 0,
-          } as never);
-        }
-        qc.invalidateQueries({ queryKey: ["checkout-for-product", newId] });
-      }
-
+      qc.invalidateQueries({ queryKey: ["checkout-for-product", newId] });
       toast.success(isNew ? "Produto criado" : "Produto atualizado");
       if (isNew && newId !== id) {
         nav({ to: "/app/produtos/$id", params: { id: newId }, replace: true });
