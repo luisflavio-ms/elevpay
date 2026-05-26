@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { brl, slugify } from "@/lib/store";
+import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { rowToCheckout, checkoutToRow, type CheckoutRow } from "@/lib/checkout-mapper";
@@ -170,7 +170,7 @@ function Builder() {
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(`${checkoutOrigin()}/checkout/${checkout.slug}`);
+    navigator.clipboard.writeText(`${checkoutOrigin()}/checkout/${checkout.publicId}`);
     toast.success("Link copiado");
   };
 
@@ -270,8 +270,8 @@ function ConfigPanel({
           <F label="Nome do checkout">
             <Input value={checkout.name} onChange={(e) => update("name", e.target.value)} />
           </F>
-          <F label="Slug (URL)">
-            <Input value={checkout.slug} onChange={(e) => update("slug", slugify(e.target.value))} />
+          <F label="Link público">
+            <Input value={`/checkout/${checkout.publicId}`} readOnly />
           </F>
           <F label="Produto vinculado">
             <Select value={checkout.productId} onValueChange={(v) => update("productId", v)}>
@@ -488,7 +488,7 @@ function PreviewPanel({
 function PublishPanel({
   checkout, onCopy, onRemove, onPublish,
 }: { checkout: Checkout; onCopy: () => void; onRemove: () => void; onPublish: () => void }) {
-  const url = typeof window !== "undefined" ? `${checkoutOrigin()}/checkout/${checkout.slug}` : "";
+  const url = typeof window !== "undefined" ? `${checkoutOrigin()}/checkout/${checkout.publicId}` : "";
   return (
     <div className="space-y-4">
       <Card className="rounded-2xl">
@@ -505,7 +505,7 @@ function PublishPanel({
             <Button size="sm" variant="outline" onClick={onCopy}>
               <Copy className="h-4 w-4 mr-1" /> Copiar link
             </Button>
-            <Link to="/checkout/$slug" params={{ slug: checkout.slug }} target="_blank">
+            <Link to="/checkout/$publicId" params={{ publicId: checkout.publicId }} target="_blank">
               <Button size="sm" variant="outline" className="w-full">
                 <ExternalLink className="h-4 w-4 mr-1" /> Abrir checkout
               </Button>
