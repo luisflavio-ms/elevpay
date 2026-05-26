@@ -55,6 +55,7 @@ import type { Checkout, Product, OrderBump, CheckoutBlock, CheckoutBlockType } f
 import { BlockBuilder, Palette, BlockEditor, CANVAS_ID } from "@/components/checkout/BlockBuilder";
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { BLOCK_ICONS, BLOCK_LABELS, createBlock } from "@/components/checkout/blockDefaults";
+import { checkoutOrigin } from "@/lib/domains";
 
 export const Route = createFileRoute("/app/checkouts/$id")({
   component: Builder,
