@@ -284,19 +284,6 @@ function ConfigPanel({
               onChange={(e) => update("amount", Number(e.target.value) || 0)}
             />
           </F>
-          <F label="Link público">
-            <Input value={`/checkout/${checkout.publicId}`} readOnly />
-          </F>
-          <F label="Produto vinculado">
-            <Select value={checkout.productId} onValueChange={(v) => update("productId", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {products.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </F>
         </Section>
 
         <PriceVariantsSection checkoutId={checkout.id} />
