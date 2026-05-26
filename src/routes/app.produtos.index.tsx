@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ProductType } from "@/lib/types";
 import { checkoutOrigin } from "@/lib/domains";
 
-export const Route = createFileRoute("/app/produtos")({
+export const Route = createFileRoute("/app/produtos/")({
   component: ProdutosPage,
 });
 
