@@ -270,8 +270,8 @@ function ConfigPanel({
           <F label="Nome do checkout">
             <Input value={checkout.name} onChange={(e) => update("name", e.target.value)} />
           </F>
-          <F label="Slug (URL)">
-            <Input value={checkout.slug} onChange={(e) => update("slug", slugify(e.target.value))} />
+          <F label="Link público">
+            <Input value={`/checkout/${checkout.publicId}`} readOnly />
           </F>
           <F label="Produto vinculado">
             <Select value={checkout.productId} onValueChange={(v) => update("productId", v)}>
