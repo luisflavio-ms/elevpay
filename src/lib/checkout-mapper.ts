@@ -6,6 +6,7 @@ export type CheckoutRow = {
   product_id: string | null;
   order_bump_id: string | null;
   public_id: string;
+  amount: number | string;
   name: string;
   headline: string;
   subheadline: string;
