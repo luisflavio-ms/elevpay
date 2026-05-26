@@ -46,13 +46,11 @@ function ChecksList() {
       const product = products?.[0];
       if (!product) throw new Error("Crie um produto antes");
 
-      const slug = slugify(`novo-checkout-${Math.random().toString(36).slice(2, 6)}`);
       const { data, error } = await supabase
         .from("checkouts")
         .insert({
           user_id: user.id,
           product_id: product.id,
-          slug,
           name: "Novo checkout",
           headline: product.name,
           subheadline: "",
