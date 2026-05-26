@@ -39,7 +39,7 @@ interface Props {
   onChange: (b: CheckoutBlock[]) => void;
 }
 
-export const TYPES: CheckoutBlockType[] = ["image", "text", "html", "timer", "guarantee", "notifications"];
+export const TYPES: CheckoutBlockType[] = ["image", "text", "html", "timer", "guarantee", "notifications", "secureSeal"];
 
 export const CANVAS_ID = "checkout-canvas";
 
