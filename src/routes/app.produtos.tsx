@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Package, Copy, Search, Link2 } from "lucide-react";
@@ -6,27 +6,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+
 import type { ProductType } from "@/lib/types";
 import { checkoutOrigin } from "@/lib/domains";
 
@@ -44,24 +27,6 @@ type ProductRow = {
   delivery_url: string | null;
 };
 
-type DraftProduct = {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  type: ProductType;
-  delivery_url: string;
-};
-
-const empty: DraftProduct = {
-  id: "",
-  name: "",
-  description: "",
-  image: "",
-  type: "digital",
-  delivery_url: "",
-};
-
 const typeLabel: Record<ProductType, string> = {
   digital: "Digital",
   fisico: "Físico",
@@ -69,11 +34,9 @@ const typeLabel: Record<ProductType, string> = {
 };
 
 function ProdutosPage() {
-  const { user } = useAuth();
   const qc = useQueryClient();
+  const nav = useNavigate();
 
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<DraftProduct>(empty);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -140,36 +103,6 @@ function ProdutosPage() {
     );
   }, [items, query]);
 
-  const upsertM = useMutation({
-    mutationFn: async (d: DraftProduct) => {
-      if (!user) throw new Error("Não autenticado");
-      const payload = {
-        user_id: user.id,
-        name: d.name,
-        description: d.description,
-        image: d.image || null,
-        type: d.type,
-        delivery_url: d.delivery_url || null,
-      };
-      if (d.id) {
-        const { error } = await supabase
-          .from("products")
-          .update(payload)
-          .eq("id", d.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("products").insert(payload);
-        if (error) throw error;
-      }
-    },
-    onSuccess: (_d, v) => {
-      qc.invalidateQueries({ queryKey: ["products"] });
-      setOpen(false);
-      toast.success(v.id ? "Produto atualizado" : "Produto criado");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
   const deleteM = useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("products").delete().in("id", ids);
@@ -187,11 +120,6 @@ function ProdutosPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const save = () => {
-    if (!draft.name.trim()) return toast.error("Nome é obrigatório");
-    upsertM.mutate(draft);
-  };
-
   const toggle = (id: string) =>
     setSelected((s) => {
       const n = new Set(s);
@@ -204,21 +132,9 @@ function ProdutosPage() {
       s.size === filtered.length ? new Set() : new Set(filtered.map((p) => p.id)),
     );
 
-  const openNew = () => {
-    setDraft(empty);
-    setOpen(true);
-  };
-  const openEdit = (p: ProductRow) => {
-    setDraft({
-      id: p.id,
-      name: p.name,
-      description: p.description ?? "",
-      image: p.image ?? "",
-      type: p.type,
-      delivery_url: p.delivery_url ?? "",
-    });
-    setOpen(true);
-  };
+  const openNew = () => nav({ to: "/app/produtos/$id", params: { id: "new" } });
+  const openEdit = (p: ProductRow) =>
+    nav({ to: "/app/produtos/$id", params: { id: p.id } });
 
   const copyLink = (slug: string) => {
     const url = `${checkoutOrigin()}/checkout/${slug}`;
@@ -257,58 +173,11 @@ function ProdutosPage() {
           <h1 className="text-2xl font-bold">Produtos</h1>
           <p className="text-sm text-muted-foreground">Gerencie seu catálogo de ofertas</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openNew} className="bg-gradient-to-r from-primary to-[oklch(0.68_0.22_300)]">
-              <Plus className="h-4 w-4 mr-2" /> Novo produto
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>{draft.id ? "Editar produto" : "Novo produto"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <Field label="Nome">
-                <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-              </Field>
-              <Field label="Descrição curta">
-                <Textarea
-                  rows={2}
-                  value={draft.description}
-                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                />
-              </Field>
-              <Field label="Tipo">
-                <Select
-                  value={draft.type}
-                  onValueChange={(v) => setDraft({ ...draft, type: v as ProductType })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="digital">Digital</SelectItem>
-                    <SelectItem value="fisico">Físico</SelectItem>
-                    <SelectItem value="assinatura">Assinatura</SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <p className="text-xs text-muted-foreground">
-                O preço agora é definido no checkout, permitindo variações de valor.
-              </p>
-              <Field label="URL da imagem">
-                <Input value={draft.image} onChange={(e) => setDraft({ ...draft, image: e.target.value })} />
-              </Field>
-              <Field label="URL de entrega">
-                <Input value={draft.delivery_url} onChange={(e) => setDraft({ ...draft, delivery_url: e.target.value })} />
-              </Field>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={save} disabled={upsertM.isPending}>
-                {upsertM.isPending ? "Salvando..." : "Salvar"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Link to="/app/produtos/$id" params={{ id: "new" }}>
+          <Button className="bg-gradient-to-r from-primary to-[oklch(0.68_0.22_300)]">
+            <Plus className="h-4 w-4 mr-2" /> Novo produto
+          </Button>
+        </Link>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -468,15 +337,6 @@ function ProdutosPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
-      {children}
-    </div>
-  );
-}
-
 function EmptyState({ onAction }: { onAction: () => void }) {
   return (
     <Card className="rounded-2xl">
@@ -493,3 +353,4 @@ function EmptyState({ onAction }: { onAction: () => void }) {
     </Card>
   );
 }
+

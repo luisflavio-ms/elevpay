@@ -56,11 +56,15 @@ import { BLOCK_ICONS, BLOCK_LABELS, createBlock } from "@/components/checkout/bl
 import { checkoutOrigin } from "@/lib/domains";
 
 export const Route = createFileRoute("/app/checkouts/$id")({
-  component: Builder,
+  component: BuilderRoute,
 });
 
-function Builder() {
+function BuilderRoute() {
   const { id } = Route.useParams();
+  return <CheckoutBuilder id={id} showBack />;
+}
+
+export function CheckoutBuilder({ id, showBack = false }: { id: string; showBack?: boolean }) {
   const nav = useNavigate();
   const { user } = useAuth();
   const [checkout, setCheckout] = useState<Checkout | null>(null);
@@ -183,9 +187,11 @@ function Builder() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <Link to="/app/checkouts" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Link>
+        {showBack ? (
+          <Link to="/app/checkouts" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" /> Voltar
+          </Link>
+        ) : <div />}
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => save()}>
             <Save className="h-4 w-4 mr-1" /> Salvar
