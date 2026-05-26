@@ -119,7 +119,7 @@ function ChecksList() {
   });
 
   const copyLink = (slug: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/checkout/${slug}`);
+    navigator.clipboard.writeText(`${checkoutOrigin()}/checkout/${slug}`);
     toast.success("Link copiado");
   };
 
