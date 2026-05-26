@@ -444,7 +444,7 @@ function PreviewPanel({
               </div>
               <div className="mt-3 text-right">
                 <p className="text-base font-extrabold" style={{ color: checkout.primaryColor }}>
-                  Total {brl(product.price)}
+                  Total {brl(checkout.amount)}
                 </p>
               </div>
             </div>
