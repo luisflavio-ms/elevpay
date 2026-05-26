@@ -112,7 +112,8 @@ export type CheckoutBlock =
   | HtmlBlock
   | TimerBlock
   | GuaranteeBlock
-  | NotificationsBlock;
+  | NotificationsBlock
+  | SecureSealBlock;
 
 export type OrderStatus = "aprovado" | "pendente" | "recusado" | "reembolsado";
 export type PaymentMethod = "pix" | "cartao" | "boleto";
