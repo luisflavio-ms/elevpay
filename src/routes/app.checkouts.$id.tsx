@@ -488,7 +488,7 @@ function PreviewPanel({
 function PublishPanel({
   checkout, onCopy, onRemove, onPublish,
 }: { checkout: Checkout; onCopy: () => void; onRemove: () => void; onPublish: () => void }) {
-  const url = typeof window !== "undefined" ? `${checkoutOrigin()}/checkout/${checkout.slug}` : "";
+  const url = typeof window !== "undefined" ? `${checkoutOrigin()}/checkout/${checkout.publicId}` : "";
   return (
     <div className="space-y-4">
       <Card className="rounded-2xl">
