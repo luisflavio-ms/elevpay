@@ -187,9 +187,11 @@ export function CheckoutBuilder({ id, showBack = false }: { id: string; showBack
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <Link to="/app/checkouts" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Link>
+        {showBack ? (
+          <Link to="/app/checkouts" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" /> Voltar
+          </Link>
+        ) : <div />}
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => save()}>
             <Save className="h-4 w-4 mr-1" /> Salvar
