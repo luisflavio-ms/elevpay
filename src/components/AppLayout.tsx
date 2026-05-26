@@ -17,6 +17,7 @@ import { seedIfNeeded } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Logo, LogoMark, Wordmark } from "@/components/Logo";
 import { AppHeader } from "@/components/AppHeader";
+import { supabase } from "@/integrations/supabase/client";
 
 
 const nav = [
@@ -38,6 +39,49 @@ export function AppLayout() {
     seedIfNeeded();
   }, []);
   useEffect(() => setOpen(false), [loc.pathname]);
+
+  // Toca som quando uma venda é aprovada (realtime)
+  useEffect(() => {
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const audio = new Audio("/sounds/money.mp3");
+    audio.preload = "auto";
+
+    const playSale = () => {
+      try {
+        audio.currentTime = 0;
+        void audio.play().catch(() => {});
+      } catch {}
+    };
+
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const uid = data.user?.id;
+      if (!uid || cancelled) return;
+      channel = supabase
+        .channel(`orders-sound-${uid}`)
+        .on(
+          "postgres_changes" as any,
+          { event: "INSERT", schema: "public", table: "orders", filter: `user_id=eq.${uid}` },
+          (payload: any) => {
+            if (payload.new?.status === "aprovado") playSale();
+          },
+        )
+        .on(
+          "postgres_changes" as any,
+          { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${uid}` },
+          (payload: any) => {
+            if (payload.new?.status === "aprovado" && payload.old?.status !== "aprovado") playSale();
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
