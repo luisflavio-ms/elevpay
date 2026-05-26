@@ -93,7 +93,7 @@ function PublicCheckout() {
 
   const createPix = useServerFn(createPixPayment);
   const checkStatus = useServerFn(checkOrderStatus);
-  const simulatePix = useServerFn(simulatePixPayment);
+  
   const subscribePushFn = useServerFn(subscribePush);
   const getVapidKeyFn = useServerFn(getVapidPublicKey);
 
