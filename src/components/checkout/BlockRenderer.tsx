@@ -78,7 +78,7 @@ export function BlockRenderer({ block, color, asToast, preview }: Props) {
       );
 
     case "notifications":
-      return <Notifications block={block} color={color} asToast={asToast} />;
+      return <Notifications block={block} color={color} asToast={asToast} preview={preview} />;
 
     case "secureSeal":
       return (
