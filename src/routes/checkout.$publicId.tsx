@@ -234,7 +234,7 @@ function PublicCheckout() {
   }
 
   const { c, p, b } = data;
-  const total = (p?.price ?? 0) + (bumpOn && b ? b.price : 0);
+  const total = c.amount + (bumpOn && b ? b.price : 0);
   const color = c.primaryColor;
 
   const maskPhone = (v: string) => {
