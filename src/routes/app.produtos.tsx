@@ -355,7 +355,7 @@ function ProdutosPage() {
               return (
                 <li
                   key={p.id}
-                  className={`grid grid-cols-[40px_1fr] md:grid-cols-[40px_minmax(0,3fr)_120px_110px_80px_minmax(0,1.5fr)_120px] gap-4 px-5 py-4 items-center transition-colors hover:bg-primary/5 ${isSel ? "bg-primary/5" : ""}`}
+                  className={`grid grid-cols-[40px_1fr] md:grid-cols-[40px_minmax(0,3fr)_110px_80px_minmax(0,1.5fr)_120px] gap-4 px-5 py-4 items-center transition-colors hover:bg-primary/5 ${isSel ? "bg-primary/5" : ""}`}
                 >
                   <button
                     onClick={() => toggle(p.id)}
