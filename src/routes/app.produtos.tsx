@@ -39,7 +39,6 @@ type ProductRow = {
   user_id: string;
   name: string;
   description: string;
-  price: number;
   image: string | null;
   type: ProductType;
   delivery_url: string | null;
@@ -49,7 +48,6 @@ type DraftProduct = {
   id: string;
   name: string;
   description: string;
-  price: number;
   image: string;
   type: ProductType;
   delivery_url: string;
@@ -59,7 +57,6 @@ const empty: DraftProduct = {
   id: "",
   name: "",
   description: "",
-  price: 0,
   image: "",
   type: "digital",
   delivery_url: "",
@@ -85,7 +82,7 @@ function ProdutosPage() {
     queryFn: async (): Promise<ProductRow[]> => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,user_id,name,description,price,image,type,delivery_url")
+        .select("id,user_id,name,description,image,type,delivery_url")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ProductRow[];
@@ -150,7 +147,6 @@ function ProdutosPage() {
         user_id: user.id,
         name: d.name,
         description: d.description,
-        price: d.price,
         image: d.image || null,
         type: d.type,
         delivery_url: d.delivery_url || null,
@@ -217,7 +213,6 @@ function ProdutosPage() {
       id: p.id,
       name: p.name,
       description: p.description ?? "",
-      price: Number(p.price),
       image: p.image ?? "",
       type: p.type,
       delivery_url: p.delivery_url ?? "",
@@ -283,28 +278,22 @@ function ProdutosPage() {
                   onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                 />
               </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Preço (R$)">
-                  <Input
-                    type="number"
-                    value={draft.price}
-                    onChange={(e) => setDraft({ ...draft, price: Number(e.target.value) })}
-                  />
-                </Field>
-                <Field label="Tipo">
-                  <Select
-                    value={draft.type}
-                    onValueChange={(v) => setDraft({ ...draft, type: v as ProductType })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="digital">Digital</SelectItem>
-                      <SelectItem value="fisico">Físico</SelectItem>
-                      <SelectItem value="assinatura">Assinatura</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
+              <Field label="Tipo">
+                <Select
+                  value={draft.type}
+                  onValueChange={(v) => setDraft({ ...draft, type: v as ProductType })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="digital">Digital</SelectItem>
+                    <SelectItem value="fisico">Físico</SelectItem>
+                    <SelectItem value="assinatura">Assinatura</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <p className="text-xs text-muted-foreground">
+                O preço agora é definido no checkout, permitindo variações de valor.
+              </p>
               <Field label="URL da imagem">
                 <Input value={draft.image} onChange={(e) => setDraft({ ...draft, image: e.target.value })} />
               </Field>
@@ -343,14 +332,13 @@ function ProdutosPage() {
         <EmptyState onAction={openNew} />
       ) : (
         <Card className="rounded-2xl bg-card/60 backdrop-blur border-border/60 overflow-hidden">
-          <div className="hidden md:grid grid-cols-[40px_minmax(0,3fr)_120px_110px_80px_minmax(0,1.5fr)_120px] gap-4 px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border/60 bg-background/40">
+          <div className="hidden md:grid grid-cols-[40px_minmax(0,3fr)_110px_80px_minmax(0,1.5fr)_120px] gap-4 px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border/60 bg-background/40">
             <button
               onClick={toggleAll}
               aria-label="Selecionar todos"
               className={`h-4 w-4 rounded border ${allSelected ? "bg-primary border-primary" : "border-muted-foreground/40"}`}
             />
             <span>Produto</span>
-            <span>Preço</span>
             <span>Status</span>
             <span>Vendas</span>
             <span>Link</span>
@@ -367,7 +355,7 @@ function ProdutosPage() {
               return (
                 <li
                   key={p.id}
-                  className={`grid grid-cols-[40px_1fr] md:grid-cols-[40px_minmax(0,3fr)_120px_110px_80px_minmax(0,1.5fr)_120px] gap-4 px-5 py-4 items-center transition-colors hover:bg-primary/5 ${isSel ? "bg-primary/5" : ""}`}
+                  className={`grid grid-cols-[40px_1fr] md:grid-cols-[40px_minmax(0,3fr)_110px_80px_minmax(0,1.5fr)_120px] gap-4 px-5 py-4 items-center transition-colors hover:bg-primary/5 ${isSel ? "bg-primary/5" : ""}`}
                 >
                   <button
                     onClick={() => toggle(p.id)}
@@ -397,7 +385,6 @@ function ProdutosPage() {
                   </div>
 
                   <div className="md:hidden col-span-2 flex flex-wrap items-center gap-2 pt-1">
-                    <span className="font-semibold text-primary">{brl(Number(p.price))}</span>
                     <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10">Ativo</Badge>
                     <span className="text-xs text-muted-foreground">{sales} vendas</span>
                     <div className="ml-auto flex gap-1">
@@ -415,7 +402,7 @@ function ProdutosPage() {
                     </div>
                   </div>
 
-                  <div className="hidden md:block font-semibold text-primary tabular-nums">{brl(Number(p.price))}</div>
+                  
                   <div className="hidden md:block">
                     <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Ativo

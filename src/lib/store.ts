@@ -22,7 +22,6 @@ const SEED_PRODUCTS: Product[] = [
     id: "p1",
     name: "Curso Tráfego Pago Pro",
     description: "Domine Meta Ads e Google Ads do zero ao avançado.",
-    price: 497,
     image:
       "https://images.unsplash.com/photo-1551434678-e076c223a692?w=600&q=70",
     type: "digital",

@@ -6,6 +6,7 @@ export type CheckoutRow = {
   product_id: string | null;
   order_bump_id: string | null;
   public_id: string;
+  amount: number | string;
   name: string;
   headline: string;
   subheadline: string;
@@ -33,6 +34,7 @@ export function rowToCheckout(r: CheckoutRow): Checkout {
   return {
     id: r.id,
     publicId: r.public_id,
+    amount: Number(r.amount ?? 0),
     name: r.name,
     productId: r.product_id ?? "",
     headline: r.headline,
@@ -66,6 +68,7 @@ export function checkoutToRow(c: Checkout, userId: string): Omit<CheckoutRow, "i
     product_id: c.productId || null,
     order_bump_id: c.orderBumpId ?? null,
     name: c.name,
+    amount: c.amount,
     headline: c.headline,
     subheadline: c.subheadline,
     image: c.image || null,

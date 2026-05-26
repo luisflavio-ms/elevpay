@@ -55,6 +55,7 @@ export type Database = {
       checkouts: {
         Row: {
           active: boolean
+          amount: number
           benefits: Json
           blocks: Json
           button_text: string
@@ -85,6 +86,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          amount?: number
           benefits?: Json
           blocks?: Json
           button_text?: string
@@ -115,6 +117,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          amount?: number
           benefits?: Json
           blocks?: Json
           button_text?: string
@@ -294,7 +297,6 @@ export type Database = {
           id: string
           image: string | null
           name: string
-          price: number
           type: Database["public"]["Enums"]["product_type"]
           updated_at: string
           user_id: string
@@ -306,7 +308,6 @@ export type Database = {
           id?: string
           image?: string | null
           name: string
-          price?: number
           type?: Database["public"]["Enums"]["product_type"]
           updated_at?: string
           user_id: string
@@ -318,7 +319,6 @@ export type Database = {
           id?: string
           image?: string | null
           name?: string
-          price?: number
           type?: Database["public"]["Enums"]["product_type"]
           updated_at?: string
           user_id?: string

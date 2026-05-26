@@ -83,14 +83,13 @@ function Builder() {
     queryFn: async (): Promise<Product[]> => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,name,description,price,image,type,delivery_url")
+        .select("id,name,description,image,type,delivery_url")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((r) => ({
         id: r.id as string,
         name: r.name as string,
         description: (r.description as string) ?? "",
-        price: Number(r.price),
         image: (r.image as string) ?? "",
         type: r.type as Product["type"],
         deliveryUrl: (r.delivery_url as string) ?? "",
@@ -445,7 +444,7 @@ function PreviewPanel({
               </div>
               <div className="mt-3 text-right">
                 <p className="text-base font-extrabold" style={{ color: checkout.primaryColor }}>
-                  Total {brl(product.price)}
+                  Total {brl(checkout.amount)}
                 </p>
               </div>
             </div>
