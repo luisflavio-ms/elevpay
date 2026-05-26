@@ -393,6 +393,9 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 }
 
 /* ----------------- Preview ----------------- */
+const CANVAS_TOP = "checkout-canvas-top";
+const CANVAS_BOTTOM = "checkout-canvas-bottom";
+
 function PreviewPanel({
   checkout, products, bumps, selectedId, onSelect, onRemoveBlock, isDraggingPalette,
 }: {
@@ -408,83 +411,261 @@ function PreviewPanel({
   const bump = bumps.find((b) => b.id === checkout.orderBumpId);
   const interactive = !!onSelect;
   const blocks = checkout.blocks ?? [];
+  const aboveBlocks = blocks.filter((b) => (b.position ?? "above") === "above");
+  const belowBlocks = blocks.filter((b) => b.position === "below");
+  const color = checkout.primaryColor;
+
+  const renderBlocks = (list: CheckoutBlock[], zoneId: string) => {
+    if (!interactive) {
+      return list.length > 0 ? (
+        <div style={{ display: "grid", gap: 12 }}>
+          {list.map((b) => (
+            <BlockRenderer key={b.id} block={b} color={color} />
+          ))}
+        </div>
+      ) : null;
+    }
+    return (
+      <PreviewBlocksDrop
+        zoneId={zoneId}
+        blocks={list}
+        color={color}
+        selectedId={selectedId ?? null}
+        onSelect={(id) => onSelect!(id)}
+        onRemoveBlock={(id) => onRemoveBlock?.(id)}
+        isDraggingPalette={!!isDraggingPalette}
+      />
+    );
+  };
+
   return (
     <Card className="rounded-2xl sticky top-4">
       <CardContent className="p-0 overflow-hidden">
         <div className="bg-muted/40 p-2 text-[10px] text-muted-foreground text-center border-b">
-          Preview do checkout {interactive && "— clique em um bloco para editar"}
+          Preview do checkout {interactive && "— arraste blocos acima ou abaixo do checkout"}
         </div>
-        <div className="bg-white text-slate-900 p-4 max-h-[700px] overflow-y-auto">
-          {interactive ? (
-            <div className="mb-3">
-              <PreviewBlocksDrop
-                blocks={blocks}
-                color={checkout.primaryColor}
-                selectedId={selectedId ?? null}
-                onSelect={(id) => onSelect!(id)}
-                onRemoveBlock={(id) => onRemoveBlock?.(id)}
-                isDraggingPalette={!!isDraggingPalette}
+        <div
+          style={{
+            background: "#f8fafc",
+            fontFamily: "system-ui, -apple-system, sans-serif",
+            color: "#0f172a",
+            maxHeight: 720,
+            overflowY: "auto",
+            padding: 16,
+          }}
+        >
+          <div style={{ maxWidth: 480, margin: "0 auto" }}>
+            {/* Zona superior (drop) */}
+            <div style={{ marginBottom: 12 }}>{renderBlocks(aboveBlocks, CANVAS_TOP)}</div>
+
+            {checkout.urgencyMessage && (
+              <div
+                style={{
+                  background: "#fef3c7",
+                  color: "#92400e",
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  fontSize: 13,
+                  marginBottom: 12,
+                  textAlign: "center",
+                }}
+              >
+                {checkout.urgencyMessage}
+              </div>
+            )}
+
+            {checkout.image && (
+              <img
+                src={checkout.image}
+                alt=""
+                loading="lazy"
+                style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 12, marginBottom: 12 }}
               />
-            </div>
-          ) : (
-            blocks.length > 0 && (
-              <div className="space-y-3 mb-3">
-                {blocks.map((b) => (
-                  <BlockRenderer key={b.id} block={b} color={checkout.primaryColor} />
+            )}
+
+            <h1 style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.2, margin: 0 }}>{checkout.headline}</h1>
+            {checkout.subheadline && (
+              <p style={{ color: "#475569", marginTop: 6 }}>{checkout.subheadline}</p>
+            )}
+
+            {product && (
+              <div
+                style={{
+                  background: "#fff",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 12,
+                  padding: 14,
+                  marginTop: 14,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                  {product.image && (
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      loading="lazy"
+                      style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8, flexShrink: 0 }}
+                    />
+                  )}
+                  <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {product.name}
+                  </span>
+                </div>
+                <span style={{ fontSize: 22, fontWeight: 800, color, flexShrink: 0 }}>
+                  {brl(checkout.amount)}
+                </span>
+              </div>
+            )}
+
+            {checkout.benefits.filter(Boolean).length > 0 && (
+              <ul style={{ listStyle: "none", padding: 0, margin: "14px 0", fontSize: 14 }}>
+                {checkout.benefits.filter(Boolean).map((bn, i) => (
+                  <li key={i} style={{ padding: "4px 0" }}>
+                    <span style={{ color, marginRight: 8 }}>✓</span>
+                    {bn}
+                  </li>
                 ))}
+              </ul>
+            )}
+
+            <div
+              style={{
+                background: "#fff",
+                border: "1px solid #e2e8f0",
+                borderRadius: 12,
+                padding: 16,
+                marginTop: 8,
+              }}
+            >
+              <h3 style={{ fontSize: 14, margin: "0 0 10px", fontWeight: 600 }}>Seus dados</h3>
+              <PreviewInput placeholder="Nome completo" />
+              <PreviewInput placeholder="E-mail" />
+              <PreviewInput placeholder="WhatsApp" />
+              <PreviewInput placeholder="CPF" />
+
+              <h3 style={{ fontSize: 14, margin: "14px 0 8px", fontWeight: 600 }}>Pagamento</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                {checkout.paymentMethods.pix && <PreviewPayBtn label="Pix" active color={color} />}
+                {checkout.paymentMethods.card && <PreviewPayBtn label="Cartão" color={color} />}
+                {checkout.paymentMethods.boleto && <PreviewPayBtn label="Boleto" color={color} />}
               </div>
-            )
-          )}
-          {product && (
-            <div className="my-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 text-slate-900"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12h2"/></svg>
-                <h3 className="text-xs font-bold tracking-wider text-slate-900">RESUMO DO PEDIDO</h3>
+
+              {bump && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    alignItems: "flex-start",
+                    marginTop: 14,
+                    padding: 12,
+                    border: `2px dashed ${color}`,
+                    borderRadius: 10,
+                  }}
+                >
+                  <input type="checkbox" readOnly style={{ marginTop: 3 }} />
+                  <div>
+                    <div style={{ fontSize: 11, color, fontWeight: 700 }}>OFERTA ESPECIAL</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{bump.title}</div>
+                    <div style={{ fontSize: 12, color: "#475569" }}>{bump.description}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4 }}>+ {brl(bump.price)}</div>
+                  </div>
+                </div>
+              )}
+
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: 12,
+                  background: "#f1f5f9",
+                  borderRadius: 10,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontWeight: 700,
+                }}
+              >
+                <span>Total</span>
+                <span>{brl(checkout.amount)}</span>
               </div>
-              <div className="flex items-center gap-3">
-                {product.image && (
-                  <img src={product.image} alt={product.name} className="h-14 w-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />
-                )}
-                <p className="text-sm font-semibold text-slate-900 leading-snug flex-1 min-w-0">{product.name}</p>
-              </div>
-              <div className="mt-3 text-right">
-                <p className="text-base font-extrabold" style={{ color: checkout.primaryColor }}>
-                  Total {brl(checkout.amount)}
+
+              <button
+                type="button"
+                style={{
+                  marginTop: 12,
+                  width: "100%",
+                  padding: "14px 16px",
+                  background: color,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 10,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {checkout.buttonText}
+              </button>
+
+              {checkout.secureSeal && (
+                <p style={{ textAlign: "center", fontSize: 12, color: "#64748b", marginTop: 10 }}>
+                  🔒 Compra 100% segura • SSL criptografado
                 </p>
-              </div>
+              )}
+              {checkout.guarantee && (
+                <p style={{ textAlign: "center", fontSize: 12, color: "#475569", marginTop: 2 }}>
+                  🛡️ {checkout.guarantee}
+                </p>
+              )}
             </div>
-          )}
-          {checkout.benefits.length > 0 && (
-            <ul className="space-y-1.5 text-sm mb-4">
-              {checkout.benefits.filter(Boolean).map((b, i) => (
-                <li key={i} className="flex gap-2">
-                  <span style={{ color: checkout.primaryColor }}>✓</span>{b}
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="space-y-2 mb-3">
-            <input className="w-full border rounded-md px-3 py-2 text-sm" placeholder="Nome completo" />
-            <input className="w-full border rounded-md px-3 py-2 text-sm" placeholder="E-mail" />
-            <input className="w-full border rounded-md px-3 py-2 text-sm" placeholder="WhatsApp" />
+
+            {/* Zona inferior (drop) */}
+            <div style={{ marginTop: 12 }}>{renderBlocks(belowBlocks, CANVAS_BOTTOM)}</div>
           </div>
-          {bump && (
-            <div className="p-3 border-2 border-dashed rounded-lg mb-3" style={{ borderColor: checkout.primaryColor }}>
-              <p className="text-xs font-semibold" style={{ color: checkout.primaryColor }}>OFERTA ESPECIAL</p>
-              <p className="text-sm font-medium">{bump.title}</p>
-              <p className="text-xs text-slate-600">{bump.description}</p>
-              <p className="text-sm font-bold mt-1">+ {brl(bump.price)}</p>
-            </div>
-          )}
-          <button className="w-full py-3 rounded-lg text-white font-semibold text-sm" style={{ background: checkout.primaryColor }}>
-            {checkout.buttonText}
-          </button>
-          {checkout.guarantee && (
-            <p className="text-xs text-slate-600 text-center mt-3">🛡️ {checkout.guarantee}</p>
-          )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function PreviewInput({ placeholder }: { placeholder: string }) {
+  return (
+    <input
+      readOnly
+      placeholder={placeholder}
+      style={{
+        width: "100%",
+        padding: "11px 12px",
+        border: "1px solid #cbd5e1",
+        borderRadius: 8,
+        fontSize: 14,
+        marginBottom: 8,
+        outline: "none",
+        boxSizing: "border-box",
+        background: "#fff",
+      }}
+    />
+  );
+}
+function PreviewPayBtn({ label, active, color }: { label: string; active?: boolean; color: string }) {
+  return (
+    <button
+      type="button"
+      style={{
+        padding: "10px 8px",
+        borderRadius: 8,
+        cursor: "pointer",
+        fontWeight: 600,
+        fontSize: 13,
+        border: active ? `2px solid ${color}` : "1px solid #cbd5e1",
+        background: active ? color + "10" : "#fff",
+        color: active ? color : "#0f172a",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
