@@ -409,7 +409,12 @@ function PublicCheckout() {
                   style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8, flexShrink: 0 }}
                 />
               )}
-              <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</span>
+              <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</span>
+                {p.description && (
+                  <span style={{ fontSize: 12, color: "#64748b", lineHeight: 1.3 }}>{p.description}</span>
+                )}
+              </div>
             </div>
             <span style={{ fontSize: 22, fontWeight: 800, color, flexShrink: 0 }}>{brl(c.amount)}</span>
           </div>
