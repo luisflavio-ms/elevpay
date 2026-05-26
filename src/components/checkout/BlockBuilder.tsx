@@ -426,6 +426,13 @@ export function BlockEditor({
       </>
     );
   }
+  if (block.type === "secureSeal") {
+    return (
+      <F label="Texto do selo">
+        <Input value={block.text} onChange={(e) => onUpdate({ text: e.target.value })} />
+      </F>
+    );
+  }
   return null;
 }
 
