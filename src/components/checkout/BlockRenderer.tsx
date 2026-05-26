@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import DOMPurify from "dompurify";
 import type { CheckoutBlock } from "@/lib/types";
 import guaranteeBadge from "@/assets/guarantee-badge.png";
 import secureBadge from "@/assets/secure-badge.png";
@@ -45,7 +46,7 @@ export function BlockRenderer({ block, color, asToast, preview }: Props) {
     }
 
     case "html":
-      return <div dangerouslySetInnerHTML={{ __html: block.code }} />;
+      return <HtmlBlock code={block.code} />;
 
     case "timer":
       return <Timer minutes={block.minutes} label={block.label} color={color} />;
@@ -102,7 +103,19 @@ export function BlockRenderer({ block, color, asToast, preview }: Props) {
           </div>
         </div>
       );
-  }
+}
+
+function HtmlBlock({ code }: { code: string }) {
+  const safe = useMemo(
+    () =>
+      DOMPurify.sanitize(code, {
+        FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "base", "meta", "link"],
+        FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus", "onblur", "onchange", "onsubmit", "formaction"],
+      }),
+    [code],
+  );
+  return <div dangerouslySetInnerHTML={{ __html: safe }} />;
+}
 }
 
 function Timer({ minutes, label, color }: { minutes: number; label: string; color: string }) {
