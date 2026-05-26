@@ -278,28 +278,22 @@ function ProdutosPage() {
                   onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                 />
               </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Preço (R$)">
-                  <Input
-                    type="number"
-                    value={draft.price}
-                    onChange={(e) => setDraft({ ...draft, price: Number(e.target.value) })}
-                  />
-                </Field>
-                <Field label="Tipo">
-                  <Select
-                    value={draft.type}
-                    onValueChange={(v) => setDraft({ ...draft, type: v as ProductType })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="digital">Digital</SelectItem>
-                      <SelectItem value="fisico">Físico</SelectItem>
-                      <SelectItem value="assinatura">Assinatura</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
+              <Field label="Tipo">
+                <Select
+                  value={draft.type}
+                  onValueChange={(v) => setDraft({ ...draft, type: v as ProductType })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="digital">Digital</SelectItem>
+                    <SelectItem value="fisico">Físico</SelectItem>
+                    <SelectItem value="assinatura">Assinatura</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <p className="text-xs text-muted-foreground">
+                O preço agora é definido no checkout, permitindo variações de valor.
+              </p>
               <Field label="URL da imagem">
                 <Input value={draft.image} onChange={(e) => setDraft({ ...draft, image: e.target.value })} />
               </Field>
