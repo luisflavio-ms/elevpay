@@ -56,7 +56,8 @@ export type CheckoutBlockType =
   | "html"
   | "timer"
   | "guarantee"
-  | "notifications";
+  | "notifications"
+  | "secureSeal";
 
 export interface CheckoutBlockBase {
   id: string;
