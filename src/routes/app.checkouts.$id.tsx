@@ -50,7 +50,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { rowToCheckout, checkoutToRow, type CheckoutRow } from "@/lib/checkout-mapper";
 import type { Checkout, Product, OrderBump, CheckoutBlock, CheckoutBlockType } from "@/lib/types";
-import { BlockBuilder, Palette, BlockEditor, CANVAS_ID } from "@/components/checkout/BlockBuilder";
+import { BlockBuilder, Palette, BlockEditor } from "@/components/checkout/BlockBuilder";
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { BLOCK_ICONS, BLOCK_LABELS, createBlock } from "@/components/checkout/blockDefaults";
 import { checkoutOrigin } from "@/lib/domains";
