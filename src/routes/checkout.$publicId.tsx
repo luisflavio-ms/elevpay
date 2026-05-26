@@ -727,10 +727,10 @@ function PixInstructions({ amount, color }: { amount: number; color: string }) {
           borderRadius: 8,
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          justifyContent: "center",
+          textAlign: "center",
         }}
       >
-        <PixIcon size={18} />
         LIBERAÇÃO IMEDIATA AO PAGAR NO PIX!
       </div>
       <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
