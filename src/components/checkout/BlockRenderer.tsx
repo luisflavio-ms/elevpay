@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CheckoutBlock } from "@/lib/types";
 import guaranteeBadge from "@/assets/guarantee-badge.png";
+import secureBadge from "@/assets/secure-badge.png";
 
 interface Props {
   block: CheckoutBlock;
