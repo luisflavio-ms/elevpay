@@ -24,6 +24,7 @@ import { Route as AppPedidosRouteImport } from './routes/app.pedidos'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppConfiguracoesRouteImport } from './routes/app.configuracoes'
 import { Route as AppCheckoutsIndexRouteImport } from './routes/app.checkouts.index'
+import { Route as AppProdutosIdRouteImport } from './routes/app.produtos.$id'
 import { Route as AppCheckoutsIdRouteImport } from './routes/app.checkouts.$id'
 import { Route as ApiPublicTestPushRouteImport } from './routes/api/public/test-push'
 import { Route as ApiPublicAbacateWebhookRouteImport } from './routes/api/public/abacate-webhook'
@@ -103,6 +104,11 @@ const AppCheckoutsIndexRoute = AppCheckoutsIndexRouteImport.update({
   path: '/checkouts/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProdutosIdRoute = AppProdutosIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppProdutosRoute,
+} as any)
 const AppCheckoutsIdRoute = AppCheckoutsIdRouteImport.update({
   id: '/checkouts/$id',
   path: '/checkouts/$id',
@@ -129,7 +135,7 @@ export interface FileRoutesByFullPath {
   '/app/configuracoes': typeof AppConfiguracoesRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/pedidos': typeof AppPedidosRoute
-  '/app/produtos': typeof AppProdutosRoute
+  '/app/produtos': typeof AppProdutosRouteWithChildren
   '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$publicId': typeof CheckoutPublicIdRoute
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/api/public/test-push': typeof ApiPublicTestPushRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
+  '/app/produtos/$id': typeof AppProdutosIdRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -148,7 +155,7 @@ export interface FileRoutesByTo {
   '/app/configuracoes': typeof AppConfiguracoesRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/pedidos': typeof AppPedidosRoute
-  '/app/produtos': typeof AppProdutosRoute
+  '/app/produtos': typeof AppProdutosRouteWithChildren
   '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$publicId': typeof CheckoutPublicIdRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/api/public/test-push': typeof ApiPublicTestPushRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
+  '/app/produtos/$id': typeof AppProdutosIdRoute
   '/app/checkouts': typeof AppCheckoutsIndexRoute
 }
 export interface FileRoutesById {
@@ -169,7 +177,7 @@ export interface FileRoutesById {
   '/app/configuracoes': typeof AppConfiguracoesRoute
   '/app/dashboard': typeof AppDashboardRoute
   '/app/pedidos': typeof AppPedidosRoute
-  '/app/produtos': typeof AppProdutosRoute
+  '/app/produtos': typeof AppProdutosRouteWithChildren
   '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$publicId': typeof CheckoutPublicIdRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/api/public/test-push': typeof ApiPublicTestPushRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
+  '/app/produtos/$id': typeof AppProdutosIdRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
 }
 export interface FileRouteTypes {
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/api/public/abacate-webhook'
     | '/api/public/test-push'
     | '/app/checkouts/$id'
+    | '/app/produtos/$id'
     | '/app/checkouts/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/api/public/abacate-webhook'
     | '/api/public/test-push'
     | '/app/checkouts/$id'
+    | '/app/produtos/$id'
     | '/app/checkouts'
   id:
     | '__root__'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/api/public/abacate-webhook'
     | '/api/public/test-push'
     | '/app/checkouts/$id'
+    | '/app/produtos/$id'
     | '/app/checkouts/'
   fileRoutesById: FileRoutesById
 }
@@ -360,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCheckoutsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/produtos/$id': {
+      id: '/app/produtos/$id'
+      path: '/$id'
+      fullPath: '/app/produtos/$id'
+      preLoaderRoute: typeof AppProdutosIdRouteImport
+      parentRoute: typeof AppProdutosRoute
+    }
     '/app/checkouts/$id': {
       id: '/app/checkouts/$id'
       path: '/checkouts/$id'
@@ -384,11 +403,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppProdutosRouteChildren {
+  AppProdutosIdRoute: typeof AppProdutosIdRoute
+}
+
+const AppProdutosRouteChildren: AppProdutosRouteChildren = {
+  AppProdutosIdRoute: AppProdutosIdRoute,
+}
+
+const AppProdutosRouteWithChildren = AppProdutosRoute._addFileChildren(
+  AppProdutosRouteChildren,
+)
+
 interface AppRouteChildren {
   AppConfiguracoesRoute: typeof AppConfiguracoesRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppPedidosRoute: typeof AppPedidosRoute
-  AppProdutosRoute: typeof AppProdutosRoute
+  AppProdutosRoute: typeof AppProdutosRouteWithChildren
   AppVendasRoute: typeof AppVendasRoute
   AppWebhooksRoute: typeof AppWebhooksRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -400,7 +431,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppConfiguracoesRoute: AppConfiguracoesRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppPedidosRoute: AppPedidosRoute,
-  AppProdutosRoute: AppProdutosRoute,
+  AppProdutosRoute: AppProdutosRouteWithChildren,
   AppVendasRoute: AppVendasRoute,
   AppWebhooksRoute: AppWebhooksRoute,
   AppIndexRoute: AppIndexRoute,
