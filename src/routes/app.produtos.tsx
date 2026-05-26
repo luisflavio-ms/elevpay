@@ -332,14 +332,13 @@ function ProdutosPage() {
         <EmptyState onAction={openNew} />
       ) : (
         <Card className="rounded-2xl bg-card/60 backdrop-blur border-border/60 overflow-hidden">
-          <div className="hidden md:grid grid-cols-[40px_minmax(0,3fr)_120px_110px_80px_minmax(0,1.5fr)_120px] gap-4 px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border/60 bg-background/40">
+          <div className="hidden md:grid grid-cols-[40px_minmax(0,3fr)_110px_80px_minmax(0,1.5fr)_120px] gap-4 px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border/60 bg-background/40">
             <button
               onClick={toggleAll}
               aria-label="Selecionar todos"
               className={`h-4 w-4 rounded border ${allSelected ? "bg-primary border-primary" : "border-muted-foreground/40"}`}
             />
             <span>Produto</span>
-            <span>Preço</span>
             <span>Status</span>
             <span>Vendas</span>
             <span>Link</span>
