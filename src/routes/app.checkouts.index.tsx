@@ -162,17 +162,17 @@ function ChecksList() {
                       {c.active ? "Ativo" : "Inativo"}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1 truncate">/checkout/{c.slug}</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">/checkout/{c.publicId}</p>
                   <div className="flex gap-4 mt-2 text-sm">
                     <span className="text-muted-foreground">Conv.: <b className="text-foreground">{c.conversion}%</b></span>
                     <span className="text-muted-foreground">Receita: <b className="text-foreground">{brl(c.revenue)}</b></span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 sm:justify-end">
-                  <Button size="sm" variant="outline" onClick={() => copyLink(c.slug)}>
+                  <Button size="sm" variant="outline" onClick={() => copyLink(c.publicId)}>
                     <Copy className="h-4 w-4 mr-1" /> Link
                   </Button>
-                  <Link to="/checkout/$slug" params={{ slug: c.slug }} target="_blank">
+                  <Link to="/checkout/$publicId" params={{ publicId: c.publicId }} target="_blank">
                     <Button size="sm" variant="outline">
                       <ExternalLink className="h-4 w-4 mr-1" /> Abrir
                     </Button>
