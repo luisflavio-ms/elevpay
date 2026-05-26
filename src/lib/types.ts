@@ -69,6 +69,8 @@ export type CheckoutBlockType =
 export interface CheckoutBlockBase {
   id: string;
   type: CheckoutBlockType;
+  /** Em qual área do checkout o bloco aparece. Padrão: "above". */
+  position?: "above" | "below";
 }
 export interface ImageBlock extends CheckoutBlockBase {
   type: "image";
