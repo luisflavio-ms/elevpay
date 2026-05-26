@@ -27,24 +27,6 @@ type ProductRow = {
   delivery_url: string | null;
 };
 
-type DraftProduct = {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  type: ProductType;
-  delivery_url: string;
-};
-
-const empty: DraftProduct = {
-  id: "",
-  name: "",
-  description: "",
-  image: "",
-  type: "digital",
-  delivery_url: "",
-};
-
 const typeLabel: Record<ProductType, string> = {
   digital: "Digital",
   fisico: "Físico",
@@ -52,7 +34,8 @@ const typeLabel: Record<ProductType, string> = {
 };
 
 function ProdutosPage() {
-  const { user } = useAuth();
+  const _auth = useAuth();
+  void _auth;
   const qc = useQueryClient();
   const nav = useNavigate();
 
