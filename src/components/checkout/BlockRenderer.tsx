@@ -133,12 +133,13 @@ function Timer({ minutes, label, color }: { minutes: number; label: string; colo
 }
 
 function Notifications({
-  block, color, asToast,
-}: { block: Extract<CheckoutBlock, { type: "notifications" }>; color: string; asToast?: boolean }) {
+  block, color, asToast, preview,
+}: { block: Extract<CheckoutBlock, { type: "notifications" }>; color: string; asToast?: boolean; preview?: boolean }) {
   const [i, setI] = useState(0);
-  const [show, setShow] = useState(false);
-  const [started, setStarted] = useState(false);
+  const [show, setShow] = useState(preview ? true : false);
+  const [started, setStarted] = useState(preview ? true : false);
   useEffect(() => {
+    if (preview) return;
     if (block.items.length === 0) return;
     const delayMs = Math.max(0, block.delaySec ?? 6) * 1000;
     const intervalMs = Math.max(2, block.intervalSec) * 1000;
@@ -161,7 +162,7 @@ function Notifications({
       clearTimeout(cycleTimer);
       if (interval) clearInterval(interval);
     };
-  }, [block.items.length, block.intervalSec, block.delaySec]);
+  }, [block.items.length, block.intervalSec, block.delaySec, preview]);
 
   if (block.items.length === 0) return null;
   if (!started) return null;
