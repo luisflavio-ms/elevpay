@@ -4,10 +4,16 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
   image: string;
   type: ProductType;
   deliveryUrl: string;
+}
+
+export interface PriceVariant {
+  id: string;
+  publicId: string;
+  checkoutId: string;
+  amount: number;
 }
 
 export interface Testimonial {
