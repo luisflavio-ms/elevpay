@@ -33,6 +33,7 @@ export interface Checkout {
   publicId: string;
   name: string;
   productId: string;
+  amount: number;
   headline: string;
   subheadline: string;
   image: string;
