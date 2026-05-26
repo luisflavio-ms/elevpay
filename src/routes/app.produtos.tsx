@@ -123,36 +123,6 @@ function ProdutosPage() {
     );
   }, [items, query]);
 
-  const upsertM = useMutation({
-    mutationFn: async (d: DraftProduct) => {
-      if (!user) throw new Error("Não autenticado");
-      const payload = {
-        user_id: user.id,
-        name: d.name,
-        description: d.description,
-        image: d.image || null,
-        type: d.type,
-        delivery_url: d.delivery_url || null,
-      };
-      if (d.id) {
-        const { error } = await supabase
-          .from("products")
-          .update(payload)
-          .eq("id", d.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("products").insert(payload);
-        if (error) throw error;
-      }
-    },
-    onSuccess: (_d, v) => {
-      qc.invalidateQueries({ queryKey: ["products"] });
-      setOpen(false);
-      toast.success(v.id ? "Produto atualizado" : "Produto criado");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
   const deleteM = useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("products").delete().in("id", ids);
@@ -170,11 +140,6 @@ function ProdutosPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const save = () => {
-    if (!draft.name.trim()) return toast.error("Nome é obrigatório");
-    upsertM.mutate(draft);
-  };
-
   const toggle = (id: string) =>
     setSelected((s) => {
       const n = new Set(s);
@@ -187,21 +152,9 @@ function ProdutosPage() {
       s.size === filtered.length ? new Set() : new Set(filtered.map((p) => p.id)),
     );
 
-  const openNew = () => {
-    setDraft(empty);
-    setOpen(true);
-  };
-  const openEdit = (p: ProductRow) => {
-    setDraft({
-      id: p.id,
-      name: p.name,
-      description: p.description ?? "",
-      image: p.image ?? "",
-      type: p.type,
-      delivery_url: p.delivery_url ?? "",
-    });
-    setOpen(true);
-  };
+  const openNew = () => nav({ to: "/app/produtos/$id", params: { id: "new" } });
+  const openEdit = (p: ProductRow) =>
+    nav({ to: "/app/produtos/$id", params: { id: p.id } });
 
   const copyLink = (slug: string) => {
     const url = `${checkoutOrigin()}/checkout/${slug}`;
