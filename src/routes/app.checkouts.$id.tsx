@@ -172,7 +172,7 @@ function Builder() {
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/checkout/${checkout.slug}`);
+    navigator.clipboard.writeText(`${checkoutOrigin()}/checkout/${checkout.slug}`);
     toast.success("Link copiado");
   };
 
