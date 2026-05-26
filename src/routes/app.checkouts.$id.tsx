@@ -740,8 +740,10 @@ function DesktopBuilder({
     setBlocks(blocks.filter((b) => b.id !== id));
     if (selectedId === id) setSelectedId(null);
   };
-  const addBlock = (t: CheckoutBlockType, atIndex?: number) => {
-    const nb = createBlock(t);
+  const addBlock = (t: CheckoutBlockType, opts?: { atIndex?: number; position?: "above" | "below" }) => {
+    const position = opts?.position ?? "above";
+    const nb = createBlock(t, position);
+    const atIndex = opts?.atIndex;
     if (atIndex == null || atIndex >= blocks.length) {
       setBlocks([...blocks, nb]);
     } else {
@@ -767,13 +769,34 @@ function DesktopBuilder({
     if (!over) return;
     const data = active.data.current as { source?: string; type?: CheckoutBlockType } | undefined;
 
-    if (data?.source === "palette" && data.type) {
-      if (over.id === CANVAS_ID) {
-        addBlock(data.type);
+    // Drop direto numa zona (top/bottom)
+    if (over.id === CANVAS_TOP || over.id === CANVAS_BOTTOM) {
+      const zonePos: "above" | "below" = over.id === CANVAS_BOTTOM ? "below" : "above";
+      if (data?.source === "palette" && data.type) {
+        addBlock(data.type, { position: zonePos });
         return;
       }
+      // sort de um bloco existente para essa zona — só atualiza a posição
+      const movingId = String(active.id);
+      const moving = blocks.find((b) => b.id === movingId);
+      if (moving && (moving.position ?? "above") !== zonePos) {
+        setBlocks(blocks.map((b) => (b.id === movingId ? ({ ...b, position: zonePos } as CheckoutBlock) : b)));
+      }
+      return;
+    }
+
+    // Drop em cima de um bloco existente
+    const overBlock = blocks.find((b) => b.id === over.id);
+    if (!overBlock) return;
+    const overPos: "above" | "below" = overBlock.position ?? "above";
+
+    if (data?.source === "palette" && data.type) {
       const idx = blocks.findIndex((b) => b.id === over.id);
-      addBlock(data.type, idx < 0 ? undefined : idx);
+      const nb = createBlock(data.type, overPos);
+      const next = [...blocks];
+      next.splice(Math.max(0, idx), 0, nb);
+      setBlocks(next);
+      setSelectedId(nb.id);
       return;
     }
 
@@ -781,7 +804,10 @@ function DesktopBuilder({
     const oldIdx = blocks.findIndex((b) => b.id === active.id);
     const newIdx = blocks.findIndex((b) => b.id === over.id);
     if (oldIdx < 0 || newIdx < 0) return;
-    setBlocks(arrayMove(blocks, oldIdx, newIdx));
+    const moved = arrayMove(blocks, oldIdx, newIdx);
+    // garante que o bloco arrastado adota a posição do bloco-alvo
+    const movingId = String(active.id);
+    setBlocks(moved.map((b) => (b.id === movingId ? ({ ...b, position: overPos } as CheckoutBlock) : b)));
   };
 
   return (
