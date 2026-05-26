@@ -10,6 +10,7 @@ import {
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getDomainRedirect } from "@/lib/domains";
 
 import appCss from "../styles.css?url";
 
