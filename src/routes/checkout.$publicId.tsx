@@ -137,7 +137,7 @@ function PublicCheckout() {
           c.productId
             ? supabase
                 .from("products")
-                .select("id,name,description,price,image,type,delivery_url")
+                .select("id,name,description,image,type,delivery_url")
                 .eq("id", c.productId)
                 .maybeSingle()
             : Promise.resolve({ data: null }),
@@ -146,14 +146,15 @@ function PublicCheckout() {
             : Promise.resolve({ data: null }),
         ]);
 
-        const priceOverride = variant ? Number(variant.amount) : undefined;
+        const priceOverride = variant ? Number(variant.amount) : c.amount;
+        // overrides checkout.amount for this render only
+        c.amount = priceOverride;
 
         const p: Product | undefined = pRow
           ? {
               id: pRow.id as string,
               name: pRow.name as string,
               description: (pRow.description as string) ?? "",
-              price: priceOverride ?? Number(pRow.price),
               image: (pRow.image as string) ?? "",
               type: pRow.type as Product["type"],
               deliveryUrl: (pRow.delivery_url as string) ?? "",
