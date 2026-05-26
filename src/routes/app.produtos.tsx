@@ -404,15 +404,6 @@ function ProdutosPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs">{label}</Label>
-      {children}
-    </div>
-  );
-}
-
 function EmptyState({ onAction }: { onAction: () => void }) {
   return (
     <Card className="rounded-2xl">
@@ -429,3 +420,4 @@ function EmptyState({ onAction }: { onAction: () => void }) {
     </Card>
   );
 }
+
