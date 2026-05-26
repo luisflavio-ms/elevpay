@@ -287,7 +287,7 @@ function PublicCheckout() {
       if (method === "pix") {
         const result = await createPix({
           data: {
-            slug,
+            publicId,
             customer: {
               name: form.name,
               email: form.email,
