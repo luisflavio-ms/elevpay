@@ -396,6 +396,13 @@ export function BlockEditor({
       });
     return (
       <>
+        <F label="Atraso inicial (segundos)">
+          <Input
+            type="number" min={0}
+            value={block.delaySec ?? 6}
+            onChange={(e) => onUpdate({ delaySec: Math.max(0, Number(e.target.value) || 0) })}
+          />
+        </F>
         <F label="Intervalo (segundos)">
           <Input
             type="number" min={2}
