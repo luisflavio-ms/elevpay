@@ -34,6 +34,7 @@ export function rowToCheckout(r: CheckoutRow): Checkout {
   return {
     id: r.id,
     publicId: r.public_id,
+    amount: Number(r.amount ?? 0),
     name: r.name,
     productId: r.product_id ?? "",
     headline: r.headline,
