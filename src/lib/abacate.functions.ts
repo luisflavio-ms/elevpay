@@ -267,5 +267,3 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
     return { status: order.status };
   });
 
-  });
-
