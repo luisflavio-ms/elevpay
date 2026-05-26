@@ -61,5 +61,7 @@ export function createBlock(type: CheckoutBlockType): CheckoutBlock {
           { name: "Ana L.", product: "acabou de comprar", city: "Belo Horizonte, MG", ago: "há 7 min" },
         ],
       };
+    case "secureSeal":
+      return { id, type, text: "Compra 100% segura" };
   }
 }
