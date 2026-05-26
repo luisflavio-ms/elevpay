@@ -704,7 +704,7 @@ function PixInstructions({ amount, color }: { amount: number; color: string }) {
   const steps = [
     {
       title: "Copie os dados de pagamento",
-      text: 'Após clicar no botão verde "FINALIZAR PAGAMENTO", você poderá escanear o QR Code ou copiar a chave PIX "copia e cola".',
+      text: 'Após clicar no botão "FINALIZAR PAGAMENTO", você poderá escanear o QR Code ou copiar a chave PIX "copia e cola".',
     },
     {
       title: "Realize o pagamento no seu banco de preferência",
