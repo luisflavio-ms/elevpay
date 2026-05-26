@@ -261,118 +261,112 @@ function ConfigPanel({
   const rmTesti = (i: number) => update("testimonials", checkout.testimonials.filter((_, x) => x !== i));
 
   return (
-    <div className="space-y-4">
-      <Section title="Informações">
-        <F label="Nome do checkout">
-          <Input value={checkout.name} onChange={(e) => update("name", e.target.value)} />
-        </F>
-        <F label="Slug (URL)">
-          <Input value={checkout.slug} onChange={(e) => update("slug", slugify(e.target.value))} />
-        </F>
-        <F label="Produto vinculado">
-          <Select value={checkout.productId} onValueChange={(v) => update("productId", v)}>
+    <Tabs defaultValue="config" className="space-y-4">
+      <TabsList className="grid grid-cols-2 w-full">
+        <TabsTrigger value="config">Configuração</TabsTrigger>
+        <TabsTrigger value="visual">Visual</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="config" className="space-y-4 mt-0">
+        <Section title="Informações">
+          <F label="Nome do checkout">
+            <Input value={checkout.name} onChange={(e) => update("name", e.target.value)} />
+          </F>
+          <F label="Slug (URL)">
+            <Input value={checkout.slug} onChange={(e) => update("slug", slugify(e.target.value))} />
+          </F>
+          <F label="Produto vinculado">
+            <Select value={checkout.productId} onValueChange={(v) => update("productId", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {products.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </F>
+        </Section>
+
+        <Section title="Pagamento">
+          <Toggle label="Pix" checked={checkout.paymentMethods.pix} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, pix: v })} />
+          <Toggle label="Cartão" checked={checkout.paymentMethods.card} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, card: v })} />
+          <Toggle label="Boleto" checked={checkout.paymentMethods.boleto} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, boleto: v })} />
+        </Section>
+
+        <Section title="Order bump">
+          <Select
+            value={checkout.orderBumpId ?? "none"}
+            onValueChange={(v) => update("orderBumpId", v === "none" ? undefined : v)}
+          >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {products.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              <SelectItem value="none">Nenhum</SelectItem>
+              {bumps.map((b) => (
+                <SelectItem key={b.id} value={b.id}>{b.title} — {brl(b.price)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </F>
-      </Section>
-
-      {!compact && (
-        <Section title="Blocos do checkout (arraste para reordenar)">
-          <BlockBuilder
-            blocks={checkout.blocks ?? []}
-            onChange={(b: CheckoutBlock[]) => update("blocks", b)}
-          />
         </Section>
-      )}
 
-      <Section title="Conteúdo">
+        <Section title="Conversão & Urgência">
+          <F label="Timer de escassez (min)">
+            <Input type="number" value={checkout.scarcityTimerMinutes} onChange={(e) => update("scarcityTimerMinutes", Number(e.target.value))} />
+          </F>
+          <F label="Mensagem de urgência"><Input value={checkout.urgencyMessage} onChange={(e) => update("urgencyMessage", e.target.value)} /></F>
+          <Toggle label="Selo de compra segura" checked={checkout.secureSeal} onChange={(v) => update("secureSeal", v)} />
+        </Section>
+      </TabsContent>
 
-        <F label="Headline"><Input value={checkout.headline} onChange={(e) => update("headline", e.target.value)} /></F>
-        <F label="Subheadline"><Input value={checkout.subheadline} onChange={(e) => update("subheadline", e.target.value)} /></F>
-        <F label="Imagem (URL)"><Input value={checkout.image} onChange={(e) => update("image", e.target.value)} /></F>
-        <F label="Garantia"><Input value={checkout.guarantee} onChange={(e) => update("guarantee", e.target.value)} /></F>
-      </Section>
+      <TabsContent value="visual" className="space-y-4 mt-0">
+        {!compact && (
+          <Section title="Blocos do checkout (arraste para reordenar)">
+            <BlockBuilder
+              blocks={checkout.blocks ?? []}
+              onChange={(b: CheckoutBlock[]) => update("blocks", b)}
+            />
+          </Section>
+        )}
 
-      <Section title="Benefícios">
-        {checkout.benefits.map((b, i) => (
-          <div key={i} className="flex gap-2">
-            <Input value={b} onChange={(e) => setBenefit(i, e.target.value)} />
-            <Button size="icon" variant="ghost" onClick={() => rmBenefit(i)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-        <Button size="sm" variant="outline" onClick={addBenefit}>
-          <Plus className="h-4 w-4 mr-1" /> Adicionar benefício
-        </Button>
-      </Section>
+        <Section title="Aparência">
+          <F label="Cor principal">
+            <div className="flex gap-2">
+              <Input type="color" className="w-16 h-10 p-1" value={checkout.primaryColor} onChange={(e) => update("primaryColor", e.target.value)} />
+              <Input value={checkout.primaryColor} onChange={(e) => update("primaryColor", e.target.value)} />
+            </div>
+          </F>
+          <F label="Texto do botão"><Input value={checkout.buttonText} onChange={(e) => update("buttonText", e.target.value)} /></F>
+        </Section>
 
-      <Section title="Depoimentos">
-        {checkout.testimonials.map((t, i) => (
-          <div key={i} className="space-y-2 p-3 border rounded-lg">
-            <Input placeholder="Nome" value={t.name} onChange={(e) => setTesti(i, "name", e.target.value)} />
-            <Textarea placeholder="Texto" rows={2} value={t.text} onChange={(e) => setTesti(i, "text", e.target.value)} />
-            <Button size="sm" variant="ghost" onClick={() => rmTesti(i)}>
-              <Trash2 className="h-4 w-4 mr-1" /> Remover
-            </Button>
-          </div>
-        ))}
-        <Button size="sm" variant="outline" onClick={addTesti}>
-          <Plus className="h-4 w-4 mr-1" /> Adicionar depoimento
-        </Button>
-      </Section>
+        <Section title="Benefícios">
+          {checkout.benefits.map((b, i) => (
+            <div key={i} className="flex gap-2">
+              <Input value={b} onChange={(e) => setBenefit(i, e.target.value)} />
+              <Button size="icon" variant="ghost" onClick={() => rmBenefit(i)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button size="sm" variant="outline" onClick={addBenefit}>
+            <Plus className="h-4 w-4 mr-1" /> Adicionar benefício
+          </Button>
+        </Section>
 
-      <Section title="Aparência">
-        <F label="Cor principal">
-          <div className="flex gap-2">
-            <Input type="color" className="w-16 h-10 p-1" value={checkout.primaryColor} onChange={(e) => update("primaryColor", e.target.value)} />
-            <Input value={checkout.primaryColor} onChange={(e) => update("primaryColor", e.target.value)} />
-          </div>
-        </F>
-        <F label="Texto do botão"><Input value={checkout.buttonText} onChange={(e) => update("buttonText", e.target.value)} /></F>
-      </Section>
-
-      <Section title="Pagamento">
-        <Toggle label="Pix" checked={checkout.paymentMethods.pix} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, pix: v })} />
-        <Toggle label="Cartão" checked={checkout.paymentMethods.card} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, card: v })} />
-        <Toggle label="Boleto" checked={checkout.paymentMethods.boleto} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, boleto: v })} />
-      </Section>
-
-      <Section title="Order bump">
-        <Select
-          value={checkout.orderBumpId ?? "none"}
-          onValueChange={(v) => update("orderBumpId", v === "none" ? undefined : v)}
-        >
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Nenhum</SelectItem>
-            {bumps.map((b) => (
-              <SelectItem key={b.id} value={b.id}>{b.title} — {brl(b.price)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Section>
-
-      <Section title="Conversão & Urgência">
-        <F label="Timer de escassez (min)">
-          <Input type="number" value={checkout.scarcityTimerMinutes} onChange={(e) => update("scarcityTimerMinutes", Number(e.target.value))} />
-        </F>
-        <F label="Mensagem de urgência"><Input value={checkout.urgencyMessage} onChange={(e) => update("urgencyMessage", e.target.value)} /></F>
-        <Toggle label="Selo de compra segura" checked={checkout.secureSeal} onChange={(v) => update("secureSeal", v)} />
-      </Section>
-
-      <Section title="Integrações">
-        <F label="Pixel Meta"><Input value={checkout.pixelMeta} onChange={(e) => update("pixelMeta", e.target.value)} /></F>
-        <F label="Pixel Google"><Input value={checkout.pixelGoogle} onChange={(e) => update("pixelGoogle", e.target.value)} /></F>
-        <F label="Webhook URL"><Input value={checkout.webhookUrl} onChange={(e) => update("webhookUrl", e.target.value)} /></F>
-        <F label="Redirecionamento pós-compra"><Input value={checkout.redirectUrl} onChange={(e) => update("redirectUrl", e.target.value)} /></F>
-      </Section>
-    </div>
+        <Section title="Depoimentos">
+          {checkout.testimonials.map((t, i) => (
+            <div key={i} className="space-y-2 p-3 border rounded-lg">
+              <Input placeholder="Nome" value={t.name} onChange={(e) => setTesti(i, "name", e.target.value)} />
+              <Textarea placeholder="Texto" rows={2} value={t.text} onChange={(e) => setTesti(i, "text", e.target.value)} />
+              <Button size="sm" variant="ghost" onClick={() => rmTesti(i)}>
+                <Trash2 className="h-4 w-4 mr-1" /> Remover
+              </Button>
+            </div>
+          ))}
+          <Button size="sm" variant="outline" onClick={addTesti}>
+            <Plus className="h-4 w-4 mr-1" /> Adicionar depoimento
+          </Button>
+        </Section>
+      </TabsContent>
+    </Tabs>
   );
 }
 
