@@ -56,11 +56,15 @@ import { BLOCK_ICONS, BLOCK_LABELS, createBlock } from "@/components/checkout/bl
 import { checkoutOrigin } from "@/lib/domains";
 
 export const Route = createFileRoute("/app/checkouts/$id")({
-  component: Builder,
+  component: BuilderRoute,
 });
 
-function Builder() {
+function BuilderRoute() {
   const { id } = Route.useParams();
+  return <CheckoutBuilder id={id} showBack />;
+}
+
+export function CheckoutBuilder({ id, showBack = false }: { id: string; showBack?: boolean }) {
   const nav = useNavigate();
   const { user } = useAuth();
   const [checkout, setCheckout] = useState<Checkout | null>(null);
