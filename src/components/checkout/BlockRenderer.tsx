@@ -103,7 +103,19 @@ export function BlockRenderer({ block, color, asToast, preview }: Props) {
           </div>
         </div>
       );
-  }
+}
+
+function HtmlBlock({ code }: { code: string }) {
+  const safe = useMemo(
+    () =>
+      DOMPurify.sanitize(code, {
+        FORBID_TAGS: ["script", "iframe", "object", "embed", "form", "base", "meta", "link"],
+        FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus", "onblur", "onchange", "onsubmit", "formaction"],
+      }),
+    [code],
+  );
+  return <div dangerouslySetInnerHTML={{ __html: safe }} />;
+}
 }
 
 function Timer({ minutes, label, color }: { minutes: number; label: string; color: string }) {
