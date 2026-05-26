@@ -57,11 +57,11 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const checkoutQ = variant
       ? supabaseAdmin
           .from("checkouts")
-          .select("id, user_id, product_id, order_bump_id, redirect_url, active")
+          .select("id, user_id, product_id, order_bump_id, redirect_url, active, amount")
           .eq("id", variant.checkout_id)
       : supabaseAdmin
           .from("checkouts")
-          .select("id, user_id, product_id, order_bump_id, redirect_url, active")
+          .select("id, user_id, product_id, order_bump_id, redirect_url, active, amount")
           .eq("public_id", data.publicId);
 
     const { data: ckRow, error: ckErr } = await checkoutQ.maybeSingle();
@@ -73,7 +73,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
       ckRow.product_id
         ? supabaseAdmin
             .from("products")
-            .select("id, name, price")
+            .select("id, name")
             .eq("id", ckRow.product_id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
@@ -86,11 +86,11 @@ export const createPixPayment = createServerFn({ method: "POST" })
         : Promise.resolve({ data: null }),
     ]);
 
-    const productPrice = variant
+    const basePrice = variant
       ? Number(variant.amount)
-      : Number(pRow?.price ?? 0);
+      : Number(ckRow.amount ?? 0);
     const bumpPrice = data.bumpOn && bRow ? Number(bRow.price) : 0;
-    const total = productPrice + bumpPrice;
+    const total = basePrice + bumpPrice;
 
     if (total <= 0) throw new Error("Valor inválido");
 
