@@ -5,8 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 let configured = false;
 
-const VAPID_PUBLIC_KEY =
-  "BBiX5A6AsFCSf4QxqZF0eyQc8jn86nLKHjpg2zo0GEiDDK8x9eMU2RTSnCjxxAAUzI71c0ddUj0SElrGItD9PZw";
+const VAPID_PUBLIC_KEY = "BBiX5A6AsFCSf4QxqZF0eyQc8jn86nLKHjpg2zo0GEiDDK8x9eMU2RTSnCjxxAAUzI71c0ddUj0SElrGItD9PZw";
 const DEFAULT_VAPID_SUBJECT = "https://elevpay.lovable.app";
 
 function base64UrlToBuffer(value: string) {
@@ -47,11 +46,7 @@ function normalizeVapidSubject(raw?: string) {
   return DEFAULT_VAPID_SUBJECT;
 }
 
-async function handlePushSendError(
-  context: string,
-  subscription: { id: string; endpoint: string },
-  err: unknown,
-) {
+async function handlePushSendError(context: string, subscription: { id: string; endpoint: string }, err: unknown) {
   const e = err as { statusCode?: number; body?: string; endpoint?: string };
   const body = e.body ?? "";
   const isAppleBadJwt =
@@ -94,10 +89,7 @@ function ensureConfigured() {
   configured = true;
 }
 
-export async function notifyOrderStatus(
-  orderId: string,
-  status: "aprovado" | "recusado" | "reembolsado" | "pendente",
-) {
+export async function notifyOrderStatus(orderId: string, status: "aprovado" | "recusado" | "reembolsado" | "pendente") {
   try {
     ensureConfigured();
   } catch (e) {
@@ -135,7 +127,10 @@ export async function notifyOrderStatus(
     subs.map(async (s) => {
       try {
         await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          {
+            endpoint: s.endpoint,
+            keys: { p256dh: s.p256dh, auth: s.auth },
+          },
           payload,
         );
       } catch (err) {
@@ -145,11 +140,7 @@ export async function notifyOrderStatus(
   );
 }
 
-export async function notifySellerNewSale(
-  sellerUserId: string,
-  amount: number,
-  customerName?: string | null,
-) {
+export async function notifySellerNewSale(sellerUserId: string, amount: number, customerName?: string | null) {
   try {
     ensureConfigured();
   } catch (e) {
@@ -170,8 +161,8 @@ export async function notifySellerNewSale(
     currency: "BRL",
   }).format(amount || 0);
   const payload = JSON.stringify({
-    title: "💰 Nova venda aprovada!",
-    body: `${brl}${customerName ? ` — ${customerName}` : ""}`,
+    title: "Nova venda aprovada!",
+    body: `Valor recebido: ${brl}${customerName ? ` — ${customerName}` : ""}`,
     url: `/app/dashboard`,
     tag: `sale-${Date.now()}`,
   });
@@ -180,7 +171,10 @@ export async function notifySellerNewSale(
     subs.map(async (s) => {
       try {
         await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          {
+            endpoint: s.endpoint,
+            keys: { p256dh: s.p256dh, auth: s.auth },
+          },
           payload,
         );
       } catch (err) {
@@ -190,11 +184,7 @@ export async function notifySellerNewSale(
   );
 }
 
-export async function notifySellerPendingSale(
-  sellerUserId: string,
-  amount: number,
-  customerName?: string | null,
-) {
+export async function notifySellerPendingSale(sellerUserId: string, amount: number, customerName?: string | null) {
   try {
     ensureConfigured();
   } catch (e) {
@@ -215,8 +205,8 @@ export async function notifySellerPendingSale(
     currency: "BRL",
   }).format(amount || 0);
   const payload = JSON.stringify({
-    title: "⏳ Nova venda pendente",
-    body: `${brl}${customerName ? ` — ${customerName}` : ""} aguardando pagamento`,
+    title: "Nova venda pendente",
+    body: `Valor: ${brl}${customerName ? ` — ${customerName}` : ""} aguardando pagamento`,
     url: `/app/dashboard`,
     tag: `pending-${Date.now()}`,
   });
@@ -225,7 +215,10 @@ export async function notifySellerPendingSale(
     subs.map(async (s) => {
       try {
         await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          {
+            endpoint: s.endpoint,
+            keys: { p256dh: s.p256dh, auth: s.auth },
+          },
           payload,
         );
       } catch (err) {
@@ -249,7 +242,12 @@ export async function sendTestPushToUser(userId: string) {
 
   if (error) return { ok: false, error: error.message, sent: 0, results: [] };
   if (!subs || subs.length === 0) {
-    return { ok: false, error: "Nenhuma assinatura encontrada para esse usuário", sent: 0, results: [] };
+    return {
+      ok: false,
+      error: "Nenhuma assinatura encontrada para esse usuário",
+      sent: 0,
+      results: [],
+    };
   }
 
   const payload = JSON.stringify({
@@ -263,12 +261,24 @@ export async function sendTestPushToUser(userId: string) {
     subs.map(async (s) => {
       try {
         const r = await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          {
+            endpoint: s.endpoint,
+            keys: { p256dh: s.p256dh, auth: s.auth },
+          },
           payload,
         );
-        return { id: s.id, ok: true, statusCode: r.statusCode, host: new URL(s.endpoint).host };
+        return {
+          id: s.id,
+          ok: true,
+          statusCode: r.statusCode,
+          host: new URL(s.endpoint).host,
+        };
       } catch (err) {
-        const e = err as { statusCode?: number; body?: string; message?: string };
+        const e = err as {
+          statusCode?: number;
+          body?: string;
+          message?: string;
+        };
         await handlePushSendError("test", s, err);
         return {
           id: s.id,
@@ -285,6 +295,3 @@ export async function sendTestPushToUser(userId: string) {
   const sent = results.filter((r) => r.ok).length;
   return { ok: sent > 0, sent, total: subs.length, results };
 }
-
-
-
