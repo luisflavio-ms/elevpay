@@ -135,20 +135,35 @@ function Notifications({
   block, color, asToast,
 }: { block: Extract<CheckoutBlock, { type: "notifications" }>; color: string; asToast?: boolean }) {
   const [i, setI] = useState(0);
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false);
+  const [started, setStarted] = useState(false);
   useEffect(() => {
     if (block.items.length === 0) return;
-    const t = setInterval(() => {
-      setShow(false);
-      setTimeout(() => {
-        setI((v) => (v + 1) % block.items.length);
-        setShow(true);
-      }, 250);
-    }, Math.max(2, block.intervalSec) * 1000);
-    return () => clearInterval(t);
-  }, [block.items.length, block.intervalSec]);
+    const delayMs = Math.max(0, block.delaySec ?? 6) * 1000;
+    const intervalMs = Math.max(2, block.intervalSec) * 1000;
+    const startTimer = setTimeout(() => {
+      setStarted(true);
+      setShow(true);
+    }, delayMs);
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const cycleTimer = setTimeout(() => {
+      interval = setInterval(() => {
+        setShow(false);
+        setTimeout(() => {
+          setI((v) => (v + 1) % block.items.length);
+          setShow(true);
+        }, 250);
+      }, intervalMs);
+    }, delayMs);
+    return () => {
+      clearTimeout(startTimer);
+      clearTimeout(cycleTimer);
+      if (interval) clearInterval(interval);
+    };
+  }, [block.items.length, block.intervalSec, block.delaySec]);
 
   if (block.items.length === 0) return null;
+  if (!started) return null;
   const it = block.items[i];
   const card = (
     <div
