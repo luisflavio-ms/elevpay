@@ -39,7 +39,6 @@ type ProductRow = {
   user_id: string;
   name: string;
   description: string;
-  price: number;
   image: string | null;
   type: ProductType;
   delivery_url: string | null;
@@ -49,7 +48,6 @@ type DraftProduct = {
   id: string;
   name: string;
   description: string;
-  price: number;
   image: string;
   type: ProductType;
   delivery_url: string;
@@ -59,7 +57,6 @@ const empty: DraftProduct = {
   id: "",
   name: "",
   description: "",
-  price: 0,
   image: "",
   type: "digital",
   delivery_url: "",
