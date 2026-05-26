@@ -362,7 +362,7 @@ function ProdutosPage() {
               const isSel = selected.has(p.id);
               const sales = salesByProduct.get(p.id) ?? 0;
               const slug = slugByProduct.get(p.id);
-              const url = slug ? `${window.location.origin}/checkout/${slug}` : "—";
+              const url = slug ? `${checkoutOrigin()}/checkout/${slug}` : "—";
 
               return (
                 <li
