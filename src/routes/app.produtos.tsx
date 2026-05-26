@@ -213,7 +213,6 @@ function ProdutosPage() {
       id: p.id,
       name: p.name,
       description: p.description ?? "",
-      price: Number(p.price),
       image: p.image ?? "",
       type: p.type,
       delivery_url: p.delivery_url ?? "",
