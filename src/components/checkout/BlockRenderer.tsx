@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { CheckoutBlock } from "@/lib/types";
+import guaranteeBadge from "@/assets/guarantee-badge.png";
 
 interface Props {
   block: CheckoutBlock;
@@ -50,28 +51,25 @@ export function BlockRenderer({ block, color }: Props) {
       return (
         <div
           style={{
-            border: `1px solid ${color}40`,
-            background: `${color}08`,
             borderRadius: 12,
-            padding: 14,
+            padding: "14px 4px",
             display: "flex",
-            gap: 12,
+            gap: 16,
             alignItems: "center",
           }}
         >
-          <div
-            style={{
-              width: 48, height: 48, borderRadius: "50%",
-              background: color, color: "#fff",
-              display: "grid", placeItems: "center",
-              fontWeight: 800, fontSize: 13, flexShrink: 0,
-            }}
-          >
-            {block.days}d
-          </div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 14 }}>{block.title}</div>
-            <div style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>{block.text}</div>
+          <img
+            src={guaranteeBadge}
+            alt="Selo de garantia"
+            style={{ width: 88, height: 88, objectFit: "contain", flexShrink: 0 }}
+          />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 16, color: "#0f172a" }}>
+              {block.title || `Garantia de ${block.days} dias`}
+            </div>
+            <div style={{ fontSize: 13, color: "#475569", marginTop: 4, lineHeight: 1.4 }}>
+              {block.text}
+            </div>
           </div>
         </div>
       );
