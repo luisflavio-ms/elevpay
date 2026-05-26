@@ -307,15 +307,8 @@ function ConfigPanel({
             </SelectContent>
           </Select>
         </Section>
-
-        <Section title="Conversão & Urgência">
-          <F label="Timer de escassez (min)">
-            <Input type="number" value={checkout.scarcityTimerMinutes} onChange={(e) => update("scarcityTimerMinutes", Number(e.target.value))} />
-          </F>
-          <F label="Mensagem de urgência"><Input value={checkout.urgencyMessage} onChange={(e) => update("urgencyMessage", e.target.value)} /></F>
-          <Toggle label="Selo de compra segura" checked={checkout.secureSeal} onChange={(v) => update("secureSeal", v)} />
-        </Section>
       </TabsContent>
+
 
       <TabsContent value="visual" className="space-y-4 mt-0">
         {!compact && (
