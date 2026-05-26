@@ -261,118 +261,112 @@ function ConfigPanel({
   const rmTesti = (i: number) => update("testimonials", checkout.testimonials.filter((_, x) => x !== i));
 
   return (
-    <div className="space-y-4">
-      <Section title="Informações">
-        <F label="Nome do checkout">
-          <Input value={checkout.name} onChange={(e) => update("name", e.target.value)} />
-        </F>
-        <F label="Slug (URL)">
-          <Input value={checkout.slug} onChange={(e) => update("slug", slugify(e.target.value))} />
-        </F>
-        <F label="Produto vinculado">
-          <Select value={checkout.productId} onValueChange={(v) => update("productId", v)}>
+    <Tabs defaultValue="config" className="space-y-4">
+      <TabsList className="grid grid-cols-2 w-full">
+        <TabsTrigger value="config">Configuração</TabsTrigger>
+        <TabsTrigger value="visual">Visual</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="config" className="space-y-4 mt-0">
+        <Section title="Informações">
+          <F label="Nome do checkout">
+            <Input value={checkout.name} onChange={(e) => update("name", e.target.value)} />
+          </F>
+          <F label="Slug (URL)">
+            <Input value={checkout.slug} onChange={(e) => update("slug", slugify(e.target.value))} />
+          </F>
+          <F label="Produto vinculado">
+            <Select value={checkout.productId} onValueChange={(v) => update("productId", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {products.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </F>
+        </Section>
+
+        <Section title="Pagamento">
+          <Toggle label="Pix" checked={checkout.paymentMethods.pix} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, pix: v })} />
+          <Toggle label="Cartão" checked={checkout.paymentMethods.card} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, card: v })} />
+          <Toggle label="Boleto" checked={checkout.paymentMethods.boleto} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, boleto: v })} />
+        </Section>
+
+        <Section title="Order bump">
+          <Select
+            value={checkout.orderBumpId ?? "none"}
+            onValueChange={(v) => update("orderBumpId", v === "none" ? undefined : v)}
+          >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {products.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              <SelectItem value="none">Nenhum</SelectItem>
+              {bumps.map((b) => (
+                <SelectItem key={b.id} value={b.id}>{b.title} — {brl(b.price)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </F>
-      </Section>
-
-      {!compact && (
-        <Section title="Blocos do checkout (arraste para reordenar)">
-          <BlockBuilder
-            blocks={checkout.blocks ?? []}
-            onChange={(b: CheckoutBlock[]) => update("blocks", b)}
-          />
         </Section>
-      )}
 
-      <Section title="Conteúdo">
+        <Section title="Conversão & Urgência">
+          <F label="Timer de escassez (min)">
+            <Input type="number" value={checkout.scarcityTimerMinutes} onChange={(e) => update("scarcityTimerMinutes", Number(e.target.value))} />
+          </F>
+          <F label="Mensagem de urgência"><Input value={checkout.urgencyMessage} onChange={(e) => update("urgencyMessage", e.target.value)} /></F>
+          <Toggle label="Selo de compra segura" checked={checkout.secureSeal} onChange={(v) => update("secureSeal", v)} />
+        </Section>
+      </TabsContent>
 
-        <F label="Headline"><Input value={checkout.headline} onChange={(e) => update("headline", e.target.value)} /></F>
-        <F label="Subheadline"><Input value={checkout.subheadline} onChange={(e) => update("subheadline", e.target.value)} /></F>
-        <F label="Imagem (URL)"><Input value={checkout.image} onChange={(e) => update("image", e.target.value)} /></F>
-        <F label="Garantia"><Input value={checkout.guarantee} onChange={(e) => update("guarantee", e.target.value)} /></F>
-      </Section>
+      <TabsContent value="visual" className="space-y-4 mt-0">
+        {!compact && (
+          <Section title="Blocos do checkout (arraste para reordenar)">
+            <BlockBuilder
+              blocks={checkout.blocks ?? []}
+              onChange={(b: CheckoutBlock[]) => update("blocks", b)}
+            />
+          </Section>
+        )}
 
-      <Section title="Benefícios">
-        {checkout.benefits.map((b, i) => (
-          <div key={i} className="flex gap-2">
-            <Input value={b} onChange={(e) => setBenefit(i, e.target.value)} />
-            <Button size="icon" variant="ghost" onClick={() => rmBenefit(i)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-        <Button size="sm" variant="outline" onClick={addBenefit}>
-          <Plus className="h-4 w-4 mr-1" /> Adicionar benefício
-        </Button>
-      </Section>
+        <Section title="Aparência">
+          <F label="Cor principal">
+            <div className="flex gap-2">
+              <Input type="color" className="w-16 h-10 p-1" value={checkout.primaryColor} onChange={(e) => update("primaryColor", e.target.value)} />
+              <Input value={checkout.primaryColor} onChange={(e) => update("primaryColor", e.target.value)} />
+            </div>
+          </F>
+          <F label="Texto do botão"><Input value={checkout.buttonText} onChange={(e) => update("buttonText", e.target.value)} /></F>
+        </Section>
 
-      <Section title="Depoimentos">
-        {checkout.testimonials.map((t, i) => (
-          <div key={i} className="space-y-2 p-3 border rounded-lg">
-            <Input placeholder="Nome" value={t.name} onChange={(e) => setTesti(i, "name", e.target.value)} />
-            <Textarea placeholder="Texto" rows={2} value={t.text} onChange={(e) => setTesti(i, "text", e.target.value)} />
-            <Button size="sm" variant="ghost" onClick={() => rmTesti(i)}>
-              <Trash2 className="h-4 w-4 mr-1" /> Remover
-            </Button>
-          </div>
-        ))}
-        <Button size="sm" variant="outline" onClick={addTesti}>
-          <Plus className="h-4 w-4 mr-1" /> Adicionar depoimento
-        </Button>
-      </Section>
+        <Section title="Benefícios">
+          {checkout.benefits.map((b, i) => (
+            <div key={i} className="flex gap-2">
+              <Input value={b} onChange={(e) => setBenefit(i, e.target.value)} />
+              <Button size="icon" variant="ghost" onClick={() => rmBenefit(i)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button size="sm" variant="outline" onClick={addBenefit}>
+            <Plus className="h-4 w-4 mr-1" /> Adicionar benefício
+          </Button>
+        </Section>
 
-      <Section title="Aparência">
-        <F label="Cor principal">
-          <div className="flex gap-2">
-            <Input type="color" className="w-16 h-10 p-1" value={checkout.primaryColor} onChange={(e) => update("primaryColor", e.target.value)} />
-            <Input value={checkout.primaryColor} onChange={(e) => update("primaryColor", e.target.value)} />
-          </div>
-        </F>
-        <F label="Texto do botão"><Input value={checkout.buttonText} onChange={(e) => update("buttonText", e.target.value)} /></F>
-      </Section>
-
-      <Section title="Pagamento">
-        <Toggle label="Pix" checked={checkout.paymentMethods.pix} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, pix: v })} />
-        <Toggle label="Cartão" checked={checkout.paymentMethods.card} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, card: v })} />
-        <Toggle label="Boleto" checked={checkout.paymentMethods.boleto} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, boleto: v })} />
-      </Section>
-
-      <Section title="Order bump">
-        <Select
-          value={checkout.orderBumpId ?? "none"}
-          onValueChange={(v) => update("orderBumpId", v === "none" ? undefined : v)}
-        >
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Nenhum</SelectItem>
-            {bumps.map((b) => (
-              <SelectItem key={b.id} value={b.id}>{b.title} — {brl(b.price)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Section>
-
-      <Section title="Conversão & Urgência">
-        <F label="Timer de escassez (min)">
-          <Input type="number" value={checkout.scarcityTimerMinutes} onChange={(e) => update("scarcityTimerMinutes", Number(e.target.value))} />
-        </F>
-        <F label="Mensagem de urgência"><Input value={checkout.urgencyMessage} onChange={(e) => update("urgencyMessage", e.target.value)} /></F>
-        <Toggle label="Selo de compra segura" checked={checkout.secureSeal} onChange={(v) => update("secureSeal", v)} />
-      </Section>
-
-      <Section title="Integrações">
-        <F label="Pixel Meta"><Input value={checkout.pixelMeta} onChange={(e) => update("pixelMeta", e.target.value)} /></F>
-        <F label="Pixel Google"><Input value={checkout.pixelGoogle} onChange={(e) => update("pixelGoogle", e.target.value)} /></F>
-        <F label="Webhook URL"><Input value={checkout.webhookUrl} onChange={(e) => update("webhookUrl", e.target.value)} /></F>
-        <F label="Redirecionamento pós-compra"><Input value={checkout.redirectUrl} onChange={(e) => update("redirectUrl", e.target.value)} /></F>
-      </Section>
-    </div>
+        <Section title="Depoimentos">
+          {checkout.testimonials.map((t, i) => (
+            <div key={i} className="space-y-2 p-3 border rounded-lg">
+              <Input placeholder="Nome" value={t.name} onChange={(e) => setTesti(i, "name", e.target.value)} />
+              <Textarea placeholder="Texto" rows={2} value={t.text} onChange={(e) => setTesti(i, "text", e.target.value)} />
+              <Button size="sm" variant="ghost" onClick={() => rmTesti(i)}>
+                <Trash2 className="h-4 w-4 mr-1" /> Remover
+              </Button>
+            </div>
+          ))}
+          <Button size="sm" variant="outline" onClick={addTesti}>
+            <Plus className="h-4 w-4 mr-1" /> Adicionar depoimento
+          </Button>
+        </Section>
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -452,15 +446,23 @@ function PreviewPanel({
               Oferta expira em {checkout.scarcityTimerMinutes}:00
             </div>
           )}
-          {checkout.image && (
-            <img src={checkout.image} alt="" className="w-full aspect-video object-cover rounded-lg mb-3" loading="lazy" />
-          )}
-          <h2 className="text-xl font-bold leading-tight">{checkout.headline}</h2>
-          {checkout.subheadline && <p className="text-sm text-slate-600 mt-1">{checkout.subheadline}</p>}
           {product && (
-            <div className="my-4 p-3 border rounded-lg flex items-center justify-between">
-              <span className="text-sm">{product.name}</span>
-              <span className="text-xl font-bold" style={{ color: checkout.primaryColor }}>{brl(product.price)}</span>
+            <div className="my-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 text-slate-900"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12h2"/></svg>
+                <h3 className="text-xs font-bold tracking-wider text-slate-900">RESUMO DO PEDIDO</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                {product.image && (
+                  <img src={product.image} alt={product.name} className="h-14 w-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+                )}
+                <p className="text-sm font-semibold text-slate-900 leading-snug flex-1 min-w-0">{product.name}</p>
+              </div>
+              <div className="mt-3 text-right">
+                <p className="text-base font-extrabold" style={{ color: checkout.primaryColor }}>
+                  Total {brl(product.price)}
+                </p>
+              </div>
             </div>
           )}
           {checkout.benefits.length > 0 && (
