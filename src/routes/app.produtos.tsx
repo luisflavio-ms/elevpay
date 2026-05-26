@@ -54,9 +54,8 @@ const typeLabel: Record<ProductType, string> = {
 function ProdutosPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const nav = useNavigate();
 
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<DraftProduct>(empty);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
