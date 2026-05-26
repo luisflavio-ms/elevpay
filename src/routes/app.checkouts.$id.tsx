@@ -55,6 +55,7 @@ import type { Checkout, Product, OrderBump, CheckoutBlock, CheckoutBlockType } f
 import { BlockBuilder, Palette, BlockEditor, CANVAS_ID } from "@/components/checkout/BlockBuilder";
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { BLOCK_ICONS, BLOCK_LABELS, createBlock } from "@/components/checkout/blockDefaults";
+import { checkoutOrigin } from "@/lib/domains";
 
 export const Route = createFileRoute("/app/checkouts/$id")({
   component: Builder,
@@ -171,7 +172,7 @@ function Builder() {
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/checkout/${checkout.slug}`);
+    navigator.clipboard.writeText(`${checkoutOrigin()}/checkout/${checkout.slug}`);
     toast.success("Link copiado");
   };
 
@@ -505,7 +506,7 @@ function PreviewPanel({
 function PublishPanel({
   checkout, onCopy, onRemove, onPublish,
 }: { checkout: Checkout; onCopy: () => void; onRemove: () => void; onPublish: () => void }) {
-  const url = typeof window !== "undefined" ? `${window.location.origin}/checkout/${checkout.slug}` : "";
+  const url = typeof window !== "undefined" ? `${checkoutOrigin()}/checkout/${checkout.slug}` : "";
   return (
     <div className="space-y-4">
       <Card className="rounded-2xl">

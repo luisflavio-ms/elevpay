@@ -10,6 +10,7 @@ import {
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getDomainRedirect } from "@/lib/domains";
 
 import appCss from "../styles.css?url";
 
@@ -94,6 +95,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const target = getDomainRedirect();
+    if (target) { window.location.replace(target); }
+  }, []);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();

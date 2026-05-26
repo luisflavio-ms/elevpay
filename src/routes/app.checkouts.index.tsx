@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import type { Checkout } from "@/lib/types";
+import { checkoutOrigin } from "@/lib/domains";
 
 export const Route = createFileRoute("/app/checkouts/")({
   component: ChecksList,
@@ -118,7 +119,7 @@ function ChecksList() {
   });
 
   const copyLink = (slug: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/checkout/${slug}`);
+    navigator.clipboard.writeText(`${checkoutOrigin()}/checkout/${slug}`);
     toast.success("Link copiado");
   };
 

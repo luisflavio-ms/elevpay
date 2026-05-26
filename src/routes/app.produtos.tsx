@@ -28,6 +28,7 @@ import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import type { ProductType } from "@/lib/types";
+import { checkoutOrigin } from "@/lib/domains";
 
 export const Route = createFileRoute("/app/produtos")({
   component: ProdutosPage,
@@ -225,7 +226,7 @@ function ProdutosPage() {
   };
 
   const copyLink = (slug: string) => {
-    const url = `${window.location.origin}/checkout/${slug}`;
+    const url = `${checkoutOrigin()}/checkout/${slug}`;
     navigator.clipboard.writeText(url);
     toast.success("Link copiado");
   };
@@ -361,7 +362,7 @@ function ProdutosPage() {
               const isSel = selected.has(p.id);
               const sales = salesByProduct.get(p.id) ?? 0;
               const slug = slugByProduct.get(p.id);
-              const url = slug ? `${window.location.origin}/checkout/${slug}` : "—";
+              const url = slug ? `${checkoutOrigin()}/checkout/${slug}` : "—";
 
               return (
                 <li
