@@ -15,12 +15,12 @@ export const Route = createFileRoute("/checkout/$publicId")({
 });
 
 /**
- * Public checkout — busca diretamente do Supabase (RLS permite anon
- * quando o checkout está active = true e o produto/bump referenciado).
+ * Public checkout — busca pelo public_id curto (10 chars).
+ * Pode ser o public_id do próprio checkout OU de uma variação de preço.
  */
 function PublicCheckout() {
-  const { slug } = Route.useParams();
-  const [data, setData] = useState<{ c: Checkout; p?: Product; b?: OrderBump } | null>(null);
+  const { publicId } = Route.useParams();
+  const [data, setData] = useState<{ c: Checkout; p?: Product; b?: OrderBump; priceOverride?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [method, setMethod] = useState<PaymentMethod>("pix");
   const [bumpOn, setBumpOn] = useState(false);
