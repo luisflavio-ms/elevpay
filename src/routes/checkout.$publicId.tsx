@@ -6,7 +6,7 @@ import { brl } from "@/lib/store";
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
-import { createPixPayment, checkOrderStatus, simulatePixPayment } from "@/lib/abacate.functions";
+import { createPixPayment, checkOrderStatus } from "@/lib/abacate.functions";
 import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
 import { urlBase64ToUint8Array } from "@/lib/push-config";
 
@@ -93,7 +93,7 @@ function PublicCheckout() {
 
   const createPix = useServerFn(createPixPayment);
   const checkStatus = useServerFn(checkOrderStatus);
-  const simulatePix = useServerFn(simulatePixPayment);
+  
   const subscribePushFn = useServerFn(subscribePush);
   const getVapidKeyFn = useServerFn(getVapidPublicKey);
 
@@ -679,14 +679,6 @@ function PublicCheckout() {
           redirect={c.redirectUrl}
           pix={pix}
           paid={paid}
-          onSimulate={async () => {
-            if (!pix) return;
-            try {
-              await simulatePix({ data: { orderId: pix.orderId } });
-            } catch (err) {
-              setPayError((err as Error).message);
-            }
-          }}
           onEnablePush={async () => {
             if (!pix) return;
             await enablePushForOrder(pix.orderId);
@@ -857,7 +849,6 @@ function SuccessModal({
   redirect,
   pix,
   paid,
-  onSimulate,
   onEnablePush,
 }: {
   method: PaymentMethod;
@@ -866,7 +857,6 @@ function SuccessModal({
   redirect: string;
   pix: { orderId: string; qr: string; copy: string; amount: number } | null;
   paid: boolean;
-  onSimulate: () => void;
   onEnablePush: () => void;
 }) {
   return (

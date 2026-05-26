@@ -105,6 +105,23 @@ export const createPixPayment = createServerFn({ method: "POST" })
       throw new Error("Telefone inválido. Informe DDD + número.");
     }
 
+    // Anti-flood: rejeita se já existe pedido pendente recente p/ mesmo checkout+CPF
+    const since = new Date(Date.now() - 30_000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from("orders")
+      .select("id")
+      .eq("checkout_id", ckRow.id)
+      .eq("customer_document", taxId)
+      .eq("status", "pendente")
+      .gte("created_at", since)
+      .limit(1)
+      .maybeSingle();
+    if (recent) {
+      throw new Error("Já existe um PIX pendente para este checkout. Aguarde alguns segundos.");
+    }
+
+
+
 
     const res = await fetch(`${ABACATE_BASE}/transparents/create`, {
       method: "POST",
@@ -248,43 +265,5 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
     }
 
     return { status: order.status };
-  });
-
-const simulateInput = z.object({ orderId: z.string().uuid() });
-
-/**
- * Simula o pagamento de um PIX no ambiente de testes da AbacatePay.
- * Só funciona com chave `abc_dev_...`. Em produção retorna erro.
- */
-export const simulatePixPayment = createServerFn({ method: "POST" })
-  .inputValidator((input) => simulateInput.parse(input))
-  .handler(async ({ data }) => {
-    const apiKey = process.env.ABACATE_API_KEY;
-    if (!apiKey) throw new Error("ABACATE_API_KEY não configurada");
-
-    const { data: order, error } = await supabaseAdmin
-      .from("orders")
-      .select("abacate_billing_id")
-      .eq("id", data.orderId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!order?.abacate_billing_id) throw new Error("Pedido sem billingId");
-
-    const res = await fetch(
-      `https://api.abacatepay.com/v2/transparents/simulate-payment?id=${encodeURIComponent(order.abacate_billing_id)}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: "{}",
-      },
-    );
-    const json = (await res.json().catch(() => ({}))) as { error?: string };
-    if (!res.ok) {
-      throw new Error(`AbacatePay [${res.status}]: ${json.error ?? "erro ao simular"}`);
-    }
-    return { ok: true };
   });
 
