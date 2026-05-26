@@ -102,6 +102,10 @@ export interface NotificationsBlock extends CheckoutBlockBase {
   items: PurchaseNotification[];
   intervalSec: number;
 }
+export interface SecureSealBlock extends CheckoutBlockBase {
+  type: "secureSeal";
+  text: string;
+}
 export type CheckoutBlock =
   | ImageBlock
   | TextBlock
