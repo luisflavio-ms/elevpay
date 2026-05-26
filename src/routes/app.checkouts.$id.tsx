@@ -9,8 +9,6 @@ import {
   Save,
   Trash2,
   Plus,
-  ShieldCheck,
-  Clock,
   X,
   GripVertical,
 } from "lucide-react";
