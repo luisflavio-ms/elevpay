@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.gen_short_id(integer) TO authenticated, anon, service_role;
