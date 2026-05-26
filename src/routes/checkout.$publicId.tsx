@@ -368,7 +368,8 @@ function PublicCheckout() {
             {(c.blocks ?? [])
               .filter((b) => (b.position ?? "above") === "above")
               .map((b) => (
-                <BlockRenderer key={b.id} block={b} color={color} />
+                <BlockRenderer key={b.id} block={b} color={color} asToast={b.type === "notifications"} />
+
               ))}
           </div>
         )}
