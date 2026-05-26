@@ -82,7 +82,7 @@ function ProdutosPage() {
     queryFn: async (): Promise<ProductRow[]> => {
       const { data, error } = await supabase
         .from("products")
-        .select("id,user_id,name,description,price,image,type,delivery_url")
+        .select("id,user_id,name,description,image,type,delivery_url")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ProductRow[];
