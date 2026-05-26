@@ -7,7 +7,7 @@ import { notifyOrderStatus, notifySellerNewSale, notifySellerPendingSale } from 
 const ABACATE_BASE = "https://api.abacatepay.com/v2";
 
 const createPixInput = z.object({
-  slug: z.string().min(1).max(120),
+  publicId: z.string().min(10).max(10).regex(/^[a-z0-9]+$/),
   customer: z.object({
     name: z.string().min(2).max(120),
     email: z.string().email().max(200),
@@ -37,7 +37,8 @@ type AbacateBilling = {
 
 /**
  * Cria um pagamento PIX via AbacatePay e registra um pedido pendente.
- * Chamado publicamente (anon) da página /checkout/:slug.
+ * Chamado publicamente (anon) da página /checkout/:publicId.
+ * O public_id pode ser o do próprio checkout OU de uma variação de preço.
  */
 export const createPixPayment = createServerFn({ method: "POST" })
   .inputValidator((input) => createPixInput.parse(input))
@@ -45,12 +46,25 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const apiKey = process.env.ABACATE_API_KEY;
     if (!apiKey) throw new Error("ABACATE_API_KEY não configurada");
 
-    // Busca checkout + produto + bump pelo slug
-    const { data: ckRow, error: ckErr } = await supabaseAdmin
-      .from("checkouts")
-      .select("id, user_id, product_id, order_bump_id, redirect_url, active")
-      .eq("slug", data.slug)
+    // 1) Tenta achar uma variação de preço com esse public_id
+    const { data: variant } = await supabaseAdmin
+      .from("checkout_price_variants")
+      .select("checkout_id, amount")
+      .eq("public_id", data.publicId)
       .maybeSingle();
+
+    // 2) Busca o checkout (por id se veio de variante, senão por public_id)
+    const checkoutQ = variant
+      ? supabaseAdmin
+          .from("checkouts")
+          .select("id, user_id, product_id, order_bump_id, redirect_url, active")
+          .eq("id", variant.checkout_id)
+      : supabaseAdmin
+          .from("checkouts")
+          .select("id, user_id, product_id, order_bump_id, redirect_url, active")
+          .eq("public_id", data.publicId);
+
+    const { data: ckRow, error: ckErr } = await checkoutQ.maybeSingle();
 
     if (ckErr) throw new Error(ckErr.message);
     if (!ckRow || !ckRow.active) throw new Error("Checkout indisponível");
@@ -72,7 +86,9 @@ export const createPixPayment = createServerFn({ method: "POST" })
         : Promise.resolve({ data: null }),
     ]);
 
-    const productPrice = Number(pRow?.price ?? 0);
+    const productPrice = variant
+      ? Number(variant.amount)
+      : Number(pRow?.price ?? 0);
     const bumpPrice = data.bumpOn && bRow ? Number(bRow.price) : 0;
     const total = productPrice + bumpPrice;
 
