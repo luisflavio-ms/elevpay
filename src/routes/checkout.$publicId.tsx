@@ -363,11 +363,13 @@ function PublicCheckout() {
           </div>
         )}
 
-        {(c.blocks ?? []).length > 0 && (
+        {(c.blocks ?? []).filter((b) => (b.position ?? "above") === "above").length > 0 && (
           <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
-            {(c.blocks ?? []).map((b) => (
-              <BlockRenderer key={b.id} block={b} color={color} />
-            ))}
+            {(c.blocks ?? [])
+              .filter((b) => (b.position ?? "above") === "above")
+              .map((b) => (
+                <BlockRenderer key={b.id} block={b} color={color} />
+              ))}
           </div>
         )}
 
