@@ -86,7 +86,6 @@ function ChecksList() {
         user_id: user.id,
         product_id: c.productId || null,
         order_bump_id: c.orderBumpId ?? null,
-        slug: `${c.slug}-copia-${Math.random().toString(36).slice(2, 5)}`,
         name: `${c.name} (cópia)`,
         headline: c.headline,
         subheadline: c.subheadline,
