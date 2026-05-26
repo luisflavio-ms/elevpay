@@ -402,7 +402,7 @@ function ProdutosPage() {
                     </div>
                   </div>
 
-                  <div className="hidden md:block font-semibold text-primary tabular-nums">{brl(Number(p.price))}</div>
+                  
                   <div className="hidden md:block">
                     <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Ativo
