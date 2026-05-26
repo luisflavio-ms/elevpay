@@ -531,7 +531,7 @@ function PublicCheckout() {
               opacity: submitting ? 0.7 : 1,
             }}
           >
-            {submitting ? "Processando..." : c.buttonText}
+            {submitting ? "Processando..." : "Finalizar compra"}
           </button>
 
           {c.secureSeal && (
@@ -704,7 +704,7 @@ function PixInstructions({ amount, color }: { amount: number; color: string }) {
   const steps = [
     {
       title: "Copie os dados de pagamento",
-      text: 'Após clicar no botão verde "FINALIZAR PAGAMENTO", você poderá escanear o QR Code ou copiar a chave PIX "copia e cola".',
+      text: 'Após clicar no botão "FINALIZAR PAGAMENTO", você poderá escanear o QR Code ou copiar a chave PIX "copia e cola".',
     },
     {
       title: "Realize o pagamento no seu banco de preferência",
@@ -727,10 +727,10 @@ function PixInstructions({ amount, color }: { amount: number; color: string }) {
           borderRadius: 8,
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          justifyContent: "center",
+          textAlign: "center",
         }}
       >
-        <PixIcon size={18} />
         LIBERAÇÃO IMEDIATA AO PAGAR NO PIX!
       </div>
       <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
