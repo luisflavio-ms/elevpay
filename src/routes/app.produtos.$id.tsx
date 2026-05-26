@@ -93,6 +93,20 @@ function ProductPage() {
     },
   });
 
+  // Auto-create checkout when product exists but has none yet
+  useEffect(() => {
+    if (
+      !isNew &&
+      user &&
+      checkoutQ.isSuccess &&
+      checkoutQ.data === null &&
+      !ensureCheckoutM.isPending
+    ) {
+      ensureCheckoutM.mutate(draft.name || "Produto");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNew, user, checkoutQ.isSuccess, checkoutQ.data]);
+
   const ensureCheckoutM = useMutation({
     mutationFn: async (productName: string) => {
       if (!user) throw new Error("Não autenticado");
