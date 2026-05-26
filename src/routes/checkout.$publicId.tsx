@@ -394,10 +394,21 @@ function PublicCheckout() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              gap: 12,
             }}
           >
-            <span style={{ fontSize: 14 }}>{p.name}</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color }}>{brl(c.amount)}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+              {p.image && (
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  loading="lazy"
+                  style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8, flexShrink: 0 }}
+                />
+              )}
+              <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</span>
+            </div>
+            <span style={{ fontSize: 22, fontWeight: 800, color, flexShrink: 0 }}>{brl(c.amount)}</span>
           </div>
         )}
 
