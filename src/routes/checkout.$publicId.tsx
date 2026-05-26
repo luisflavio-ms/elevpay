@@ -652,11 +652,13 @@ function PayBtn({
   active,
   color,
   onClick,
+  icon,
 }: {
   label: string;
   active: boolean;
   color: string;
   onClick: () => void;
+  icon?: React.ReactNode;
 }) {
   return (
     <button
@@ -671,10 +673,104 @@ function PayBtn({
         border: active ? `2px solid ${color}` : "1px solid #cbd5e1",
         background: active ? color + "10" : "#fff",
         color: active ? color : "#0f172a",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
       }}
     >
+      {icon}
       {label}
     </button>
+  );
+}
+
+function PixIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path
+        d="M9.4 22.6a4 4 0 0 0 2.83-1.17l3.06-3.06a1.1 1.1 0 0 1 1.52 0l3.07 3.07a4 4 0 0 0 2.83 1.17h.6l-3.88 3.88a3.4 3.4 0 0 1-4.8 0L10.74 22.6h-1.34Zm13.31-13.2a4 4 0 0 0-2.83 1.17l-3.07 3.07a1.07 1.07 0 0 1-1.52 0l-3.06-3.06A4 4 0 0 0 9.4 9.4h-.6l3.88-3.88a3.4 3.4 0 0 1 4.8 0l3.87 3.88h1.36Z"
+        fill="#32BCAD"
+      />
+      <path
+        d="M26.12 13.62 22.24 9.74h-1.07a2.86 2.86 0 0 0-2 .83l-3.07 3.07a2.2 2.2 0 0 1-3.06 0L9.95 10.55a2.86 2.86 0 0 0-2-.83H6.65l-2.77 2.77a3.4 3.4 0 0 0 0 4.8L6.65 20h1.3a2.86 2.86 0 0 0 2-.83l3.07-3.07a2.2 2.2 0 0 1 3.07 0l3.07 3.07a2.86 2.86 0 0 0 2 .83h1.07l3.88-3.88a3.4 3.4 0 0 0 0-4.8Z"
+        fill="#32BCAD"
+      />
+    </svg>
+  );
+}
+
+function PixInstructions({ amount, color }: { amount: number; color: string }) {
+  const steps = [
+    {
+      title: "Copie os dados de pagamento",
+      text: 'Após clicar no botão verde "FINALIZAR PAGAMENTO", você poderá escanear o QR Code ou copiar a chave PIX "copia e cola".',
+    },
+    {
+      title: "Realize o pagamento no seu banco de preferência",
+      text: 'Com o QR Code e a chave PIX em mãos, basta você abrir o aplicativo do seu banco, escolher a opção PIX, escanear o QR Code ou colar a chave "copia e cola" que foi gerada.',
+    },
+    {
+      title: "Pronto!",
+      text: "Após realizar o pagamento, nosso sistema processará e liberará o seu pedido em instantes.",
+    },
+  ];
+  return (
+    <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+      <div
+        style={{
+          background: "#dcfce7",
+          color: "#15803d",
+          fontWeight: 700,
+          fontSize: 12,
+          padding: "10px 12px",
+          borderRadius: 8,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        <PixIcon size={18} />
+        LIBERAÇÃO IMEDIATA AO PAGAR NO PIX!
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+        Compra à vista: {brl(amount)}
+      </div>
+      {steps.map((s, i) => (
+        <div
+          key={i}
+          style={{
+            background: "#f1f5f9",
+            borderRadius: 10,
+            padding: 12,
+            display: "flex",
+            gap: 12,
+            alignItems: "flex-start",
+          }}
+        >
+          <div
+            style={{
+              minWidth: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: color,
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+              fontSize: 13,
+            }}
+          >
+            {i + 1}
+          </div>
+          <div style={{ display: "grid", gap: 4 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{s.title}</div>
+            <div style={{ fontSize: 12, color: "#475569", lineHeight: 1.5 }}>{s.text}</div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
