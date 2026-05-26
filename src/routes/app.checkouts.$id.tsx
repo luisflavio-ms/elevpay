@@ -446,15 +446,23 @@ function PreviewPanel({
               Oferta expira em {checkout.scarcityTimerMinutes}:00
             </div>
           )}
-          {checkout.image && (
-            <img src={checkout.image} alt="" className="w-full aspect-video object-cover rounded-lg mb-3" loading="lazy" />
-          )}
-          <h2 className="text-xl font-bold leading-tight">{checkout.headline}</h2>
-          {checkout.subheadline && <p className="text-sm text-slate-600 mt-1">{checkout.subheadline}</p>}
           {product && (
-            <div className="my-4 p-3 border rounded-lg flex items-center justify-between">
-              <span className="text-sm">{product.name}</span>
-              <span className="text-xl font-bold" style={{ color: checkout.primaryColor }}>{brl(product.price)}</span>
+            <div className="my-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 text-slate-900"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12h2"/></svg>
+                <h3 className="text-xs font-bold tracking-wider text-slate-900">RESUMO DO PEDIDO</h3>
+              </div>
+              <div className="flex items-center gap-3">
+                {product.image && (
+                  <img src={product.image} alt={product.name} className="h-14 w-14 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+                )}
+                <p className="text-sm font-semibold text-slate-900 leading-snug flex-1 min-w-0">{product.name}</p>
+              </div>
+              <div className="mt-3 text-right">
+                <p className="text-base font-extrabold" style={{ color: checkout.primaryColor }}>
+                  Total {brl(product.price)}
+                </p>
+              </div>
             </div>
           )}
           {checkout.benefits.length > 0 && (
