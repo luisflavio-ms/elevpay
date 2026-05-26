@@ -24,7 +24,7 @@ export interface OrderBump {
 
 export interface Checkout {
   id: string;
-  slug: string;
+  publicId: string;
   name: string;
   productId: string;
   headline: string;
