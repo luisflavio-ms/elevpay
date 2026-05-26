@@ -97,7 +97,7 @@ function ProdutosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("checkouts")
-        .select("product_id,slug")
+        .select("product_id,public_id")
         .eq("active", true);
       if (error) throw error;
       return data ?? [];
