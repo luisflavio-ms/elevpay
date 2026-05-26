@@ -589,6 +589,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_safe_public_url: { Args: { u: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
