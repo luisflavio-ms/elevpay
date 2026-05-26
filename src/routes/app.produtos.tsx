@@ -385,7 +385,6 @@ function ProdutosPage() {
                   </div>
 
                   <div className="md:hidden col-span-2 flex flex-wrap items-center gap-2 pt-1">
-                    <span className="font-semibold text-primary">{brl(Number(p.price))}</span>
                     <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10">Ativo</Badge>
                     <span className="text-xs text-muted-foreground">{sales} vendas</span>
                     <div className="ml-auto flex gap-1">
