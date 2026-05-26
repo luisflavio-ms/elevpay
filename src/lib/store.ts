@@ -104,7 +104,7 @@ const SEED_CHECKOUTS: Checkout[] = [
   },
   {
     id: "c2",
-    slug: "mentoria-ecom",
+    publicId: "mentoriaec",
     name: "Checkout Mentoria",
     productId: "p2",
     headline: "Escale sua loja com mentoria semanal",
