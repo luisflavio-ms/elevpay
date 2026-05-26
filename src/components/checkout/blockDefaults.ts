@@ -54,7 +54,7 @@ export function createBlock(type: CheckoutBlockType, position: "above" | "below"
       };
     case "notifications":
       return {
-        id, type, position, intervalSec: 5,
+        id, type, position, intervalSec: 10, delaySec: 6,
         items: [
           { name: "Maria S.", product: "acabou de comprar", city: "São Paulo, SP", ago: "há 2 min" },
           { name: "João P.", product: "acabou de comprar", city: "Rio de Janeiro, RJ", ago: "há 4 min" },
