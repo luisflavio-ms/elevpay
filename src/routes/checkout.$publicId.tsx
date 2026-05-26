@@ -531,7 +531,7 @@ function PublicCheckout() {
               opacity: submitting ? 0.7 : 1,
             }}
           >
-            {submitting ? "Processando..." : c.buttonText}
+            {submitting ? "Processando..." : "Finalizar compra"}
           </button>
 
           {c.secureSeal && (
