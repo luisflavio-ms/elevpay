@@ -97,6 +97,11 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const target = getDomainRedirect();
+    if (target) { window.location.replace(target); }
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
     const isPreview =
       window.location.hostname.includes("id-preview--") ||
