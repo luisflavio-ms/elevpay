@@ -6,7 +6,7 @@ import { brl } from "@/lib/store";
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
-import { createPixPayment, checkOrderStatus, simulatePixPayment } from "@/lib/abacate.functions";
+import { createPixPayment, checkOrderStatus } from "@/lib/abacate.functions";
 import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
 import { urlBase64ToUint8Array } from "@/lib/push-config";
 
