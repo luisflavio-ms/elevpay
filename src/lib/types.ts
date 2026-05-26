@@ -110,6 +110,7 @@ export interface NotificationsBlock extends CheckoutBlockBase {
   type: "notifications";
   items: PurchaseNotification[];
   intervalSec: number;
+  delaySec?: number;
 }
 export interface SecureSealBlock extends CheckoutBlockBase {
   type: "secureSeal";
