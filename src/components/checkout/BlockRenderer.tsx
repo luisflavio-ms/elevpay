@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import DOMPurify from "dompurify";
 import type { CheckoutBlock } from "@/lib/types";
 import guaranteeBadge from "@/assets/guarantee-badge.png";
 import secureBadge from "@/assets/secure-badge.png";
