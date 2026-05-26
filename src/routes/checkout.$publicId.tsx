@@ -541,6 +541,16 @@ function PublicCheckout() {
           )}
         </form>
 
+        {(c.blocks ?? []).filter((b) => b.position === "below").length > 0 && (
+          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+            {(c.blocks ?? [])
+              .filter((b) => b.position === "below")
+              .map((b) => (
+                <BlockRenderer key={b.id} block={b} color={color} />
+              ))}
+          </div>
+        )}
+
         {c.testimonials.length > 0 && (
           <div style={{ marginTop: 16 }}>
             <h3 style={{ fontSize: 14, marginBottom: 8, fontWeight: 600 }}>O que dizem</h3>
