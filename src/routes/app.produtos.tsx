@@ -147,7 +147,6 @@ function ProdutosPage() {
         user_id: user.id,
         name: d.name,
         description: d.description,
-        price: d.price,
         image: d.image || null,
         type: d.type,
         delivery_url: d.delivery_url || null,
