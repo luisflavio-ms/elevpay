@@ -25,17 +25,18 @@ export function checkoutOrigin(): string {
   return window.location.origin;
 }
 
-/** Decide se a URL atual deve ser redirecionada para o subdomínio correto. */
+/**
+ * Decide se a URL atual deve ser redirecionada para o subdomínio correto.
+ *
+ * IMPORTANTE: desativado. O hosting (Lovable) está configurado com um
+ * subdomínio primário que redireciona o outro via 30x no servidor. Se o
+ * client também forçar redirect entre pay/dashboard, criamos um loop
+ * infinito (server manda pra A, client manda pra B, server manda pra A...).
+ *
+ * As rotas funcionam em qualquer um dos dois hosts, então simplesmente
+ * não redirecionamos no client. `checkoutOrigin()` continua usando
+ * `pay.*` para gerar links públicos.
+ */
 export function getDomainRedirect(): string | null {
-  if (typeof window === "undefined") return null;
-  const { hostname, pathname, search, hash } = window.location;
-  const isCheckoutPath = pathname.startsWith("/checkout/") || pathname === "/checkout";
-
-  if (hostname === PAY_HOST && !isCheckoutPath) {
-    return `${DASHBOARD_ORIGIN}${pathname}${search}${hash}`;
-  }
-  if (hostname === DASHBOARD_HOST && isCheckoutPath) {
-    return `${PAY_ORIGIN}${pathname}${search}${hash}`;
-  }
   return null;
 }
