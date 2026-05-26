@@ -7,9 +7,10 @@ interface Props {
   block: CheckoutBlock;
   color: string;
   asToast?: boolean;
+  preview?: boolean;
 }
 
-export function BlockRenderer({ block, color, asToast }: Props) {
+export function BlockRenderer({ block, color, asToast, preview }: Props) {
   switch (block.type) {
     case "image":
       return block.src ? (
