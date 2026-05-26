@@ -10,7 +10,7 @@ import { createPixPayment, checkOrderStatus, simulatePixPayment } from "@/lib/ab
 import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
 import { urlBase64ToUint8Array } from "@/lib/push-config";
 
-export const Route = createFileRoute("/checkout/$slug")({
+export const Route = createFileRoute("/checkout/$publicId")({
   component: PublicCheckout,
 });
 
