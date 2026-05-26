@@ -10,7 +10,6 @@ import { createPixPayment, checkOrderStatus, simulatePixPayment } from "@/lib/ab
 import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
 import { urlBase64ToUint8Array } from "@/lib/push-config";
 
-
 export const Route = createFileRoute("/checkout/$slug")({
   component: PublicCheckout,
 });
@@ -43,10 +42,16 @@ function PublicCheckout() {
     try {
       // Detecta iframe (preview do Lovable bloqueia Notification API)
       const inIframe = (() => {
-        try { return window.self !== window.top; } catch { return true; }
+        try {
+          return window.self !== window.top;
+        } catch {
+          return true;
+        }
       })();
       if (inIframe) {
-        setPayError("Notificações só funcionam no app publicado (abra em https://elevpay.lovable.app), não no preview do editor.");
+        setPayError(
+          "Notificações só funcionam no app publicado (abra em https://elevpay.lovable.app), não no preview do editor.",
+        );
         return;
       }
       if (typeof Notification === "undefined") {
@@ -101,7 +106,6 @@ function PublicCheckout() {
     }
   };
 
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -127,11 +131,7 @@ function PublicCheckout() {
                 .maybeSingle()
             : Promise.resolve({ data: null }),
           c.orderBumpId
-            ? supabase
-                .from("order_bumps")
-                .select("id,title,description,price")
-                .eq("id", c.orderBumpId)
-                .maybeSingle()
+            ? supabase.from("order_bumps").select("id,title,description,price").eq("id", c.orderBumpId).maybeSingle()
             : Promise.resolve({ data: null }),
         ]);
 
@@ -158,11 +158,7 @@ function PublicCheckout() {
 
         if (cancelled) return;
         setData({ c, p, b });
-        const first: PaymentMethod = c.paymentMethods.pix
-          ? "pix"
-          : c.paymentMethods.card
-            ? "cartao"
-            : "boleto";
+        const first: PaymentMethod = c.paymentMethods.pix ? "pix" : c.paymentMethods.card ? "cartao" : "boleto";
         setMethod(first);
         if (c.scarcityTimerMinutes > 0) setSecondsLeft(c.scarcityTimerMinutes * 60);
       } catch {
@@ -246,11 +242,13 @@ function PublicCheckout() {
     if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
     let s = 0;
     for (let i = 0; i < 9; i++) s += parseInt(c[i]) * (10 - i);
-    let r = (s * 10) % 11; if (r === 10) r = 0;
+    let r = (s * 10) % 11;
+    if (r === 10) r = 0;
     if (r !== parseInt(c[9])) return false;
     s = 0;
     for (let i = 0; i < 10; i++) s += parseInt(c[i]) * (11 - i);
-    r = (s * 10) % 11; if (r === 10) r = 0;
+    r = (s * 10) % 11;
+    if (r === 10) r = 0;
     return r === parseInt(c[10]);
   };
   const isValidPhone = (v: string) => {
@@ -261,8 +259,14 @@ function PublicCheckout() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.cpf || !form.whatsapp) return;
-    if (!isValidCpf(form.cpf)) { setPayError("CPF inválido"); return; }
-    if (!isValidPhone(form.whatsapp)) { setPayError("WhatsApp inválido"); return; }
+    if (!isValidCpf(form.cpf)) {
+      setPayError("CPF inválido");
+      return;
+    }
+    if (!isValidPhone(form.whatsapp)) {
+      setPayError("WhatsApp inválido");
+      return;
+    }
 
     setSubmitting(true);
     setPayError(null);
@@ -298,23 +302,49 @@ function PublicCheckout() {
     }
   };
 
-
-
-
-
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "system-ui, -apple-system, sans-serif", color: "#0f172a" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f8fafc",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        color: "#0f172a",
+      }}
+    >
       <div style={{ maxWidth: 560, margin: "0 auto", padding: 16 }}>
         {secondsLeft > 0 && (
-          <div style={{ background: color, color: "#fff", padding: "10px 14px", borderRadius: 10, textAlign: "center", fontSize: 13, marginBottom: 12 }}>
-            ⏳ Oferta expira em <b>{mm}:{ss}</b>
+          <div
+            style={{
+              background: color,
+              color: "#fff",
+              padding: "10px 14px",
+              borderRadius: 10,
+              textAlign: "center",
+              fontSize: 13,
+              marginBottom: 12,
+            }}
+          >
+            ⏳ Oferta expira em{" "}
+            <b>
+              {mm}:{ss}
+            </b>
           </div>
         )}
         {c.urgencyMessage && (
-          <div style={{ background: "#fef3c7", color: "#92400e", padding: "8px 12px", borderRadius: 10, fontSize: 13, marginBottom: 12, textAlign: "center" }}>
+          <div
+            style={{
+              background: "#fef3c7",
+              color: "#92400e",
+              padding: "8px 12px",
+              borderRadius: 10,
+              fontSize: 13,
+              marginBottom: 12,
+              textAlign: "center",
+            }}
+          >
             {c.urgencyMessage}
           </div>
         )}
@@ -326,7 +356,6 @@ function PublicCheckout() {
             ))}
           </div>
         )}
-
 
         {c.image && (
           <img
@@ -341,7 +370,18 @@ function PublicCheckout() {
         {c.subheadline && <p style={{ color: "#475569", marginTop: 6 }}>{c.subheadline}</p>}
 
         {p && (
-          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 14, marginTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              background: "#fff",
+              border: "1px solid #e2e8f0",
+              borderRadius: 12,
+              padding: 14,
+              marginTop: 14,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <span style={{ fontSize: 14 }}>{p.name}</span>
             <span style={{ fontSize: 22, fontWeight: 800, color }}>{brl(p.price)}</span>
           </div>
@@ -351,25 +391,43 @@ function PublicCheckout() {
           <ul style={{ listStyle: "none", padding: 0, margin: "14px 0", fontSize: 14 }}>
             {c.benefits.filter(Boolean).map((bn, i) => (
               <li key={i} style={{ padding: "4px 0" }}>
-                <span style={{ color, marginRight: 8 }}>✓</span>{bn}
+                <span style={{ color, marginRight: 8 }}>✓</span>
+                {bn}
               </li>
             ))}
           </ul>
         )}
 
-        <form onSubmit={submit} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, marginTop: 8 }}>
+        <form
+          onSubmit={submit}
+          style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, marginTop: 8 }}
+        >
           <h3 style={{ fontSize: 14, margin: "0 0 10px", fontWeight: 600 }}>Seus dados</h3>
           <Input placeholder="Nome completo" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
-          <Input placeholder="E-mail" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
-          <Input placeholder="WhatsApp" value={form.whatsapp} onChange={(v) => setForm({ ...form, whatsapp: maskPhone(v) })} />
+          <Input
+            placeholder="E-mail"
+            type="email"
+            value={form.email}
+            onChange={(v) => setForm({ ...form, email: v })}
+          />
+          <Input
+            placeholder="WhatsApp"
+            value={form.whatsapp}
+            onChange={(v) => setForm({ ...form, whatsapp: maskPhone(v) })}
+          />
           <Input placeholder="CPF" value={form.cpf} onChange={(v) => setForm({ ...form, cpf: maskCpf(v) })} />
-
 
           <h3 style={{ fontSize: 14, margin: "14px 0 8px", fontWeight: 600 }}>Pagamento</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-            {c.paymentMethods.pix && <PayBtn label="Pix" active={method === "pix"} color={color} onClick={() => setMethod("pix")} />}
-            {c.paymentMethods.card && <PayBtn label="Cartão" active={method === "cartao"} color={color} onClick={() => setMethod("cartao")} />}
-            {c.paymentMethods.boleto && <PayBtn label="Boleto" active={method === "boleto"} color={color} onClick={() => setMethod("boleto")} />}
+            {c.paymentMethods.pix && (
+              <PayBtn label="Pix" active={method === "pix"} color={color} onClick={() => setMethod("pix")} />
+            )}
+            {c.paymentMethods.card && (
+              <PayBtn label="Cartão" active={method === "cartao"} color={color} onClick={() => setMethod("cartao")} />
+            )}
+            {c.paymentMethods.boleto && (
+              <PayBtn label="Boleto" active={method === "boleto"} color={color} onClick={() => setMethod("boleto")} />
+            )}
           </div>
 
           {method === "cartao" && (
@@ -384,8 +442,24 @@ function PublicCheckout() {
           )}
 
           {b && (
-            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", marginTop: 14, padding: 12, border: `2px dashed ${color}`, borderRadius: 10, cursor: "pointer" }}>
-              <input type="checkbox" checked={bumpOn} onChange={(e) => setBumpOn(e.target.checked)} style={{ marginTop: 3 }} />
+            <label
+              style={{
+                display: "flex",
+                gap: 10,
+                alignItems: "flex-start",
+                marginTop: 14,
+                padding: 12,
+                border: `2px dashed ${color}`,
+                borderRadius: 10,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={bumpOn}
+                onChange={(e) => setBumpOn(e.target.checked)}
+                style={{ marginTop: 3 }}
+              />
               <div>
                 <div style={{ fontSize: 11, color, fontWeight: 700 }}>OFERTA ESPECIAL</div>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>{b.title}</div>
@@ -395,17 +469,36 @@ function PublicCheckout() {
             </label>
           )}
 
-          <div style={{ marginTop: 14, padding: 12, background: "#f1f5f9", borderRadius: 10, display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-            <span>Total</span><span>{brl(total)}</span>
+          <div
+            style={{
+              marginTop: 14,
+              padding: 12,
+              background: "#f1f5f9",
+              borderRadius: 10,
+              display: "flex",
+              justifyContent: "space-between",
+              fontWeight: 700,
+            }}
+          >
+            <span>Total</span>
+            <span>{brl(total)}</span>
           </div>
 
           <button
             type="submit"
             disabled={submitting}
             style={{
-              marginTop: 12, width: "100%", padding: "14px 16px", background: color,
-              color: "#fff", border: "none", borderRadius: 10, fontSize: 16, fontWeight: 700,
-              cursor: "pointer", opacity: submitting ? 0.7 : 1,
+              marginTop: 12,
+              width: "100%",
+              padding: "14px 16px",
+              background: color,
+              color: "#fff",
+              border: "none",
+              borderRadius: 10,
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+              opacity: submitting ? 0.7 : 1,
             }}
           >
             {submitting ? "Processando..." : c.buttonText}
@@ -417,9 +510,7 @@ function PublicCheckout() {
             </p>
           )}
           {c.guarantee && (
-            <p style={{ textAlign: "center", fontSize: 12, color: "#475569", marginTop: 2 }}>
-              🛡️ {c.guarantee}
-            </p>
+            <p style={{ textAlign: "center", fontSize: 12, color: "#475569", marginTop: 2 }}>🛡️ {c.guarantee}</p>
           )}
         </form>
 
@@ -427,7 +518,16 @@ function PublicCheckout() {
           <div style={{ marginTop: 16 }}>
             <h3 style={{ fontSize: 14, marginBottom: 8, fontWeight: 600 }}>O que dizem</h3>
             {c.testimonials.map((t, i) => (
-              <div key={i} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: 12, marginBottom: 8 }}>
+              <div
+                key={i}
+                style={{
+                  background: "#fff",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: 10,
+                  padding: 12,
+                  marginBottom: 8,
+                }}
+              >
                 <p style={{ fontSize: 13, margin: 0 }}>"{t.text}"</p>
                 <p style={{ fontSize: 12, color: "#64748b", marginTop: 4, marginBottom: 0 }}>— {t.name}</p>
               </div>
@@ -441,7 +541,22 @@ function PublicCheckout() {
       </div>
 
       {payError && (
-        <div style={{ position: "fixed", bottom: 16, left: 16, right: 16, background: "#fee2e2", color: "#991b1b", padding: 12, borderRadius: 8, fontSize: 13, textAlign: "center", maxWidth: 528, margin: "0 auto" }}>
+        <div
+          style={{
+            position: "fixed",
+            bottom: 16,
+            left: 16,
+            right: 16,
+            background: "#fee2e2",
+            color: "#991b1b",
+            padding: 12,
+            borderRadius: 8,
+            fontSize: 13,
+            textAlign: "center",
+            maxWidth: 528,
+            margin: "0 auto",
+          }}
+        >
           {payError}
         </div>
       )}
@@ -467,17 +582,11 @@ function PublicCheckout() {
           }}
         />
       )}
-
     </div>
   );
 }
 
-function Input(props: {
-  placeholder: string;
-  type?: string;
-  value?: string;
-  onChange?: (v: string) => void;
-}) {
+function Input(props: { placeholder: string; type?: string; value?: string; onChange?: (v: string) => void }) {
   return (
     <input
       type={props.type || "text"}
@@ -485,21 +594,40 @@ function Input(props: {
       value={props.value}
       onChange={(e) => props.onChange?.(e.target.value)}
       style={{
-        width: "100%", padding: "11px 12px", border: "1px solid #cbd5e1",
-        borderRadius: 8, fontSize: 14, marginBottom: 8, outline: "none",
+        width: "100%",
+        padding: "11px 12px",
+        border: "1px solid #cbd5e1",
+        borderRadius: 8,
+        fontSize: 14,
+        marginBottom: 8,
+        outline: "none",
         boxSizing: "border-box",
       }}
     />
   );
 }
 
-function PayBtn({ label, active, color, onClick }: { label: string; active: boolean; color: string; onClick: () => void }) {
+function PayBtn({
+  label,
+  active,
+  color,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  color: string;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       style={{
-        padding: "10px 8px", borderRadius: 8, cursor: "pointer", fontWeight: 600, fontSize: 13,
+        padding: "10px 8px",
+        borderRadius: 8,
+        cursor: "pointer",
+        fontWeight: 600,
+        fontSize: 13,
         border: active ? `2px solid ${color}` : "1px solid #cbd5e1",
         background: active ? color + "10" : "#fff",
         color: active ? color : "#0f172a",
@@ -512,8 +640,11 @@ function PayBtn({ label, active, color, onClick }: { label: string; active: bool
 
 function skeleton(h: number): React.CSSProperties {
   return {
-    height: h, background: "linear-gradient(90deg, #e2e8f0, #f1f5f9, #e2e8f0)",
-    backgroundSize: "200% 100%", borderRadius: 10, animation: "elev-pulse 1.2s linear infinite",
+    height: h,
+    background: "linear-gradient(90deg, #e2e8f0, #f1f5f9, #e2e8f0)",
+    backgroundSize: "200% 100%",
+    borderRadius: 10,
+    animation: "elev-pulse 1.2s linear infinite",
   };
 }
 
@@ -536,12 +667,16 @@ function SuccessModal({
   onSimulate: () => void;
   onEnablePush: () => void;
 }) {
-
   return (
     <div
       style={{
-        position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-        display: "grid", placeItems: "center", padding: 16, zIndex: 50,
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "grid",
+        placeItems: "center",
+        padding: 16,
+        zIndex: 50,
       }}
       onClick={onClose}
     >
@@ -555,39 +690,54 @@ function SuccessModal({
             <p style={{ color: "#64748b", fontSize: 14, marginTop: 4 }}>
               Escaneie o QR Code ou copie o código abaixo. Aguardando confirmação...
             </p>
-            <div style={{ width: 220, height: 220, margin: "16px auto", background: "#fff", padding: 8, borderRadius: 10, border: "1px solid #e2e8f0" }}>
+            <div
+              style={{
+                width: 220,
+                height: 220,
+                margin: "16px auto",
+                background: "#fff",
+                padding: 8,
+                borderRadius: 10,
+                border: "1px solid #e2e8f0",
+              }}
+            >
               <img
                 src={pix.qr.startsWith("data:") ? pix.qr : `data:image/png;base64,${pix.qr}`}
                 alt="QR Code Pix"
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             </div>
-            <div style={{ background: "#f1f5f9", borderRadius: 8, padding: 10, fontFamily: "monospace", fontSize: 11, wordBreak: "break-all" }}>
+            <div
+              style={{
+                background: "#f1f5f9",
+                borderRadius: 8,
+                padding: 10,
+                fontFamily: "monospace",
+                fontSize: 11,
+                wordBreak: "break-all",
+              }}
+            >
               {pix.copy}
             </div>
             <button
               onClick={() => navigator.clipboard.writeText(pix.copy)}
-              style={{ width: "100%", marginTop: 10, padding: 12, background: "#0f172a", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}
+              style={{
+                width: "100%",
+                marginTop: 10,
+                padding: 12,
+                background: "#0f172a",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
             >
               Copiar código Pix
             </button>
             <p style={{ textAlign: "center", fontSize: 12, color: "#64748b", marginTop: 8 }}>
               Valor: <b>{brl(pix.amount)}</b>
             </p>
-            <button
-              type="button"
-              onClick={onEnablePush}
-              style={{ width: "100%", marginTop: 10, padding: 12, background: "#ede9fe", color: "#5b21b6", border: "1px solid #c4b5fd", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-            >
-              🔔 Receber notificação quando aprovar
-            </button>
-            <button
-              type="button"
-              onClick={onSimulate}
-              style={{ width: "100%", marginTop: 10, padding: 10, background: "#fef3c7", color: "#92400e", border: "1px dashed #f59e0b", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-            >
-              🧪 Simular pagamento (modo teste)
-            </button>
           </>
         )}
 
@@ -606,10 +756,31 @@ function SuccessModal({
             <p style={{ color: "#64748b", fontSize: 14, marginTop: 4 }}>
               Seu boleto vence em 3 dias úteis. Pague em qualquer banco ou app.
             </p>
-            <div style={{ background: "#f1f5f9", borderRadius: 8, padding: 12, marginTop: 14, fontFamily: "monospace", fontSize: 12 }}>
+            <div
+              style={{
+                background: "#f1f5f9",
+                borderRadius: 8,
+                padding: 12,
+                marginTop: 14,
+                fontFamily: "monospace",
+                fontSize: 12,
+              }}
+            >
               23793.38128 60082.111111 11111.111111 1 99990000{Math.floor(amount * 100)}
             </div>
-            <button style={{ width: "100%", marginTop: 10, padding: 12, background: "#0f172a", color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer" }}>
+            <button
+              style={{
+                width: "100%",
+                marginTop: 10,
+                padding: 12,
+                background: "#0f172a",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
               Baixar boleto
             </button>
           </>
@@ -628,7 +799,16 @@ function SuccessModal({
         )}
         <button
           onClick={onClose}
-          style={{ width: "100%", marginTop: 14, padding: 12, background: "transparent", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: 8, cursor: "pointer" }}
+          style={{
+            width: "100%",
+            marginTop: 14,
+            padding: 12,
+            background: "transparent",
+            color: "#64748b",
+            border: "1px solid #e2e8f0",
+            borderRadius: 8,
+            cursor: "pointer",
+          }}
         >
           {redirect ? "Ir para próxima etapa" : "Fechar"}
         </button>
