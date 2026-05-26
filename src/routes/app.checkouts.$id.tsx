@@ -922,8 +922,9 @@ function PreviewBlockWrap({
 
 /* Droppable canvas wrapper for the preview blocks area */
 function PreviewBlocksDrop({
-  blocks, color, selectedId, onSelect, onRemoveBlock, isDraggingPalette,
+  zoneId, blocks, color, selectedId, onSelect, onRemoveBlock, isDraggingPalette,
 }: {
+  zoneId: string;
   blocks: CheckoutBlock[];
   color: string;
   selectedId: string | null;
@@ -931,14 +932,14 @@ function PreviewBlocksDrop({
   onRemoveBlock: (id: string) => void;
   isDraggingPalette: boolean;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: CANVAS_ID });
+  const { setNodeRef, isOver } = useDroppable({ id: zoneId });
   const highlight = isDraggingPalette || isOver;
   return (
     <div
       ref={setNodeRef}
       className={`rounded-lg transition ${
         highlight ? "ring-2 ring-primary/60 bg-primary/5" : ""
-      } ${blocks.length === 0 && isDraggingPalette ? "min-h-[120px] border-2 border-dashed border-primary/50 flex items-center justify-center text-xs text-primary" : ""}`}
+      } ${blocks.length === 0 && isDraggingPalette ? "min-h-[80px] border-2 border-dashed border-primary/50 flex items-center justify-center text-xs text-primary p-2" : ""}`}
     >
       {blocks.length === 0 ? (
         isDraggingPalette ? <span>Solte aqui para adicionar</span> : null
