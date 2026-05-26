@@ -269,6 +269,15 @@ function ConfigPanel({
           <F label="Nome do checkout">
             <Input value={checkout.name} onChange={(e) => update("name", e.target.value)} />
           </F>
+          <F label="Preço (R$)">
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={checkout.amount}
+              onChange={(e) => update("amount", Number(e.target.value) || 0)}
+            />
+          </F>
           <F label="Link público">
             <Input value={`/checkout/${checkout.publicId}`} readOnly />
           </F>
@@ -283,6 +292,8 @@ function ConfigPanel({
             </Select>
           </F>
         </Section>
+
+        <PriceVariantsSection checkoutId={checkout.id} />
 
         <Section title="Pagamento">
           <Toggle label="Pix" checked={checkout.paymentMethods.pix} onChange={(v) => update("paymentMethods", { ...checkout.paymentMethods, pix: v })} />
@@ -305,6 +316,7 @@ function ConfigPanel({
           </Select>
         </Section>
       </TabsContent>
+
 
 
       <TabsContent value="visual" className="space-y-4 mt-0">
