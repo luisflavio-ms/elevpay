@@ -433,12 +433,6 @@ function PreviewPanel({
               </div>
             )
           )}
-          {checkout.scarcityTimerMinutes > 0 && (
-            <div className="text-center text-xs py-2 px-3 mb-3 rounded-lg" style={{ background: checkout.primaryColor + "20", color: checkout.primaryColor }}>
-              <Clock className="inline h-3 w-3 mr-1" />
-              Oferta expira em {checkout.scarcityTimerMinutes}:00
-            </div>
-          )}
           {product && (
             <div className="my-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
