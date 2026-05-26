@@ -46,7 +46,7 @@ export function BlockRenderer({ block, color, asToast, preview }: Props) {
     }
 
     case "html":
-      return <div dangerouslySetInnerHTML={{ __html: block.code }} />;
+      return <HtmlBlock code={block.code} />;
 
     case "timer":
       return <Timer minutes={block.minutes} label={block.label} color={color} />;
