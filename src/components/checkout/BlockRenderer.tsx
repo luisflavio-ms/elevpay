@@ -132,8 +132,8 @@ function Timer({ minutes, label, color }: { minutes: number; label: string; colo
 }
 
 function Notifications({
-  block, color,
-}: { block: Extract<CheckoutBlock, { type: "notifications" }>; color: string }) {
+  block, color, asToast,
+}: { block: Extract<CheckoutBlock, { type: "notifications" }>; color: string; asToast?: boolean }) {
   const [i, setI] = useState(0);
   const [show, setShow] = useState(true);
   useEffect(() => {
@@ -150,7 +150,7 @@ function Notifications({
 
   if (block.items.length === 0) return null;
   const it = block.items[i];
-  return (
+  const card = (
     <div
       style={{
         background: "#fff",
@@ -160,10 +160,11 @@ function Notifications({
         display: "flex",
         alignItems: "center",
         gap: 10,
-        boxShadow: "0 4px 14px rgba(15,23,42,0.06)",
+        boxShadow: "0 10px 30px rgba(15,23,42,0.12)",
         opacity: show ? 1 : 0,
         transform: show ? "translateY(0)" : "translateY(4px)",
         transition: "opacity .25s, transform .25s",
+        maxWidth: 320,
       }}
     >
       <div
@@ -181,4 +182,21 @@ function Notifications({
       </div>
     </div>
   );
+
+  if (asToast) {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          left: 16,
+          bottom: 16,
+          zIndex: 9999,
+          pointerEvents: "none",
+        }}
+      >
+        {card}
+      </div>
+    );
+  }
+  return card;
 }
