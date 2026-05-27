@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,6 +49,7 @@ function ProdutosPage() {
 
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
 
   const productsQ = useQuery({
     queryKey: ["products"],
@@ -105,16 +116,25 @@ function ProdutosPage() {
 
   const deleteM = useMutation({
     mutationFn: async (ids: string[]) => {
+      // Apaga checkouts vinculados antes (sem FK cascade)
+      const { error: ckErr } = await supabase
+        .from("checkouts")
+        .delete()
+        .in("product_id", ids);
+      if (ckErr) throw ckErr;
       const { error } = await supabase.from("products").delete().in("id", ids);
       if (error) throw error;
     },
     onSuccess: (_d, ids) => {
       qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["checkouts", "slug-by-product"] });
+      qc.invalidateQueries({ queryKey: ["checkouts"] });
       setSelected((s) => {
         const n = new Set(s);
         ids.forEach((id) => n.delete(id));
         return n;
       });
+      setConfirmIds(null);
       toast.success(ids.length > 1 ? `${ids.length} produtos excluídos` : "Produto excluído");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -244,7 +264,7 @@ function ProdutosPage() {
           />
         </div>
         {selected.size > 0 && (
-          <Button variant="outline" onClick={() => deleteM.mutate(Array.from(selected))} className="text-destructive">
+          <Button variant="outline" onClick={() => setConfirmIds(Array.from(selected))} className="text-destructive">
             <Trash2 className="h-4 w-4 mr-2" /> Excluir ({selected.size})
           </Button>
         )}
@@ -316,7 +336,7 @@ function ProdutosPage() {
                       <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
                         <Pencil className="h-4 w-4 text-primary" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => deleteM.mutate([p.id])}>
+                      <Button size="icon" variant="ghost" onClick={() => setConfirmIds([p.id])}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -366,7 +386,7 @@ function ProdutosPage() {
                       <Copy className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => deleteM.mutate([p.id])}
+                      onClick={() => setConfirmIds([p.id])}
                       className="h-8 w-8 grid place-items-center rounded-md text-destructive hover:bg-destructive/10 transition"
                       aria-label="Excluir"
                     >
@@ -385,6 +405,32 @@ function ProdutosPage() {
           )}
         </Card>
       )}
+
+      <AlertDialog open={confirmIds !== null} onOpenChange={(o) => !o && setConfirmIds(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Excluir {confirmIds && confirmIds.length > 1 ? `${confirmIds.length} produtos` : "produto"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. O checkout vinculado também será excluído e os links pararão de funcionar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteM.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmIds) deleteM.mutate(confirmIds);
+              }}
+              disabled={deleteM.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteM.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
