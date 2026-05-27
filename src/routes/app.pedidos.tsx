@@ -55,6 +55,21 @@ function PedidosPage() {
   const [open, setOpen] = useState<OrderRow | null>(null);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  const [resending, setResending] = useState(false);
+  const resendFn = useServerFn(resendProductAccessEmail);
+
+  async function handleResend(orderId: string) {
+    setResending(true);
+    try {
+      await resendFn({ data: { orderId } });
+      toast.success("Email de acesso reenviado ao cliente");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao reenviar email");
+    } finally {
+      setResending(false);
+    }
+  }
+
 
   const ordersQ = useQuery({
     queryKey: ["orders"],
