@@ -507,16 +507,17 @@ function WebhooksPage() {
 
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
-                <Label>Produtos</Label>
+                <Label>
+                  Produtos <span className="text-rose-500">*</span>
+                </Label>
                 <span className="text-xs text-muted-foreground">
                   {form.product_ids.length === 0
-                    ? "Todos os produtos"
+                    ? "Nenhum selecionado"
                     : `${form.product_ids.length} selecionado(s)`}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground -mt-1">
-                Deixe vazio para disparar em todos os produtos, ou selecione os
-                produtos específicos que devem disparar este webhook.
+                Selecione ao menos 1 produto. O webhook só dispara para os produtos escolhidos.
               </p>
               <div className="max-h-44 overflow-y-auto rounded-md border p-2 space-y-1">
                 {productsQ.isLoading ? (
