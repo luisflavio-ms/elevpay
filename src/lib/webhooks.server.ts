@@ -106,8 +106,10 @@ async function fireOne(
     event,
     status_code: statusCode,
     success,
-    payload: payload as Record<string, unknown>,
-    response: responseBody as Record<string, unknown> | null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    payload: payload as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    response: responseBody as any,
     error: errorMsg,
   });
 
