@@ -307,6 +307,29 @@ function ConfigPanel({
               ))}
             </SelectContent>
           </Select>
+          <div className="flex gap-2 mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setBumpEditing(null); setBumpModalOpen(true); }}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Novo bump
+            </Button>
+            {checkout.orderBumpId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const b = bumps.find((x) => x.id === checkout.orderBumpId);
+                  if (!b) return;
+                  setBumpEditing({ id: b.id, title: b.title, description: b.description, price: b.price });
+                  setBumpModalOpen(true);
+                }}
+              >
+                <Pencil className="h-4 w-4 mr-1" /> Editar
+              </Button>
+            )}
+          </div>
         </Section>
       </TabsContent>
 
