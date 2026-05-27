@@ -169,12 +169,16 @@ function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Faturamento</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">Últimos 7 dias</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {periodLabel(period)}
+              </p>
             </div>
-            <Badge variant="secondary" className="bg-primary/15 text-primary border-0">Diário</Badge>
+            <Badge variant="secondary" className="bg-primary/15 text-primary border-0">
+              {start.toDateString() === end.toDateString() ? "Por hora" : "Diário"}
+            </Badge>
           </CardHeader>
           <CardContent>
-            <RevenueChart orders={orders} />
+            <RevenueChart orders={orders} start={start} end={end} />
           </CardContent>
         </Card>
 

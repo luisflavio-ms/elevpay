@@ -10,29 +10,75 @@ import {
 import type { Order } from "@/lib/types";
 import { brl } from "@/lib/store";
 
-export function RevenueChart({ orders }: { orders: Order[] }) {
-  const data = useMemo(() => {
-    // Last 7 days, oldest -> newest
-    const days: { label: string; key: string }[] = [];
+export function RevenueChart({
+  orders,
+  start,
+  end,
+}: {
+  orders: Order[];
+  start?: Date;
+  end?: Date;
+}) {
+  const { data, isHourly } = useMemo(() => {
+    // Determina o intervalo. Se não vier, usa últimos 7 dias.
     const now = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      const label = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
-      days.push({ key, label });
+    const endD = end ?? now;
+    const startD =
+      start ??
+      (() => {
+        const d = new Date(now);
+        d.setDate(now.getDate() - 6);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      })();
+
+    const sameDay =
+      startD.getFullYear() === endD.getFullYear() &&
+      startD.getMonth() === endD.getMonth() &&
+      startD.getDate() === endD.getDate();
+
+    if (sameDay) {
+      // Buckets por hora (0..23)
+      const buckets = Array.from({ length: 24 }, (_, h) => ({
+        label: `${String(h).padStart(2, "0")}h`,
+        value: 0,
+        key: h,
+      }));
+      for (const o of orders) {
+        if (o.status !== "aprovado") continue;
+        const d = new Date(o.date);
+        if (
+          d.getFullYear() !== startD.getFullYear() ||
+          d.getMonth() !== startD.getMonth() ||
+          d.getDate() !== startD.getDate()
+        )
+          continue;
+        buckets[d.getHours()].value += o.amount;
+      }
+      return { data: buckets, isHourly: true };
     }
-    const map = new Map(days.map((d) => [d.key, 0]));
+
+    // Buckets por dia
+    const days: { label: string; key: string; value: number }[] = [];
+    const cursor = new Date(startD);
+    cursor.setHours(0, 0, 0, 0);
+    const endKey = new Date(endD);
+    endKey.setHours(0, 0, 0, 0);
+    while (cursor.getTime() <= endKey.getTime()) {
+      const key = cursor.toISOString().slice(0, 10);
+      const label = `${String(cursor.getDate()).padStart(2, "0")}/${String(cursor.getMonth() + 1).padStart(2, "0")}`;
+      days.push({ key, label, value: 0 });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    const map = new Map(days.map((d) => [d.key, d]));
     for (const o of orders) {
       if (o.status !== "aprovado") continue;
-      const k = o.date.slice(0, 10);
-      if (map.has(k)) map.set(k, (map.get(k) ?? 0) + o.amount);
+      const k = new Date(o.date).toISOString().slice(0, 10);
+      const b = map.get(k);
+      if (b) b.value += o.amount;
     }
-    return days.map((d) => ({
-      label: d.label,
-      value: map.get(d.key) ?? 0,
-    }));
-  }, [orders]);
+    return { data: days, isHourly: false };
+  }, [orders, start, end]);
 
   return (
     <div className="h-[260px] w-full">
@@ -53,12 +99,13 @@ export function RevenueChart({ orders }: { orders: Order[] }) {
             tick={{ fontSize: 11, fill: "oklch(0.7 0.02 285)" }}
             axisLine={false}
             tickLine={false}
+            interval={isHourly ? 2 : "preserveStartEnd"}
           />
           <YAxis
             tick={{ fontSize: 11, fill: "oklch(0.7 0.02 285)" }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v) => `${Math.round(v / 1000)}k`}
+            tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
             width={40}
           />
           <Tooltip
