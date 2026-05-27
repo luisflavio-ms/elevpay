@@ -139,15 +139,23 @@ export const Route = createFileRoute("/checkout/$publicId")({
  */
 function PublicCheckout() {
   const { publicId } = Route.useParams();
+  const loaderData = Route.useLoaderData();
+  const initialData = loaderData?.data ?? null;
   const navigate = useNavigate();
-  const [data, setData] = useState<{ c: Checkout; p?: Product; b?: OrderBump; priceOverride?: number } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [method, setMethod] = useState<PaymentMethod>("pix");
+  const [data] = useState<{ c: Checkout; p?: Product; b?: OrderBump; priceOverride?: number } | null>(initialData);
+  const [method, setMethod] = useState<PaymentMethod>(() => {
+    const c = initialData?.c;
+    if (!c) return "pix";
+    return c.paymentMethods.pix ? "pix" : c.paymentMethods.card ? "cartao" : "boleto";
+  });
   const [bumpOn, setBumpOn] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", whatsapp: "", cpf: "" });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState<number>(0);
+  const [secondsLeft, setSecondsLeft] = useState<number>(() => {
+    const mins = initialData?.c.scarcityTimerMinutes ?? 0;
+    return mins > 0 ? mins * 60 : 0;
+  });
   const [pix, setPix] = useState<{ orderId: string; qr: string; copy: string; amount: number } | null>(null);
   const [paid, setPaid] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
@@ -179,11 +187,80 @@ function PublicCheckout() {
 
   const createPix = useServerFn(createPixPayment);
   const checkStatus = useServerFn(checkOrderStatus);
-  
+
   const subscribePushFn = useServerFn(subscribePush);
   const getVapidKeyFn = useServerFn(getVapidPublicKey);
 
   const enablePushForOrder = async (orderId: string) => {
+    try {
+      // Detecta iframe (preview do Lovable bloqueia Notification API)
+      const inIframe = (() => {
+        try {
+          return window.self !== window.top;
+        } catch {
+          return true;
+        }
+      })();
+      if (inIframe) {
+        setPayError(
+          "Notificações só funcionam no app publicado (abra em https://elevpay.lovable.app), não no preview do editor.",
+        );
+        return;
+      }
+      if (typeof Notification === "undefined") {
+        setPayError("Seu navegador não suporta notificações.");
+        return;
+      }
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        setPayError("Seu navegador não suporta notificações push.");
+        return;
+      }
+
+      // IMPORTANTE: requestPermission precisa ser chamado direto no gesto do usuário,
+      // sem awaits antes. Por isso é a primeira chamada async.
+      const perm = await Notification.requestPermission();
+      if (perm === "denied") {
+        setPayError("Permissão negada. Habilite notificações nas configurações do navegador.");
+        return;
+      }
+      if (perm !== "granted") {
+        setPayError("Permissão não concedida.");
+        return;
+      }
+
+      let reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) {
+        reg = await navigator.serviceWorker.register("/sw.js");
+      }
+      reg = await navigator.serviceWorker.ready;
+
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        const [{ urlBase64ToUint8Array }, { publicKey }] = await Promise.all([
+          import("@/lib/push-config"),
+          getVapidKeyFn(),
+        ]);
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
+        });
+      }
+
+      const json = sub.toJSON();
+      await subscribePushFn({
+        data: {
+          orderId,
+          endpoint: sub.endpoint,
+          p256dh: json.keys?.p256dh ?? "",
+          auth: json.keys?.auth ?? "",
+          userAgent: navigator.userAgent.slice(0, 500),
+        },
+      });
+      setPayError("✅ Notificações ativadas! Você será avisado quando o pagamento for aprovado.");
+    } catch (err) {
+      setPayError("Erro ao ativar notificações: " + (err as Error).message);
+    }
+  };
     try {
       // Detecta iframe (preview do Lovable bloqueia Notification API)
       const inIframe = (() => {
