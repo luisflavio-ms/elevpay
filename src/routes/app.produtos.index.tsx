@@ -405,6 +405,32 @@ function ProdutosPage() {
           )}
         </Card>
       )}
+
+      <AlertDialog open={confirmIds !== null} onOpenChange={(o) => !o && setConfirmIds(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Excluir {confirmIds && confirmIds.length > 1 ? `${confirmIds.length} produtos` : "produto"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. O checkout vinculado também será excluído e os links pararão de funcionar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteM.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmIds) deleteM.mutate(confirmIds);
+              }}
+              disabled={deleteM.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteM.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
