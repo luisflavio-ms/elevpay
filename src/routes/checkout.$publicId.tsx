@@ -401,6 +401,11 @@ function PublicCheckout() {
     setSubmitting(true);
     setPayError(null);
     try {
+      localStorage.setItem(BUYER_STORAGE_KEY, JSON.stringify(form));
+    } catch {
+      /* ignore */
+    }
+    try {
       if (method === "pix") {
         const result = await createPix({
           data: {
