@@ -553,6 +553,8 @@ function PublicCheckout() {
               <span style={{ fontSize: 20, fontWeight: 800, color, marginTop: 2 }}>{brl(c.amount)}</span>
             </div>
           </div>
+          </div>
+
         )}
 
         {c.benefits.length > 0 && (
