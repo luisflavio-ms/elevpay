@@ -1,12 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { User, Mail, Phone, IdCard } from "lucide-react";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import { createPixPayment, checkOrderStatus } from "@/lib/abacate.functions";
 import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
+
+const BUYER_STORAGE_KEY = "elevpay:buyer";
 
 const BlockRenderer = lazy(() =>
   import("@/components/checkout/BlockRenderer").then((m) => ({ default: m.BlockRenderer })),
