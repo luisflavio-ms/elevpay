@@ -398,6 +398,7 @@ function PublicCheckout() {
               phone: form.whatsapp,
             },
             bumpOn,
+            utm,
           },
         });
         setPix({
