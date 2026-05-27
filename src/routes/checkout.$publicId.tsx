@@ -94,13 +94,15 @@ export const Route = createFileRoute("/checkout/$publicId")({
       };
 
       let bumpProductName: string | undefined;
+      let bumpProductImage: string | undefined;
       if (bRow?.product_id) {
         const { data: bp } = await supabase
           .from("products")
-          .select("name")
+          .select("name, image")
           .eq("id", bRow.product_id as string)
           .maybeSingle();
         bumpProductName = (bp?.name as string) ?? undefined;
+        bumpProductImage = (bp?.image as string) ?? undefined;
       }
 
       const b: OrderBump | undefined = bRow
@@ -113,6 +115,7 @@ export const Route = createFileRoute("/checkout/$publicId")({
               bRow.compare_at_price == null ? undefined : Number(bRow.compare_at_price),
             productId: (bRow.product_id as string | null) ?? undefined,
             productName: bumpProductName,
+            productImage: bumpProductImage,
           }
         : undefined;
 
@@ -649,39 +652,103 @@ function PublicCheckout() {
           )}
 
           {b && (
-            <label
-              style={{
-                display: "flex",
-                gap: 10,
-                alignItems: "flex-start",
-                marginTop: 14,
-                padding: 12,
-                border: `2px dashed ${color}`,
-                borderRadius: 10,
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={bumpOn}
-                onChange={(e) => setBumpOn(e.target.checked)}
-                style={{ marginTop: 3 }}
-              />
-              <div>
-                <div style={{ fontSize: 11, color, fontWeight: 700 }}>OFERTA ESPECIAL</div>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>{b.productName ?? b.title}</div>
-                <div style={{ fontSize: 12, color: "#475569" }}>{b.description}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4, display: "flex", gap: 6, alignItems: "baseline" }}>
-                  <span>+ {brl(b.price)}</span>
-                  {b.compareAtPrice != null && (
-                    <span style={{ fontSize: 11, color: "#94a3b8", textDecoration: "line-through", fontWeight: 500 }}>
-                      {brl(b.compareAtPrice)}
-                    </span>
-                  )}
-                </div>
+            <div style={{ marginTop: 18 }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  marginBottom: 8,
+                }}
+              >
+                Aproveite e compre junto:
               </div>
-
-            </label>
+              <div
+                style={{
+                  border: "1.5px solid #e2e8f0",
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  background: "#fff",
+                }}
+              >
+                <div style={{ display: "flex", gap: 12, padding: 12, alignItems: "flex-start" }}>
+                  {b.productImage && (
+                    <img
+                      src={b.productImage}
+                      alt={b.productName ?? b.title}
+                      style={{
+                        width: 72,
+                        height: 72,
+                        objectFit: "cover",
+                        borderRadius: 8,
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>
+                      {b.productName ?? b.title}
+                    </div>
+                    {b.description && (
+                      <div style={{ fontSize: 12, color: "#475569", marginTop: 4, lineHeight: 1.45 }}>
+                        {b.description}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 12, color: "#dc2626", marginTop: 8, fontWeight: 600 }}>
+                      🎁 Adicione{b.compareAtPrice && b.compareAtPrice > b.price
+                        ? ` com ${Math.round(((b.compareAtPrice - b.price) / b.compareAtPrice) * 100)}% de desconto`
+                        : ""}, por apenas {brl(b.price)}!
+                    </div>
+                    <div style={{ marginTop: 4, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      {b.compareAtPrice != null && b.compareAtPrice > b.price && (
+                        <>
+                          <span style={{ fontSize: 12, color: "#94a3b8", textDecoration: "line-through" }}>
+                            {brl(b.compareAtPrice)}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: "#fff",
+                              background: "#16a34a",
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                            }}
+                          >
+                            ↓ {Math.round(((b.compareAtPrice - b.price) / b.compareAtPrice) * 100)}%
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 4 }}>
+                      {brl(b.price)}
+                    </div>
+                  </div>
+                </div>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 12px",
+                    background: "#dcfce7",
+                    cursor: "pointer",
+                    borderTop: "1.5px solid #e2e8f0",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={bumpOn}
+                    onChange={(e) => setBumpOn(e.target.checked)}
+                    style={{ width: 18, height: 18, cursor: "pointer", accentColor: color }}
+                  />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#0f172a" }}>
+                    {bumpOn ? "Produto adicionado" : "Adicionar produto"}
+                  </span>
+                </label>
+              </div>
+            </div>
           )}
 
           <div
