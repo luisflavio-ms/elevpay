@@ -172,9 +172,10 @@ function ProductPage() {
         .select("id")
         .eq("product_id", productId)
         .eq("user_id", user.id)
-        .maybeSingle();
+        .order("created_at", { ascending: true })
+        .limit(1);
       if (selErr) throw new Error(`Checkout lookup: ${selErr.message}`);
-      if (!existing) {
+      if (!existing || existing.length === 0) {
         const { error: insErr } = await supabase.from("checkouts").insert({
           user_id: user.id,
           product_id: productId,
