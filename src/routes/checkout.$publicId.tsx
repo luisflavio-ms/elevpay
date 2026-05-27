@@ -278,6 +278,23 @@ function PublicCheckout() {
     }
   };
 
+  // Autofill: restaura dados do comprador salvos localmente em compras anteriores
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(BUYER_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<typeof form>;
+      setForm((prev) => ({
+        name: prev.name || saved.name || "",
+        email: prev.email || saved.email || "",
+        whatsapp: prev.whatsapp || saved.whatsapp || "",
+        cpf: prev.cpf || saved.cpf || "",
+      }));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   useEffect(() => {
     if (secondsLeft <= 0) return;
     const i = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
