@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
@@ -91,6 +91,31 @@ function PublicCheckout() {
   const [pix, setPix] = useState<{ orderId: string; qr: string; copy: string; amount: number } | null>(null);
   const [paid, setPaid] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+
+  // Captura UTM params da URL (anúncios) e persiste durante a sessão.
+  const utm = useMemo(() => {
+    if (typeof window === "undefined") return {};
+    const KEY = `elevpay:utm:${publicId}`;
+    const sp = new URLSearchParams(window.location.search);
+    const fromUrl = {
+      source: sp.get("utm_source") ?? undefined,
+      medium: sp.get("utm_medium") ?? undefined,
+      campaign: sp.get("utm_campaign") ?? undefined,
+      term: sp.get("utm_term") ?? undefined,
+      content: sp.get("utm_content") ?? undefined,
+    };
+    const hasAny = Object.values(fromUrl).some(Boolean);
+    if (hasAny) {
+      try { sessionStorage.setItem(KEY, JSON.stringify(fromUrl)); } catch {}
+      return fromUrl;
+    }
+    try {
+      const raw = sessionStorage.getItem(KEY);
+      if (raw) return JSON.parse(raw) as typeof fromUrl;
+    } catch {}
+    return {};
+  }, [publicId]);
+
 
   const createPix = useServerFn(createPixPayment);
   const checkStatus = useServerFn(checkOrderStatus);
@@ -373,6 +398,7 @@ function PublicCheckout() {
               phone: form.whatsapp,
             },
             bumpOn,
+            utm,
           },
         });
         setPix({
