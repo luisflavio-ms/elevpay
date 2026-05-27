@@ -250,9 +250,10 @@ export async function testWebhookConfig(
   if (error) throw new Error(error.message);
   if (!config) throw new Error("Webhook não encontrado");
 
-  const payload = {
-    test: true,
-    ...buildPayload(event, config.provider, {
+  const payload = buildPayload(
+    event,
+    config.provider,
+    {
       id: "test_" + Math.random().toString(36).slice(2, 10),
       amount: 97,
       customer_name: "Cliente Teste",
@@ -260,8 +261,9 @@ export async function testWebhookConfig(
       customer_document: "00000000000",
       customer_phone: "11999999999",
       product_id: null,
-    }),
-  };
+    },
+    true,
+  );
 
   return fireOne(config as WebhookConfigRow, event, payload);
 }
