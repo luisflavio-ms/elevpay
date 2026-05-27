@@ -55,6 +55,7 @@ import { BlockBuilder, Palette, BlockEditor } from "@/components/checkout/BlockB
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { BLOCK_ICONS, BLOCK_LABELS, createBlock } from "@/components/checkout/blockDefaults";
 import { checkoutOrigin } from "@/lib/domains";
+import { OrderBumpModal } from "@/components/OrderBumpModal";
 
 export const Route = createFileRoute("/app/checkouts/$id")({
   component: BuilderRoute,
