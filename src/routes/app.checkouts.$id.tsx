@@ -9,6 +9,7 @@ import {
   Save,
   Trash2,
   Plus,
+  Pencil,
   X,
   GripVertical,
 } from "lucide-react";
@@ -54,6 +55,7 @@ import { BlockBuilder, Palette, BlockEditor } from "@/components/checkout/BlockB
 import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { BLOCK_ICONS, BLOCK_LABELS, createBlock } from "@/components/checkout/blockDefaults";
 import { checkoutOrigin } from "@/lib/domains";
+import { OrderBumpModal } from "@/components/OrderBumpModal";
 
 export const Route = createFileRoute("/app/checkouts/$id")({
   component: BuilderRoute,
@@ -246,6 +248,8 @@ function ConfigPanel({
   bumps: OrderBump[];
   compact?: boolean;
 }) {
+  const [bumpModalOpen, setBumpModalOpen] = useState(false);
+  const [bumpEditing, setBumpEditing] = useState<import("@/components/OrderBumpModal").OrderBumpInput | null>(null);
   const setBenefit = (i: number, v: string) => {
     const next = [...checkout.benefits];
     next[i] = v;
@@ -307,6 +311,29 @@ function ConfigPanel({
               ))}
             </SelectContent>
           </Select>
+          <div className="flex gap-2 mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setBumpEditing(null); setBumpModalOpen(true); }}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Novo bump
+            </Button>
+            {checkout.orderBumpId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const b = bumps.find((x) => x.id === checkout.orderBumpId);
+                  if (!b) return;
+                  setBumpEditing({ id: b.id, title: b.title, description: b.description, price: b.price });
+                  setBumpModalOpen(true);
+                }}
+              >
+                <Pencil className="h-4 w-4 mr-1" /> Editar
+              </Button>
+            )}
+          </div>
         </Section>
       </TabsContent>
 
@@ -361,6 +388,12 @@ function ConfigPanel({
           </Button>
         </Section>
       </TabsContent>
+      <OrderBumpModal
+        open={bumpModalOpen}
+        onOpenChange={setBumpModalOpen}
+        initial={bumpEditing}
+        onSaved={(id: string) => update("orderBumpId", id)}
+      />
     </Tabs>
   );
 }

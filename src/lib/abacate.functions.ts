@@ -85,7 +85,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
       ckRow.order_bump_id
         ? supabaseAdmin
             .from("order_bumps")
-            .select("id, title, price")
+            .select("id, title, price, user_id")
             .eq("id", ckRow.order_bump_id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
@@ -96,6 +96,16 @@ export const createPixPayment = createServerFn({ method: "POST" })
       throw new Error("Checkout indisponível: produto não encontrado.");
     }
 
+    // Validação rigorosa do order bump quando o cliente marcou
+    if (data.bumpOn) {
+      if (!bRow) throw new Error("Order bump indisponível.");
+      if (bRow.user_id !== ckRow.user_id) {
+        throw new Error("Order bump inválido.");
+      }
+      if (Number(bRow.price) <= 0) {
+        throw new Error("Preço de order bump inválido.");
+      }
+    }
 
     const basePrice = variant
       ? Number(variant.amount)
@@ -185,7 +195,11 @@ export const createPixPayment = createServerFn({ method: "POST" })
         utm_campaign: data.utm?.campaign ?? null,
         utm_term: data.utm?.term ?? null,
         utm_content: data.utm?.content ?? null,
-        metadata: { bump: data.bumpOn ?? false },
+        metadata: {
+          bump: data.bumpOn && bRow
+            ? { id: bRow.id, title: bRow.title, price: Number(bRow.price) }
+            : null,
+        },
       })
       .select("id")
       .single();
