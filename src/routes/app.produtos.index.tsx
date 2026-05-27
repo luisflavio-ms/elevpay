@@ -142,6 +142,59 @@ function ProdutosPage() {
     toast.success("Link copiado");
   };
 
+  const duplicateM = useMutation({
+    mutationFn: async (productId: string) => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) throw new Error("Não autenticado");
+
+      // 1. duplicar produto
+      const { data: orig, error: pErr } = await supabase
+        .from("products")
+        .select("name,description,image,type,delivery_url")
+        .eq("id", productId)
+        .single();
+      if (pErr || !orig) throw pErr ?? new Error("Produto não encontrado");
+
+      const { data: newProd, error: insPErr } = await supabase
+        .from("products")
+        .insert({
+          user_id: uid,
+          name: `${orig.name} (cópia)`,
+          description: orig.description,
+          image: orig.image,
+          type: orig.type,
+          delivery_url: orig.delivery_url,
+        })
+        .select("id")
+        .single();
+      if (insPErr || !newProd) throw insPErr ?? new Error("Falha ao duplicar produto");
+
+      // 2. duplicar checkout(s) vinculados
+      const { data: cks } = await supabase
+        .from("checkouts")
+        .select("name,headline,subheadline,image,benefits,testimonials,blocks,payment_methods,button_text,primary_color,guarantee,urgency_message,secure_seal,scarcity_timer_minutes,redirect_url,webhook_url,pixel_google,pixel_meta,amount,active,order_bump_id")
+        .eq("product_id", productId)
+        .limit(1);
+
+      if (cks && cks.length > 0) {
+        const ck = cks[0];
+        await supabase.from("checkouts").insert({
+          ...ck,
+          user_id: uid,
+          product_id: newProd.id,
+          name: `${ck.name} (cópia)`,
+        });
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["checkouts", "slug-by-product"] });
+      toast.success("Produto e checkout duplicados");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const allSelected = filtered.length > 0 && selected.size === filtered.length;
 
   if (productsQ.isLoading) {
