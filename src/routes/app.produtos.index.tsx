@@ -271,7 +271,23 @@ function ProdutosPage() {
           />
         </div>
         {selected.size > 0 && (
-          <Button variant="outline" onClick={() => setConfirmIds(Array.from(selected))} className="text-destructive">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const ids = Array.from(selected);
+              const blocked = ids.filter((id) => (salesByProduct.get(id) ?? 0) > 0);
+              if (blocked.length > 0) {
+                toast.error(
+                  blocked.length === ids.length
+                    ? "Nenhum dos produtos selecionados pode ser excluído pois possuem vendas"
+                    : `${blocked.length} produto(s) com vendas não podem ser excluídos`,
+                );
+                return;
+              }
+              setConfirmIds(ids);
+            }}
+            className="text-destructive"
+          >
             <Trash2 className="h-4 w-4 mr-2" /> Excluir ({selected.size})
           </Button>
         )}
