@@ -392,7 +392,7 @@ function ConfigPanel({
         open={bumpModalOpen}
         onOpenChange={setBumpModalOpen}
         initial={bumpEditing}
-        onSaved={(id) => update("orderBumpId", id)}
+        onSaved={(id: string) => update("orderBumpId", id)}
       />
     </Tabs>
   );
