@@ -42,19 +42,22 @@ export const Route = createFileRoute("/checkout/$publicId")({
         .eq("active", true)
         .maybeSingle();
 
-      if (!ckRow) return { data: null, meta: null };
+      if (!ckRow) return { data: null, meta: null, blocked: "notfound" as const };
 
       const c = rowToCheckout(ckRow as unknown as CheckoutRow);
 
+      // Bloqueio: checkout sem produto associado é inválido
+      if (!c.productId) {
+        return { data: null, meta: null, blocked: "no_product" as const };
+      }
+
       // 2) Produto + order bump em paralelo
       const [{ data: pRow }, { data: bRow }] = await Promise.all([
-        c.productId
-          ? supabase
-              .from("products")
-              .select("id,name,description,image,type,delivery_url")
-              .eq("id", c.productId)
-              .maybeSingle()
-          : Promise.resolve({ data: null }),
+        supabase
+          .from("products")
+          .select("id,name,description,image,type,delivery_url")
+          .eq("id", c.productId)
+          .maybeSingle(),
         c.orderBumpId
           ? supabase
               .from("order_bumps")
@@ -64,19 +67,27 @@ export const Route = createFileRoute("/checkout/$publicId")({
           : Promise.resolve({ data: null }),
       ]);
 
+      // Bloqueio: produto referenciado não existe mais
+      if (!pRow) {
+        return { data: null, meta: null, blocked: "no_product" as const };
+      }
+
       const priceOverride = variant ? Number(variant.amount) : c.amount;
       c.amount = priceOverride;
 
-      const p: Product | undefined = pRow
-        ? {
-            id: pRow.id as string,
-            name: pRow.name as string,
-            description: (pRow.description as string) ?? "",
-            image: (pRow.image as string) ?? "",
-            type: pRow.type as Product["type"],
-            deliveryUrl: (pRow.delivery_url as string) ?? "",
-          }
-        : undefined;
+      // Bloqueio: valor inválido
+      if (!(priceOverride > 0)) {
+        return { data: null, meta: null, blocked: "invalid_amount" as const };
+      }
+
+      const p: Product = {
+        id: pRow.id as string,
+        name: pRow.name as string,
+        description: (pRow.description as string) ?? "",
+        image: (pRow.image as string) ?? "",
+        type: pRow.type as Product["type"],
+        deliveryUrl: (pRow.delivery_url as string) ?? "",
+      };
 
       const b: OrderBump | undefined = bRow
         ? {
@@ -90,16 +101,18 @@ export const Route = createFileRoute("/checkout/$publicId")({
       return {
         data: { c, p, b, priceOverride },
         meta: {
-          name: p?.name ?? "Finalize sua compra",
-          description: p?.description ?? "Pagamento seguro via ElevPay",
-          image: p?.image ?? c.image ?? "",
+          name: p.name,
+          description: p.description || "Pagamento seguro via ElevPay",
+          image: p.image || c.image || "",
           amount: priceOverride,
         },
+        blocked: null,
       };
     } catch {
-      return { data: null, meta: null };
+      return { data: null, meta: null, blocked: "error" as const };
     }
   },
+
   head: ({ loaderData }) => {
     const m = loaderData?.meta;
     const title = m ? `Finalize sua compra - ${m.name} - ElevPay` : "Finalize sua compra - ElevPay";
