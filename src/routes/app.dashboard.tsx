@@ -33,6 +33,7 @@ export const Route = createFileRoute("/app/dashboard")({
 function Dashboard() {
   const { user } = useAuth();
   const uid = user?.id;
+  const [period, setPeriod] = useState<PeriodValue>({ preset: "today" });
 
   const ordersQ = useQuery({
     queryKey: ["dash-orders", uid],
