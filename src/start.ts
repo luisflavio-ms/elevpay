@@ -32,6 +32,10 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 const securityHeadersMiddleware = createMiddleware().server(async ({ next, request }) => {
+  const url = new URL(request.url);
+  if (url.pathname.startsWith("/lovable/")) {
+    return next();
+  }
   const result = await next();
   const res = result instanceof Response ? result : undefined;
   if (!res) return result;
