@@ -311,15 +311,23 @@ function PublicCheckout() {
 
 
   if (!data) {
+    const blocked = loaderData?.blocked;
+    const msg =
+      blocked === "no_product"
+        ? "Este checkout está temporariamente indisponível. Entre em contato com o vendedor."
+        : blocked === "invalid_amount"
+          ? "Este checkout possui um valor inválido. Entre em contato com o vendedor."
+          : "Verifique o link e tente novamente.";
     return (
-      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "system-ui" }}>
-        <div style={{ textAlign: "center" }}>
-          <h1 style={{ fontSize: 22, marginBottom: 8 }}>Checkout não encontrado</h1>
-          <p style={{ color: "#64748b" }}>Verifique o link e tente novamente.</p>
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "system-ui", padding: 16 }}>
+        <div style={{ textAlign: "center", maxWidth: 420 }}>
+          <h1 style={{ fontSize: 22, marginBottom: 8 }}>Checkout indisponível</h1>
+          <p style={{ color: "#64748b" }}>{msg}</p>
         </div>
       </div>
     );
   }
+
 
   const { c, p, b } = data;
   const total = c.amount + (bumpOn && b ? b.price : 0);
