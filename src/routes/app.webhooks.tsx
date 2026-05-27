@@ -65,6 +65,7 @@ type WebhookConfig = {
   api_token: string | null;
   events: WebhookEvent[];
   active: boolean;
+  product_ids: string[];
   created_at: string;
 };
 
@@ -78,6 +79,8 @@ type WebhookLog = {
   error: string | null;
   created_at: string;
 };
+
+type ProductOption = { id: string; name: string };
 
 const EVENTS: WebhookEvent[] = [
   "payment.approved",
@@ -94,7 +97,9 @@ const emptyForm = (): Omit<WebhookConfig, "id" | "user_id" | "created_at"> => ({
   api_token: "",
   events: ["payment.approved", "payment.pending"],
   active: true,
+  product_ids: [],
 });
+
 
 function WebhooksPage() {
   const { user } = useAuth();
@@ -115,6 +120,18 @@ function WebhooksPage() {
     },
   });
 
+  const productsQ = useQuery({
+    queryKey: ["products_options"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as ProductOption[];
+    },
+  });
+
   const logsQ = useQuery({
     queryKey: ["webhook_logs"],
     queryFn: async () => {
@@ -127,6 +144,7 @@ function WebhooksPage() {
       return (data ?? []) as WebhookLog[];
     },
   });
+
 
   const saveM = useMutation({
     mutationFn: async () => {
@@ -141,7 +159,9 @@ function WebhooksPage() {
         api_token: form.api_token || null,
         events: form.events,
         active: form.active,
+        product_ids: form.product_ids,
       };
+
       if (editing) {
         const { error } = await supabase
           .from("webhook_configs")
@@ -220,9 +240,20 @@ function WebhooksPage() {
       api_token: c.api_token ?? "",
       events: c.events ?? [],
       active: c.active,
+      product_ids: c.product_ids ?? [],
     });
     setOpen(true);
   };
+
+  const toggleProduct = (id: string) => {
+    setForm((f) => ({
+      ...f,
+      product_ids: f.product_ids.includes(id)
+        ? f.product_ids.filter((p) => p !== id)
+        : [...f.product_ids, id],
+    }));
+  };
+
 
   const toggleEvent = (ev: WebhookEvent) => {
     setForm((f) => ({
