@@ -325,7 +325,15 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
             id: order.id,
             amount: Number(order.amount),
             customer_name: order.customer_name,
+            customer_email: order.customer_email,
+            customer_document: order.customer_document,
+            customer_phone: order.customer_phone,
             product_id: order.product_id,
+            utm_source: order.utm_source,
+            utm_medium: order.utm_medium,
+            utm_campaign: order.utm_campaign,
+            utm_term: order.utm_term,
+            utm_content: order.utm_content,
           });
         } catch (e) {
           console.error("[webhooks] dispatch failed", e);
