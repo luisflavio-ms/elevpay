@@ -496,6 +496,46 @@ function WebhooksPage() {
               </div>
             </div>
 
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label>Produtos</Label>
+                <span className="text-xs text-muted-foreground">
+                  {form.product_ids.length === 0
+                    ? "Todos os produtos"
+                    : `${form.product_ids.length} selecionado(s)`}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Deixe vazio para disparar em todos os produtos, ou selecione os
+                produtos específicos que devem disparar este webhook.
+              </p>
+              <div className="max-h-44 overflow-y-auto rounded-md border p-2 space-y-1">
+                {productsQ.isLoading ? (
+                  <div className="text-xs text-muted-foreground p-2">
+                    Carregando produtos…
+                  </div>
+                ) : (productsQ.data ?? []).length === 0 ? (
+                  <div className="text-xs text-muted-foreground p-2">
+                    Nenhum produto cadastrado.
+                  </div>
+                ) : (
+                  (productsQ.data ?? []).map((p) => (
+                    <label
+                      key={p.id}
+                      className="flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded hover:bg-muted/60"
+                    >
+                      <Checkbox
+                        checked={form.product_ids.includes(p.id)}
+                        onCheckedChange={() => toggleProduct(p.id)}
+                      />
+                      <span className="truncate">{p.name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+
+
             <div className="flex items-center justify-between">
               <Label>Ativo</Label>
               <Switch
