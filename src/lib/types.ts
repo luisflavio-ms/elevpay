@@ -31,6 +31,7 @@ export interface OrderBump {
   /** Produto vinculado ao bump (entrega automática). */
   productId?: string;
   productName?: string;
+  productImage?: string;
 }
 
 export interface Checkout {
