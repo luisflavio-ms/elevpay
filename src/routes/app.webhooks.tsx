@@ -350,7 +350,7 @@ function WebhooksPage() {
 
                 <div className="text-xs text-muted-foreground">
                   {(c.product_ids ?? []).length === 0
-                    ? "Dispara em todos os produtos"
+                    ? "⚠️ Sem produtos vinculados — não dispara"
                     : `Dispara apenas em ${(c.product_ids ?? []).length} produto(s) selecionado(s)`}
                 </div>
 
