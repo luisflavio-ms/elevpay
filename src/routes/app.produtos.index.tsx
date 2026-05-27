@@ -116,16 +116,25 @@ function ProdutosPage() {
 
   const deleteM = useMutation({
     mutationFn: async (ids: string[]) => {
+      // Apaga checkouts vinculados antes (sem FK cascade)
+      const { error: ckErr } = await supabase
+        .from("checkouts")
+        .delete()
+        .in("product_id", ids);
+      if (ckErr) throw ckErr;
       const { error } = await supabase.from("products").delete().in("id", ids);
       if (error) throw error;
     },
     onSuccess: (_d, ids) => {
       qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["checkouts", "slug-by-product"] });
+      qc.invalidateQueries({ queryKey: ["checkouts"] });
       setSelected((s) => {
         const n = new Set(s);
         ids.forEach((id) => n.delete(id));
         return n;
       });
+      setConfirmIds(null);
       toast.success(ids.length > 1 ? `${ids.length} produtos excluídos` : "Produto excluído");
     },
     onError: (e: Error) => toast.error(e.message),
