@@ -3,6 +3,7 @@ import { timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { notifyOrderStatus, notifySellerNewSale } from "@/lib/push.server";
 import { sendTransactionalEmailServer } from "@/lib/email/send.server";
+import { dispatchUserWebhooks } from "@/lib/webhooks.server";
 
 function safeEq(a: string, b: string): boolean {
   const ab = Buffer.from(a);
@@ -86,7 +87,7 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
 
         const { data: order, error: findErr } = await supabaseAdmin
           .from("orders")
-          .select("id, user_id, product_id, amount, status, customer_name, customer_email")
+          .select("id, user_id, product_id, amount, status, customer_name, customer_email, customer_document, customer_phone, utm_source, utm_medium, utm_campaign, utm_term, utm_content")
           .eq("abacate_billing_id", billingId)
           .maybeSingle();
 
@@ -165,6 +166,28 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
 
         // Notifica cliente via push (se inscrito)
         await notifyOrderStatus(order.id, newStatus);
+
+        // Dispara webhooks configurados pelo vendedor (Utmify, Zapier, Make, etc.)
+        const eventMap = {
+          aprovado: "payment.approved",
+          recusado: "payment.refused",
+          reembolsado: "payment.refunded",
+          pendente: "payment.pending",
+        } as const;
+        dispatchUserWebhooks(order.user_id, eventMap[newStatus], {
+          id: order.id,
+          amount: Number(order.amount),
+          customer_name: order.customer_name,
+          customer_email: order.customer_email,
+          customer_document: order.customer_document,
+          customer_phone: order.customer_phone,
+          product_id: order.product_id,
+          utm_source: order.utm_source,
+          utm_medium: order.utm_medium,
+          utm_campaign: order.utm_campaign,
+          utm_term: order.utm_term,
+          utm_content: order.utm_content,
+        }).catch((e) => console.error("[webhooks] dispatch failed", e));
 
         return new Response("ok", { status: 200 });
 

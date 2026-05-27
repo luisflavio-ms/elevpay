@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { testWebhook } from "@/lib/webhooks.functions";
 
 export const Route = createFileRoute("/app/webhooks")({
   component: WebhooksPage,
@@ -178,6 +180,7 @@ function WebhooksPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["webhook_configs"] }),
   });
 
+  const testFn = useServerFn(testWebhook);
   const testM = useMutation({
     mutationFn: async ({
       config,
@@ -186,54 +189,12 @@ function WebhooksPage() {
       config: WebhookConfig;
       event: WebhookEvent;
     }) => {
-      if (!user) throw new Error("Não autenticado");
-      const payload = {
-        test: true,
-        event,
-        provider: config.provider,
-        timestamp: new Date().toISOString(),
-        data: {
-          order_id: "test_" + Math.random().toString(36).slice(2, 10),
-          amount: 9700,
-          customer: { name: "Cliente Teste", email: "teste@exemplo.com" },
-        },
-      };
-
-      let status: number | null = null;
-      let success = false;
-      let errorMsg: string | null = null;
-      try {
-        const res = await fetch(config.url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(config.api_token ? { Authorization: `Bearer ${config.api_token}` } : {}),
-          },
-          body: JSON.stringify(payload),
-        });
-        status = res.status;
-        success = res.ok;
-        if (!res.ok) errorMsg = `HTTP ${res.status}`;
-      } catch (e) {
-        errorMsg = (e as Error).message;
-      }
-
-      const { error } = await supabase.from("webhook_logs").insert({
-        user_id: user.id,
-        webhook_config_id: config.id,
-        event,
-        status_code: status,
-        success,
-        payload,
-        error: errorMsg,
-      });
-      if (error) throw error;
-      return { success, errorMsg };
+      return testFn({ data: { configId: config.id, event } });
     },
-    onSuccess: ({ success, errorMsg }) => {
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["webhook_logs"] });
-      if (success) toast.success("Webhook enviado");
-      else toast.error(`Falha: ${errorMsg ?? "erro desconhecido"}`);
+      if (result.success) toast.success(`Webhook enviado (HTTP ${result.statusCode})`);
+      else toast.error(`Falha: ${result.errorMsg ?? "erro desconhecido"}`);
     },
     onError: (e: Error) => toast.error(e.message),
   });
