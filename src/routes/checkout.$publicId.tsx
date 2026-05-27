@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
@@ -79,6 +79,7 @@ export const Route = createFileRoute("/checkout/$publicId")({
  */
 function PublicCheckout() {
   const { publicId } = Route.useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState<{ c: Checkout; p?: Product; b?: OrderBump; priceOverride?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [method, setMethod] = useState<PaymentMethod>("pix");
@@ -267,13 +268,23 @@ function PublicCheckout() {
         if (status === "aprovado") {
           setPaid(true);
           clearInterval(interval);
+          navigate({
+            to: "/obrigado/$orderId",
+            params: { orderId: pix.orderId },
+            search: {
+              email: form.email || undefined,
+              product: data?.p?.name || undefined,
+              amount: pix.amount,
+              redirect: data?.c?.redirectUrl || undefined,
+            },
+          });
         }
       } catch {
         /* ignore */
       }
     }, 4000);
     return () => clearInterval(interval);
-  }, [pix, paid, checkStatus]);
+  }, [pix, paid, checkStatus, navigate, form.email, data]);
 
   if (loading) {
     return (
