@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -18,6 +19,12 @@ import { SalesFunnel } from "@/components/SalesFunnel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { EnableAdminPush } from "@/components/EnableAdminPush";
+import {
+  DashboardPeriodFilter,
+  periodLabel,
+  periodRange,
+  type PeriodValue,
+} from "@/components/DashboardPeriodFilter";
 
 export const Route = createFileRoute("/app/dashboard")({
   component: Dashboard,
@@ -26,6 +33,7 @@ export const Route = createFileRoute("/app/dashboard")({
 function Dashboard() {
   const { user } = useAuth();
   const uid = user?.id;
+  const [period, setPeriod] = useState<PeriodValue>({ preset: "today" });
 
   const ordersQ = useQuery({
     queryKey: ["dash-orders", uid],
@@ -78,10 +86,19 @@ function Dashboard() {
     },
   });
 
-  const orders = ordersQ.data ?? [];
+  const allOrders = ordersQ.data ?? [];
   const products = productsQ.data ?? [];
   const checkouts = checkoutsQ.data ?? [];
 
+  const { start, end } = useMemo(() => periodRange(period), [period]);
+  const orders = useMemo(
+    () =>
+      allOrders.filter((o) => {
+        const t = new Date(o.date).getTime();
+        return t >= start.getTime() && t <= end.getTime();
+      }),
+    [allOrders, start, end],
+  );
   const approved = orders.filter((o) => o.status === "aprovado");
   const revenue = approved.reduce((s, o) => s + o.amount, 0);
   const conv = checkouts.length
@@ -107,13 +124,18 @@ function Dashboard() {
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Visão geral dos últimos dias</p>
+          <p className="text-sm text-muted-foreground">
+            Período: {periodLabel(period)}
+          </p>
         </div>
-        <Link to="/app/checkouts">
-          <Button className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" /> Criar checkout
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <DashboardPeriodFilter value={period} onChange={setPeriod} />
+          <Link to="/app/checkouts">
+            <Button className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2" /> Criar checkout
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <EnableAdminPush />
