@@ -89,8 +89,7 @@ function Dashboard() {
   const allOrders = ordersQ.data ?? [];
   const products = productsQ.data ?? [];
   const checkouts = checkoutsQ.data ?? [];
-  const approved = orders.filter((o) => o.status === "aprovado");
-  const revenue = approved.reduce((s, o) => s + o.amount, 0);
+
   const { start, end } = useMemo(() => periodRange(period), [period]);
   const orders = useMemo(
     () =>
@@ -100,6 +99,7 @@ function Dashboard() {
       }),
     [allOrders, start, end],
   );
+  const approved = orders.filter((o) => o.status === "aprovado");
   const revenue = approved.reduce((s, o) => s + o.amount, 0);
   const conv = checkouts.length
     ? (
