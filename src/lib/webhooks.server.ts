@@ -33,7 +33,7 @@ type WebhookConfigRow = {
   headers: Record<string, string> | null;
 };
 
-function buildPayload(
+function buildGenericPayload(
   event: WebhookEvent,
   provider: string,
   order: OrderForWebhook,
@@ -65,6 +65,84 @@ function buildPayload(
   };
 }
 
+function utmifyStatus(event: WebhookEvent): string {
+  switch (event) {
+    case "payment.approved":
+      return "paid";
+    case "payment.pending":
+      return "waiting_payment";
+    case "payment.refused":
+      return "refused";
+    case "payment.refunded":
+      return "refunded";
+    default:
+      return "waiting_payment";
+  }
+}
+
+// Formato Utmify: https://docs.utmify.com.br
+function buildUtmifyPayload(
+  event: WebhookEvent,
+  order: OrderForWebhook,
+  isTest = false,
+) {
+  const amountCents = Math.round(Number(order.amount) * 100);
+  const nowIso = new Date().toISOString().replace("T", " ").slice(0, 19);
+  const status = utmifyStatus(event);
+  return {
+    orderId: order.id,
+    platform: "ElevPay",
+    paymentMethod: "pix",
+    status,
+    createdAt: nowIso,
+    approvedDate: status === "paid" ? nowIso : null,
+    refundedAt: status === "refunded" ? nowIso : null,
+    customer: {
+      name: order.customer_name ?? "Cliente",
+      email: order.customer_email ?? "sem-email@exemplo.com",
+      phone: order.customer_phone ?? null,
+      document: order.customer_document ?? null,
+      country: "BR",
+      ip: null,
+    },
+    products: [
+      {
+        id: order.product_id ?? "produto",
+        name: "Produto",
+        planId: null,
+        planName: null,
+        quantity: 1,
+        priceInCents: amountCents,
+      },
+    ],
+    trackingParameters: {
+      src: null,
+      sck: null,
+      utm_source: order.utm_source ?? null,
+      utm_campaign: order.utm_campaign ?? null,
+      utm_medium: order.utm_medium ?? null,
+      utm_content: order.utm_content ?? null,
+      utm_term: order.utm_term ?? null,
+    },
+    commission: {
+      totalPriceInCents: amountCents,
+      gatewayFeeInCents: 0,
+      userCommissionInCents: amountCents,
+    },
+    isTest,
+  };
+}
+
+function buildPayload(
+  event: WebhookEvent,
+  provider: string,
+  order: OrderForWebhook,
+  isTest = false,
+) {
+  if (provider === "utmify") return buildUtmifyPayload(event, order, isTest);
+  return buildGenericPayload(event, provider, order);
+}
+
 async function fireOne(
   config: WebhookConfigRow,
   event: WebhookEvent,
@@ -75,14 +153,21 @@ async function fireOne(
   let errorMsg: string | null = null;
   let responseBody: unknown = null;
 
+  const authHeaders: Record<string, string> =
+    config.provider === "utmify"
+      ? config.api_token
+        ? { "x-api-token": config.api_token }
+        : {}
+      : config.api_token
+        ? { Authorization: `Bearer ${config.api_token}` }
+        : {};
+
   try {
     const res = await fetch(config.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(config.api_token
-          ? { Authorization: `Bearer ${config.api_token}` }
-          : {}),
+        ...authHeaders,
         ...(config.headers ?? {}),
       },
       body: JSON.stringify(payload),
@@ -95,7 +180,8 @@ async function fireOne(
     } catch {
       responseBody = text.slice(0, 1000);
     }
-    if (!res.ok) errorMsg = `HTTP ${res.status}`;
+    if (!res.ok)
+      errorMsg = `HTTP ${res.status}${text ? `: ${text.slice(0, 300)}` : ""}`;
   } catch (e) {
     errorMsg = (e as Error).message;
   }
