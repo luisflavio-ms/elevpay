@@ -1,12 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { User, Mail, Phone, IdCard } from "lucide-react";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import { createPixPayment, checkOrderStatus } from "@/lib/abacate.functions";
 import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
+
+const BUYER_STORAGE_KEY = "elevpay:buyer";
 
 const BlockRenderer = lazy(() =>
   import("@/components/checkout/BlockRenderer").then((m) => ({ default: m.BlockRenderer })),
@@ -275,6 +278,23 @@ function PublicCheckout() {
     }
   };
 
+  // Autofill: restaura dados do comprador salvos localmente em compras anteriores
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(BUYER_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<typeof form>;
+      setForm((prev) => ({
+        name: prev.name || saved.name || "",
+        email: prev.email || saved.email || "",
+        whatsapp: prev.whatsapp || saved.whatsapp || "",
+        cpf: prev.cpf || saved.cpf || "",
+      }));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   useEffect(() => {
     if (secondsLeft <= 0) return;
     const i = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
@@ -380,6 +400,11 @@ function PublicCheckout() {
 
     setSubmitting(true);
     setPayError(null);
+    try {
+      localStorage.setItem(BUYER_STORAGE_KEY, JSON.stringify(form));
+    } catch {
+      /* ignore */
+    }
     try {
       if (method === "pix") {
         const result = await createPix({
@@ -537,19 +562,38 @@ function PublicCheckout() {
           style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, marginTop: 8 }}
         >
           <h3 style={{ fontSize: 14, margin: "0 0 10px", fontWeight: 600 }}>Seus dados</h3>
-          <Input placeholder="Nome completo" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
           <Input
-            placeholder="E-mail"
+            placeholder="Nome completo (como no documento)"
+            value={form.name}
+            onChange={(v) => setForm({ ...form, name: v })}
+            icon={<User size={16} />}
+            autoComplete="name"
+          />
+          <Input
+            placeholder="E-mail que irá receber a compra"
             type="email"
             value={form.email}
             onChange={(v) => setForm({ ...form, email: v })}
+            icon={<Mail size={16} />}
+            autoComplete="email"
+            inputMode="email"
           />
           <Input
-            placeholder="WhatsApp"
+            placeholder="(DDD) 99999-9999"
             value={form.whatsapp}
             onChange={(v) => setForm({ ...form, whatsapp: maskPhone(v) })}
+            icon={<Phone size={16} />}
+            autoComplete="tel"
+            inputMode="tel"
           />
-          <Input placeholder="CPF" value={form.cpf} onChange={(v) => setForm({ ...form, cpf: maskCpf(v) })} />
+          <Input
+            placeholder="000.000.000-00"
+            value={form.cpf}
+            onChange={(v) => setForm({ ...form, cpf: maskCpf(v) })}
+            icon={<IdCard size={16} />}
+            autoComplete="off"
+            inputMode="numeric"
+          />
 
           <h3 style={{ fontSize: 14, margin: "14px 0 8px", fontWeight: 600 }}>Pagamento</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
@@ -726,24 +770,50 @@ function PublicCheckout() {
   );
 }
 
-function Input(props: { placeholder: string; type?: string; value?: string; onChange?: (v: string) => void }) {
+function Input(props: {
+  placeholder: string;
+  type?: string;
+  value?: string;
+  onChange?: (v: string) => void;
+  icon?: React.ReactNode;
+  autoComplete?: string;
+  inputMode?: "text" | "email" | "tel" | "numeric" | "decimal" | "search" | "url" | "none";
+}) {
   return (
-    <input
-      type={props.type || "text"}
-      placeholder={props.placeholder}
-      value={props.value}
-      onChange={(e) => props.onChange?.(e.target.value)}
-      style={{
-        width: "100%",
-        padding: "11px 12px",
-        border: "1px solid #cbd5e1",
-        borderRadius: 8,
-        fontSize: 14,
-        marginBottom: 8,
-        outline: "none",
-        boxSizing: "border-box",
-      }}
-    />
+    <div style={{ position: "relative", marginBottom: 8 }}>
+      {props.icon && (
+        <span
+          style={{
+            position: "absolute",
+            left: 12,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "#94a3b8",
+            display: "inline-flex",
+            pointerEvents: "none",
+          }}
+        >
+          {props.icon}
+        </span>
+      )}
+      <input
+        type={props.type || "text"}
+        placeholder={props.placeholder}
+        value={props.value}
+        onChange={(e) => props.onChange?.(e.target.value)}
+        autoComplete={props.autoComplete}
+        inputMode={props.inputMode}
+        style={{
+          width: "100%",
+          padding: props.icon ? "11px 12px 11px 38px" : "11px 12px",
+          border: "1px solid #cbd5e1",
+          borderRadius: 8,
+          fontSize: 14,
+          outline: "none",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
   );
 }
 
