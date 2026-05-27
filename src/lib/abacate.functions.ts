@@ -265,9 +265,10 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select("id, user_id, product_id, amount, status, abacate_billing_id, customer_name, customer_email, customer_document, customer_phone, utm_source, utm_medium, utm_campaign, utm_term, utm_content")
+      .select("id, user_id, product_id, amount, status, abacate_billing_id, customer_name, customer_email, customer_document, customer_phone, utm_source, utm_medium, utm_campaign, utm_term, utm_content, metadata")
       .eq("id", data.orderId)
       .maybeSingle();
+
     if (error) throw new Error(error.message);
     if (!order) return { status: "pendente" as const };
 
@@ -312,42 +313,51 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
           });
           await notifySellerNewSale(order.user_id, gross, order.customer_name);
 
-          if (order.customer_email && order.product_id) {
-            try {
-              const { data: product } = await supabaseAdmin
-                .from("products")
-                .select("name, delivery_url")
-                .eq("id", order.product_id)
-                .maybeSingle();
+          if (order.customer_email) {
+            const amountFmt = new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            }).format(Number(order.amount));
 
-              if (product?.delivery_url) {
-                const amountFmt = new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                }).format(Number(order.amount));
+            const bumpMeta = (order.metadata as { bump?: { product_id?: string | null } } | null)?.bump;
+            const deliveryIds = [
+              order.product_id,
+              bumpMeta?.product_id ?? null,
+            ].filter((v): v is string => !!v);
 
-                await sendTransactionalEmailServer({
-                  templateName: "product-access",
-                  recipientEmail: order.customer_email,
-                  idempotencyKey: `product-access-${order.id}`,
-                  templateData: {
-                    customerName: order.customer_name?.split(" ")[0],
-                    productName: product.name,
-                    accessUrl: product.delivery_url,
-                    orderId: order.id,
-                    amount: amountFmt,
-                  },
-                });
-              } else {
-                console.warn("[checkOrderStatus] product without delivery_url, skipping access email", {
-                  productId: order.product_id,
-                });
+            for (const pid of deliveryIds) {
+              try {
+                const { data: product } = await supabaseAdmin
+                  .from("products")
+                  .select("name, delivery_url")
+                  .eq("id", pid)
+                  .maybeSingle();
+
+                if (product?.delivery_url) {
+                  await sendTransactionalEmailServer({
+                    templateName: "product-access",
+                    recipientEmail: order.customer_email,
+                    idempotencyKey: `product-access-${order.id}-${pid}`,
+                    templateData: {
+                      customerName: order.customer_name?.split(" ")[0],
+                      productName: product.name,
+                      accessUrl: product.delivery_url,
+                      orderId: order.id,
+                      amount: amountFmt,
+                    },
+                  });
+                } else {
+                  console.warn("[checkOrderStatus] product without delivery_url, skipping access email", {
+                    productId: pid,
+                  });
+                }
+              } catch (err) {
+                console.error("[checkOrderStatus] access email failed", err);
               }
-            } catch (err) {
-              console.error("[checkOrderStatus] access email failed", err);
             }
           }
         }
+
         await notifyOrderStatus(order.id, newStatus);
         const eventMap = {
           aprovado: "payment.approved",
