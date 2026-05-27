@@ -15,6 +15,7 @@ export type OrderForWebhook = {
   customer_document?: string | null;
   customer_phone?: string | null;
   product_id?: string | null;
+  product_name?: string | null;
   utm_source?: string | null;
   utm_medium?: string | null;
   utm_campaign?: string | null;
@@ -108,7 +109,7 @@ function buildUtmifyPayload(
     products: [
       {
         id: order.product_id ?? "produto",
-        name: "Produto",
+        name: order.product_name ?? "Produto",
         planId: null,
         planName: null,
         quantity: 1,
@@ -224,9 +225,24 @@ export async function dispatchUserWebhooks(
   }
   if (!configs || configs.length === 0) return;
 
+  // Enriquece com o nome do produto se não veio do caller
+  let enriched = order;
+  if (!order.product_name && order.product_id) {
+    try {
+      const { data: product } = await supabaseAdmin
+        .from("products")
+        .select("name")
+        .eq("id", order.product_id)
+        .maybeSingle();
+      if (product?.name) enriched = { ...order, product_name: product.name };
+    } catch (e) {
+      console.error("[dispatchUserWebhooks] product name fetch failed", e);
+    }
+  }
+
   await Promise.all(
     (configs as WebhookConfigRow[]).map((c) =>
-      fireOne(c, event, buildPayload(event, c.provider, order)).catch((e) =>
+      fireOne(c, event, buildPayload(event, c.provider, enriched)).catch((e) =>
         console.error("[dispatchUserWebhooks] fire failed", c.id, e),
       ),
     ),
