@@ -264,7 +264,7 @@ function ProdutosPage() {
           />
         </div>
         {selected.size > 0 && (
-          <Button variant="outline" onClick={() => deleteM.mutate(Array.from(selected))} className="text-destructive">
+          <Button variant="outline" onClick={() => setConfirmIds(Array.from(selected))} className="text-destructive">
             <Trash2 className="h-4 w-4 mr-2" /> Excluir ({selected.size})
           </Button>
         )}
