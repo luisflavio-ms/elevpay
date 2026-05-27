@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { notifyOrderStatus, notifySellerNewSale } from "@/lib/push.server";
+import { sendTransactionalEmailServer } from "@/lib/email/send.server";
 
 function safeEq(a: string, b: string): boolean {
   const ab = Buffer.from(a);
@@ -85,7 +86,7 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
 
         const { data: order, error: findErr } = await supabaseAdmin
           .from("orders")
-          .select("id, user_id, product_id, amount, status, customer_name")
+          .select("id, user_id, product_id, amount, status, customer_name, customer_email")
           .eq("abacate_billing_id", billingId)
           .maybeSingle();
 
@@ -122,6 +123,44 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
           });
           // Notifica o vendedor (admin) da nova venda
           await notifySellerNewSale(order.user_id, gross, order.customer_name);
+
+          // Envia email de liberação de acesso ao cliente
+          if (order.customer_email && order.product_id) {
+            try {
+              const { data: product } = await supabaseAdmin
+                .from("products")
+                .select("name, delivery_url")
+                .eq("id", order.product_id)
+                .maybeSingle();
+
+              if (product?.delivery_url) {
+                const amountFmt = new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(Number(order.amount));
+
+                await sendTransactionalEmailServer({
+                  templateName: "product-access",
+                  recipientEmail: order.customer_email,
+                  idempotencyKey: `product-access-${order.id}`,
+                  templateData: {
+                    customerName: order.customer_name?.split(" ")[0],
+                    productName: product.name,
+                    accessUrl: product.delivery_url,
+                    orderId: order.id,
+                    amount: amountFmt,
+                  },
+                });
+              } else {
+                console.warn(
+                  "[abacate-webhook] product without delivery_url, skipping access email",
+                  { productId: order.product_id }
+                );
+              }
+            } catch (err) {
+              console.error("[abacate-webhook] access email failed", err);
+            }
+          }
         }
 
         // Notifica cliente via push (se inscrito)

@@ -16,6 +16,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CheckoutPublicIdRouteImport } from './routes/checkout.$publicId'
 import { Route as AppWebhooksRouteImport } from './routes/app.webhooks'
 import { Route as AppVendasRouteImport } from './routes/app.vendas'
@@ -24,9 +25,12 @@ import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppConfiguracoesRouteImport } from './routes/app.configuracoes'
 import { Route as AppProdutosIndexRouteImport } from './routes/app.produtos.index'
 import { Route as AppCheckoutsIndexRouteImport } from './routes/app.checkouts.index'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AppProdutosIdRouteImport } from './routes/app.produtos.$id'
 import { Route as AppCheckoutsIdRouteImport } from './routes/app.checkouts.$id'
 import { Route as ApiPublicAbacateWebhookRouteImport } from './routes/api/public/abacate-webhook'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -65,6 +69,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutPublicIdRoute = CheckoutPublicIdRouteImport.update({
   id: '/checkout/$publicId',
@@ -106,6 +115,11 @@ const AppCheckoutsIndexRoute = AppCheckoutsIndexRouteImport.update({
   path: '/checkouts/',
   getParentRoute: () => AppRoute,
 } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppProdutosIdRoute = AppProdutosIdRouteImport.update({
   id: '/produtos/$id',
   path: '/produtos/$id',
@@ -121,6 +135,18 @@ const ApiPublicAbacateWebhookRoute = ApiPublicAbacateWebhookRouteImport.update({
   path: '/api/public/abacate-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -151,15 +177,19 @@ export interface FileRoutesByFullPath {
   '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$publicId': typeof CheckoutPublicIdRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/app/': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
   '/app/produtos/$id': typeof AppProdutosIdRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
   '/app/produtos/': typeof AppProdutosIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -173,15 +203,19 @@ export interface FileRoutesByTo {
   '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$publicId': typeof CheckoutPublicIdRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/app': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
   '/app/produtos/$id': typeof AppProdutosIdRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/checkouts': typeof AppCheckoutsIndexRoute
   '/app/produtos': typeof AppProdutosIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -197,15 +231,19 @@ export interface FileRoutesById {
   '/app/vendas': typeof AppVendasRoute
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$publicId': typeof CheckoutPublicIdRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/app/': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
   '/app/produtos/$id': typeof AppProdutosIdRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
   '/app/produtos/': typeof AppProdutosIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -222,15 +260,19 @@ export interface FileRouteTypes {
     | '/app/vendas'
     | '/app/webhooks'
     | '/checkout/$publicId'
+    | '/email/unsubscribe'
     | '/app/'
     | '/api/public/abacate-webhook'
     | '/app/checkouts/$id'
     | '/app/produtos/$id'
+    | '/lovable/email/suppression'
     | '/app/checkouts/'
     | '/app/produtos/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -244,15 +286,19 @@ export interface FileRouteTypes {
     | '/app/vendas'
     | '/app/webhooks'
     | '/checkout/$publicId'
+    | '/email/unsubscribe'
     | '/app'
     | '/api/public/abacate-webhook'
     | '/app/checkouts/$id'
     | '/app/produtos/$id'
+    | '/lovable/email/suppression'
     | '/app/checkouts'
     | '/app/produtos'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   id:
     | '__root__'
     | '/'
@@ -267,15 +313,19 @@ export interface FileRouteTypes {
     | '/app/vendas'
     | '/app/webhooks'
     | '/checkout/$publicId'
+    | '/email/unsubscribe'
     | '/app/'
     | '/api/public/abacate-webhook'
     | '/app/checkouts/$id'
     | '/app/produtos/$id'
+    | '/lovable/email/suppression'
     | '/app/checkouts/'
     | '/app/produtos/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -286,10 +336,14 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   CheckoutPublicIdRoute: typeof CheckoutPublicIdRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicAbacateWebhookRoute: typeof ApiPublicAbacateWebhookRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -342,6 +396,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/checkout/$publicId': {
       id: '/checkout/$publicId'
@@ -399,6 +460,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCheckoutsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/produtos/$id': {
       id: '/app/produtos/$id'
       path: '/produtos/$id'
@@ -418,6 +486,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/abacate-webhook'
       fullPath: '/api/public/abacate-webhook'
       preLoaderRoute: typeof ApiPublicAbacateWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
@@ -480,10 +562,14 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   CheckoutPublicIdRoute: CheckoutPublicIdRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicAbacateWebhookRoute: ApiPublicAbacateWebhookRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
