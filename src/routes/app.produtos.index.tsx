@@ -49,6 +49,7 @@ function ProdutosPage() {
 
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmIds, setConfirmIds] = useState<string[] | null>(null);
 
   const productsQ = useQuery({
     queryKey: ["products"],
