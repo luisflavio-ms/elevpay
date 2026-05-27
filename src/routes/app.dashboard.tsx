@@ -124,13 +124,18 @@ function Dashboard() {
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Visão geral dos últimos dias</p>
+          <p className="text-sm text-muted-foreground">
+            Período: {periodLabel(period)}
+          </p>
         </div>
-        <Link to="/app/checkouts">
-          <Button className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" /> Criar checkout
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <DashboardPeriodFilter value={period} onChange={setPeriod} />
+          <Link to="/app/checkouts">
+            <Button className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2" /> Criar checkout
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <EnableAdminPush />
