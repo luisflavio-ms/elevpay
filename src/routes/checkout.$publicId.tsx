@@ -65,7 +65,7 @@ export const Route = createFileRoute("/checkout/$publicId")({
         c.orderBumpId
           ? supabase
               .from("order_bumps")
-              .select("id,title,description,price")
+              .select("id,title,description,price,compare_at_price,product_id")
               .eq("id", c.orderBumpId)
               .maybeSingle()
           : Promise.resolve({ data: null }),
@@ -93,14 +93,29 @@ export const Route = createFileRoute("/checkout/$publicId")({
         deliveryUrl: (pRow.delivery_url as string) ?? "",
       };
 
+      let bumpProductName: string | undefined;
+      if (bRow?.product_id) {
+        const { data: bp } = await supabase
+          .from("products")
+          .select("name")
+          .eq("id", bRow.product_id as string)
+          .maybeSingle();
+        bumpProductName = (bp?.name as string) ?? undefined;
+      }
+
       const b: OrderBump | undefined = bRow
         ? {
             id: bRow.id as string,
-            title: bRow.title as string,
+            title: (bRow.title as string) || bumpProductName || "",
             description: (bRow.description as string) ?? "",
             price: Number(bRow.price),
+            compareAtPrice:
+              bRow.compare_at_price == null ? undefined : Number(bRow.compare_at_price),
+            productId: (bRow.product_id as string | null) ?? undefined,
+            productName: bumpProductName,
           }
         : undefined;
+
 
       return {
         data: { c, p, b, priceOverride },
@@ -654,10 +669,18 @@ function PublicCheckout() {
               />
               <div>
                 <div style={{ fontSize: 11, color, fontWeight: 700 }}>OFERTA ESPECIAL</div>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>{b.title}</div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{b.productName ?? b.title}</div>
                 <div style={{ fontSize: 12, color: "#475569" }}>{b.description}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4 }}>+ {brl(b.price)}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4, display: "flex", gap: 6, alignItems: "baseline" }}>
+                  <span>+ {brl(b.price)}</span>
+                  {b.compareAtPrice != null && (
+                    <span style={{ fontSize: 11, color: "#94a3b8", textDecoration: "line-through", fontWeight: 500 }}>
+                      {brl(b.compareAtPrice)}
+                    </span>
+                  )}
+                </div>
               </div>
+
             </label>
           )}
 
