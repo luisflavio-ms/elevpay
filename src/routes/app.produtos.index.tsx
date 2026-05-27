@@ -320,10 +320,6 @@ function ProdutosPage() {
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
-                      <Button size="icon" variant="ghost" onClick={() => deleteM.mutate([p.id])}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
                   </div>
 
                   
