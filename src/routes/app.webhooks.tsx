@@ -346,6 +346,13 @@ function WebhooksPage() {
                   ))}
                 </div>
 
+                <div className="text-xs text-muted-foreground">
+                  {(c.product_ids ?? []).length === 0
+                    ? "Dispara em todos os produtos"
+                    : `Dispara apenas em ${(c.product_ids ?? []).length} produto(s) selecionado(s)`}
+                </div>
+
+
                 <div className="border-t pt-3">
                   <div className="text-xs font-medium text-muted-foreground mb-2">
                     Enviar evento de teste
