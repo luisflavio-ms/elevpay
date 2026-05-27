@@ -336,7 +336,7 @@ function ProdutosPage() {
                       <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
                         <Pencil className="h-4 w-4 text-primary" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => deleteM.mutate([p.id])}>
+                      <Button size="icon" variant="ghost" onClick={() => setConfirmIds([p.id])}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
