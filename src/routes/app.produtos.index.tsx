@@ -389,30 +389,14 @@ function ProdutosPage() {
                       <span className="text-xs text-muted-foreground">sem checkout</span>
                     )}
                   </div>
-                  <div className="hidden md:flex justify-end gap-1">
-                    <button
-                      onClick={() => openEdit(p)}
-                      className="h-8 w-8 grid place-items-center rounded-md text-primary hover:bg-primary/10 transition"
-                      aria-label="Editar"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => duplicateM.mutate(p.id)}
-                      disabled={duplicateM.isPending}
-                      className="h-8 w-8 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition disabled:opacity-30"
-                      aria-label="Duplicar produto e checkout"
-                      title="Duplicar produto e checkout"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setConfirmIds([p.id])}
-                      className="h-8 w-8 grid place-items-center rounded-md text-destructive hover:bg-destructive/10 transition"
-                      aria-label="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  <div className="hidden md:flex justify-end">
+                    <ProductActions
+                      hasSales={sales > 0}
+                      onEdit={() => openEdit(p)}
+                      onDuplicate={() => duplicateM.mutate(p.id)}
+                      duplicating={duplicateM.isPending}
+                      onDelete={() => setConfirmIds([p.id])}
+                    />
                   </div>
                 </li>
               );
