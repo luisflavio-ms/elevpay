@@ -85,11 +85,12 @@ export const createPixPayment = createServerFn({ method: "POST" })
       ckRow.order_bump_id
         ? supabaseAdmin
             .from("order_bumps")
-            .select("id, title, price, user_id")
+            .select("id, title, price, user_id, product_id")
             .eq("id", ckRow.order_bump_id)
             .maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
+
 
     // Bloqueio: produto referenciado não existe (foi excluído)
     if (!pRow) {
@@ -105,7 +106,11 @@ export const createPixPayment = createServerFn({ method: "POST" })
       if (Number(bRow.price) <= 0) {
         throw new Error("Preço de order bump inválido.");
       }
+      if (!bRow.product_id) {
+        throw new Error("Order bump sem produto vinculado.");
+      }
     }
+
 
     const basePrice = variant
       ? Number(variant.amount)
@@ -197,9 +202,15 @@ export const createPixPayment = createServerFn({ method: "POST" })
         utm_content: data.utm?.content ?? null,
         metadata: {
           bump: data.bumpOn && bRow
-            ? { id: bRow.id, title: bRow.title, price: Number(bRow.price) }
+            ? {
+                id: bRow.id,
+                title: bRow.title,
+                price: Number(bRow.price),
+                product_id: bRow.product_id ?? null,
+              }
             : null,
         },
+
       })
       .select("id")
       .single();
