@@ -320,12 +320,16 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
           recusado: "payment.refused",
           reembolsado: "payment.refunded",
         } as const;
-        dispatchUserWebhooks(order.user_id, eventMap[newStatus], {
-          id: order.id,
-          amount: Number(order.amount),
-          customer_name: order.customer_name,
-          product_id: order.product_id,
-        }).catch((e) => console.error("[webhooks] dispatch failed", e));
+        try {
+          await dispatchUserWebhooks(order.user_id, eventMap[newStatus], {
+            id: order.id,
+            amount: Number(order.amount),
+            customer_name: order.customer_name,
+            product_id: order.product_id,
+          });
+        } catch (e) {
+          console.error("[webhooks] dispatch failed", e);
+        }
         return { status: newStatus };
       }
 
