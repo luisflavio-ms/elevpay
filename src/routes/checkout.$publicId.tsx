@@ -94,13 +94,15 @@ export const Route = createFileRoute("/checkout/$publicId")({
       };
 
       let bumpProductName: string | undefined;
+      let bumpProductImage: string | undefined;
       if (bRow?.product_id) {
         const { data: bp } = await supabase
           .from("products")
-          .select("name")
+          .select("name, image")
           .eq("id", bRow.product_id as string)
           .maybeSingle();
         bumpProductName = (bp?.name as string) ?? undefined;
+        bumpProductImage = (bp?.image as string) ?? undefined;
       }
 
       const b: OrderBump | undefined = bRow
@@ -113,6 +115,7 @@ export const Route = createFileRoute("/checkout/$publicId")({
               bRow.compare_at_price == null ? undefined : Number(bRow.compare_at_price),
             productId: (bRow.product_id as string | null) ?? undefined,
             productName: bumpProductName,
+            productImage: bumpProductImage,
           }
         : undefined;
 
