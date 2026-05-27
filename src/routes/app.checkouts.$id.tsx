@@ -329,8 +329,11 @@ function ConfigPanel({
             <SelectContent>
               <SelectItem value="none">Nenhum</SelectItem>
               {bumps.map((b) => (
-                <SelectItem key={b.id} value={b.id}>{b.title} — {brl(b.price)}</SelectItem>
+                <SelectItem key={b.id} value={b.id}>
+                  {(b.productName ?? b.title) || "Sem produto"} — {brl(b.price)}
+                </SelectItem>
               ))}
+
             </SelectContent>
           </Select>
           <div className="flex gap-2 mt-2">
@@ -631,12 +634,19 @@ function PreviewPanel({
                   <input type="checkbox" readOnly style={{ marginTop: 3 }} />
                   <div>
                     <div style={{ fontSize: 11, color, fontWeight: 700 }}>OFERTA ESPECIAL</div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{bump.title}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>
+                      {bump.productName ?? bump.title}
+                    </div>
                     <div style={{ fontSize: 12, color: "#475569" }}>{bump.description}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4 }}>+ {brl(bump.price)}</div>
-                  </div>
-                </div>
-              )}
+                    <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4, display: "flex", gap: 6, alignItems: "baseline" }}>
+                      <span>+ {brl(bump.price)}</span>
+                      {bump.compareAtPrice != null && (
+                        <span style={{ fontSize: 11, color: "#94a3b8", textDecoration: "line-through", fontWeight: 500 }}>
+                          {brl(bump.compareAtPrice)}
+                        </span>
+                      )}
+                    </div>
+
 
               <div
                 style={{
