@@ -86,11 +86,19 @@ function Dashboard() {
     },
   });
 
-  const orders = ordersQ.data ?? [];
+  const allOrders = ordersQ.data ?? [];
   const products = productsQ.data ?? [];
   const checkouts = checkoutsQ.data ?? [];
 
-  const approved = orders.filter((o) => o.status === "aprovado");
+  const { start, end } = useMemo(() => periodRange(period), [period]);
+  const orders = useMemo(
+    () =>
+      allOrders.filter((o) => {
+        const t = new Date(o.date).getTime();
+        return t >= start.getTime() && t <= end.getTime();
+      }),
+    [allOrders, start, end],
+  );
   const revenue = approved.reduce((s, o) => s + o.amount, 0);
   const conv = checkouts.length
     ? (
