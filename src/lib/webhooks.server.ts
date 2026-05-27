@@ -227,10 +227,10 @@ export async function dispatchUserWebhooks(
   }
   if (!configs || configs.length === 0) return;
 
-  // Filter by product_ids (empty array = all products)
+  // Filter by product_ids — at least 1 product is required; webhook never fires for "all"
   const filtered = (configs as WebhookConfigRow[]).filter((c) => {
     const ids = c.product_ids ?? [];
-    if (ids.length === 0) return true;
+    if (ids.length === 0) return false;
     if (!order.product_id) return false;
     return ids.includes(order.product_id);
   });
