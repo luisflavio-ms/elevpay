@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { User, Mail, Phone, IdCard } from "lucide-react";
+import { User, Mail, Phone, IdCard, Lock, ShieldCheck } from "lucide-react";
+import logoMark from "@/assets/logo-mark.png";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
@@ -738,8 +739,30 @@ function PublicCheckout() {
           </div>
         )}
 
-        <footer style={{ textAlign: "center", fontSize: 11, color: "#94a3b8", marginTop: 20, paddingBottom: 20 }}>
-          Processado por <b>ElevPay</b>
+        <footer
+          style={{
+            marginTop: 28,
+            paddingTop: 24,
+            paddingBottom: 24,
+            borderTop: "1px solid #e2e8f0",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <img src={logoMark} alt="ElevPay" style={{ height: 36, width: "auto" }} />
+          <p style={{ fontSize: 13, color: "#64748b", margin: 0, textAlign: "center" }}>
+            {new Date().getFullYear()} ElevPay. Todos os direitos reservados.
+          </p>
+          <div style={{ display: "flex", gap: 24, fontSize: 13, color: "#64748b", flexWrap: "wrap", justifyContent: "center" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <Lock size={16} color="#10b981" /> Compra 100% segura
+            </span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <ShieldCheck size={16} color="#10b981" /> Site protegido
+            </span>
+          </div>
         </footer>
       </div>
 
