@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Receipt, Search } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Mail, Receipt, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -19,6 +21,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { resendProductAccessEmail } from "@/lib/orders.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/pedidos")({
   component: PedidosPage,
@@ -51,6 +55,21 @@ function PedidosPage() {
   const [open, setOpen] = useState<OrderRow | null>(null);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  const [resending, setResending] = useState(false);
+  const resendFn = useServerFn(resendProductAccessEmail);
+
+  async function handleResend(orderId: string) {
+    setResending(true);
+    try {
+      await resendFn({ data: { orderId } });
+      toast.success("Email de acesso reenviado ao cliente");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao reenviar email");
+    } finally {
+      setResending(false);
+    }
+  }
+
 
   const ordersQ = useQuery({
     queryKey: ["orders"],
@@ -200,6 +219,20 @@ function PedidosPage() {
               {open.utm_source && <Row k="UTM source" v={open.utm_source} />}
               {open.utm_campaign && <Row k="UTM campaign" v={open.utm_campaign} />}
               <Row k="Data" v={new Date(open.created_at).toLocaleString("pt-BR")} />
+
+              {open.status === "aprovado" && open.customer_email && (
+                <div className="pt-3">
+                  <Button
+                    onClick={() => handleResend(open.id)}
+                    disabled={resending}
+                    className="w-full"
+                    variant="secondary"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    {resending ? "Reenviando…" : "Reenviar email de acesso"}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
