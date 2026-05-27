@@ -195,7 +195,11 @@ export const createPixPayment = createServerFn({ method: "POST" })
         utm_campaign: data.utm?.campaign ?? null,
         utm_term: data.utm?.term ?? null,
         utm_content: data.utm?.content ?? null,
-        metadata: { bump: data.bumpOn ?? false },
+        metadata: {
+          bump: data.bumpOn && bRow
+            ? { id: bRow.id, title: bRow.title, price: Number(bRow.price) }
+            : null,
+        },
       })
       .select("id")
       .single();
