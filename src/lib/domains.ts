@@ -6,7 +6,7 @@
 // fica como está: a mesma origem serve tudo.
 
 export const PAY_HOST = "pay.elevpayapp.com.br";
-export const DASHBOARD_HOST = "dashboard.elevpayapp.com.br";
+export const DASHBOARD_HOST = "app.elevpayapp.com.br";
 
 export const PAY_ORIGIN = `https://${PAY_HOST}`;
 export const DASHBOARD_ORIGIN = `https://${DASHBOARD_HOST}`;
