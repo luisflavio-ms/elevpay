@@ -1,7 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Package, Copy, Search, Link2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Copy, Search, Link2, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -264,7 +271,23 @@ function ProdutosPage() {
           />
         </div>
         {selected.size > 0 && (
-          <Button variant="outline" onClick={() => setConfirmIds(Array.from(selected))} className="text-destructive">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const ids = Array.from(selected);
+              const blocked = ids.filter((id) => (salesByProduct.get(id) ?? 0) > 0);
+              if (blocked.length > 0) {
+                toast.error(
+                  blocked.length === ids.length
+                    ? "Nenhum dos produtos selecionados pode ser excluído pois possuem vendas"
+                    : `${blocked.length} produto(s) com vendas não podem ser excluídos`,
+                );
+                return;
+              }
+              setConfirmIds(ids);
+            }}
+            className="text-destructive"
+          >
             <Trash2 className="h-4 w-4 mr-2" /> Excluir ({selected.size})
           </Button>
         )}
@@ -329,16 +352,14 @@ function ProdutosPage() {
                   <div className="md:hidden col-span-2 flex flex-wrap items-center gap-2 pt-1">
                     <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10">Ativo</Badge>
                     <span className="text-xs text-muted-foreground">{sales} vendas</span>
-                    <div className="ml-auto flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => duplicateM.mutate(p.id)} disabled={duplicateM.isPending}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
-                        <Pencil className="h-4 w-4 text-primary" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setConfirmIds([p.id])}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                    <div className="ml-auto">
+                      <ProductActions
+                        hasSales={sales > 0}
+                        onEdit={() => openEdit(p)}
+                        onDuplicate={() => duplicateM.mutate(p.id)}
+                        duplicating={duplicateM.isPending}
+                        onDelete={() => setConfirmIds([p.id])}
+                      />
                     </div>
                   </div>
 
@@ -368,30 +389,14 @@ function ProdutosPage() {
                       <span className="text-xs text-muted-foreground">sem checkout</span>
                     )}
                   </div>
-                  <div className="hidden md:flex justify-end gap-1">
-                    <button
-                      onClick={() => openEdit(p)}
-                      className="h-8 w-8 grid place-items-center rounded-md text-primary hover:bg-primary/10 transition"
-                      aria-label="Editar"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => duplicateM.mutate(p.id)}
-                      disabled={duplicateM.isPending}
-                      className="h-8 w-8 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition disabled:opacity-30"
-                      aria-label="Duplicar produto e checkout"
-                      title="Duplicar produto e checkout"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setConfirmIds([p.id])}
-                      className="h-8 w-8 grid place-items-center rounded-md text-destructive hover:bg-destructive/10 transition"
-                      aria-label="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  <div className="hidden md:flex justify-end">
+                    <ProductActions
+                      hasSales={sales > 0}
+                      onEdit={() => openEdit(p)}
+                      onDuplicate={() => duplicateM.mutate(p.id)}
+                      duplicating={duplicateM.isPending}
+                      onDelete={() => setConfirmIds([p.id])}
+                    />
                   </div>
                 </li>
               );
@@ -451,4 +456,53 @@ function EmptyState({ onAction }: { onAction: () => void }) {
     </Card>
   );
 }
+
+function ProductActions({
+  hasSales,
+  onEdit,
+  onDuplicate,
+  duplicating,
+  onDelete,
+}: {
+  hasSales: boolean;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  duplicating: boolean;
+  onDelete: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Ações">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onClick={onEdit}>
+          <Pencil className="h-4 w-4 mr-2 text-primary" /> Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onDuplicate} disabled={duplicating}>
+          <Copy className="h-4 w-4 mr-2" /> Duplicar
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={(e) => {
+            if (hasSales) {
+              e.preventDefault();
+              toast.error("Não é possível excluir produtos com vendas");
+              return;
+            }
+            onDelete();
+          }}
+          disabled={hasSales}
+          className="text-destructive focus:text-destructive"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          {hasSales ? "Excluir (com vendas)" : "Excluir"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 
