@@ -206,7 +206,7 @@ export async function notifySellerPendingSale(sellerUserId: string, amount: numb
   }).format(amount || 0);
   const payload = JSON.stringify({
     title: "Nova venda pendente",
-    body: `Valor: ${brl}${customerName ? ` — ${customerName}` : ""} aguardando pagamento`,
+    body: `Valor: ${brl}${customerName ? ` — ${customerName}` : ""}`,
     url: `/app/dashboard`,
     tag: `pending-${Date.now()}`,
   });
