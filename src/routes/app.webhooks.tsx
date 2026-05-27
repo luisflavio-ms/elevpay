@@ -348,11 +348,15 @@ function WebhooksPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <Accordion type="multiple" className="space-y-3">
             {logs.map((log) => (
-              <Card key={log.id} className="rounded-2xl">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+              <AccordionItem
+                key={log.id}
+                value={log.id}
+                className="rounded-2xl border bg-card px-4"
+              >
+                <AccordionTrigger className="hover:no-underline py-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap w-full pr-2">
                     <div className="flex items-center gap-2">
                       {log.success ? (
                         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -368,16 +372,18 @@ function WebhooksPage() {
                       {new Date(log.created_at).toLocaleString("pt-BR")}
                     </span>
                   </div>
+                </AccordionTrigger>
+                <AccordionContent>
                   {log.error && (
                     <div className="text-xs text-rose-500 mb-2">{log.error}</div>
                   )}
                   <pre className="bg-muted/50 rounded-md p-3 text-xs overflow-x-auto">
 {JSON.stringify(log.payload, null, 2)}
                   </pre>
-                </CardContent>
-              </Card>
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         )}
       </div>
 
