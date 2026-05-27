@@ -587,7 +587,7 @@ function PublicCheckout() {
             inputMode="tel"
           />
           <Input
-            placeholder="000.000.000-00"
+            placeholder="CPF 000.000.000-00"
             value={form.cpf}
             onChange={(v) => setForm({ ...form, cpf: maskCpf(v) })}
             icon={<IdCard size={16} />}
