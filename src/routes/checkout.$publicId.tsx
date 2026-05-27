@@ -440,21 +440,25 @@ function PublicCheckout() {
         )}
 
         {(c.blocks ?? []).filter((b) => (b.position ?? "above") === "above").length > 0 && (
-          <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
-            {(c.blocks ?? [])
-              .filter((b) => (b.position ?? "above") === "above")
-              .map((b) => (
-                <BlockRenderer key={b.id} block={b} color={color} asToast={b.type === "notifications"} />
-
-              ))}
-          </div>
+          <Suspense fallback={null}>
+            <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
+              {(c.blocks ?? [])
+                .filter((b) => (b.position ?? "above") === "above")
+                .map((b) => (
+                  <BlockRenderer key={b.id} block={b} color={color} asToast={b.type === "notifications"} />
+                ))}
+            </div>
+          </Suspense>
         )}
 
         {c.image && (
           <img
             src={c.image}
             alt=""
-            loading="lazy"
+            loading="eager"
+            // @ts-expect-error fetchpriority is valid HTML attr
+            fetchpriority="high"
+            decoding="async"
             style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 12, marginBottom: 12 }}
           />
         )}
