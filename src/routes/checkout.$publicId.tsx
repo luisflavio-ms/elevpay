@@ -520,11 +520,23 @@ function PublicCheckout() {
               borderRadius: 12,
               padding: 14,
               marginTop: 14,
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 12,
             }}
           >
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                color: "#64748b",
+                paddingBottom: 10,
+                marginBottom: 12,
+                borderBottom: "1px solid #e2e8f0",
+              }}
+            >
+              Resumo do pedido
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
             {p.image && (
               <img
                 src={p.image}
@@ -541,6 +553,8 @@ function PublicCheckout() {
               <span style={{ fontSize: 20, fontWeight: 800, color, marginTop: 2 }}>{brl(c.amount)}</span>
             </div>
           </div>
+          </div>
+
         )}
 
         {c.benefits.length > 0 && (
