@@ -9,6 +9,7 @@ import {
   Save,
   Trash2,
   Plus,
+  Pencil,
   X,
   GripVertical,
 } from "lucide-react";
