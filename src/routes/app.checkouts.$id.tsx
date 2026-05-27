@@ -247,6 +247,8 @@ function ConfigPanel({
   bumps: OrderBump[];
   compact?: boolean;
 }) {
+  const [bumpModalOpen, setBumpModalOpen] = useState(false);
+  const [bumpEditing, setBumpEditing] = useState<import("@/components/OrderBumpModal").OrderBumpInput | null>(null);
   const setBenefit = (i: number, v: string) => {
     const next = [...checkout.benefits];
     next[i] = v;
