@@ -357,10 +357,11 @@ function ProdutosPage() {
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => copyLink(slug ?? "")}
-                      disabled={!slug}
+                      onClick={() => duplicateM.mutate(p.id)}
+                      disabled={duplicateM.isPending}
                       className="h-8 w-8 grid place-items-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition disabled:opacity-30"
-                      aria-label="Duplicar link"
+                      aria-label="Duplicar produto e checkout"
+                      title="Duplicar produto e checkout"
                     >
                       <Copy className="h-4 w-4" />
                     </button>
