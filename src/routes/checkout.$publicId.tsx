@@ -770,24 +770,50 @@ function PublicCheckout() {
   );
 }
 
-function Input(props: { placeholder: string; type?: string; value?: string; onChange?: (v: string) => void }) {
+function Input(props: {
+  placeholder: string;
+  type?: string;
+  value?: string;
+  onChange?: (v: string) => void;
+  icon?: React.ReactNode;
+  autoComplete?: string;
+  inputMode?: "text" | "email" | "tel" | "numeric" | "decimal" | "search" | "url" | "none";
+}) {
   return (
-    <input
-      type={props.type || "text"}
-      placeholder={props.placeholder}
-      value={props.value}
-      onChange={(e) => props.onChange?.(e.target.value)}
-      style={{
-        width: "100%",
-        padding: "11px 12px",
-        border: "1px solid #cbd5e1",
-        borderRadius: 8,
-        fontSize: 14,
-        marginBottom: 8,
-        outline: "none",
-        boxSizing: "border-box",
-      }}
-    />
+    <div style={{ position: "relative", marginBottom: 8 }}>
+      {props.icon && (
+        <span
+          style={{
+            position: "absolute",
+            left: 12,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "#94a3b8",
+            display: "inline-flex",
+            pointerEvents: "none",
+          }}
+        >
+          {props.icon}
+        </span>
+      )}
+      <input
+        type={props.type || "text"}
+        placeholder={props.placeholder}
+        value={props.value}
+        onChange={(e) => props.onChange?.(e.target.value)}
+        autoComplete={props.autoComplete}
+        inputMode={props.inputMode}
+        style={{
+          width: "100%",
+          padding: props.icon ? "11px 12px 11px 38px" : "11px 12px",
+          border: "1px solid #cbd5e1",
+          borderRadius: 8,
+          fontSize: 14,
+          outline: "none",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
   );
 }
 
