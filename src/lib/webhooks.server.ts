@@ -262,7 +262,7 @@ export async function testWebhookConfig(
       customer_phone: "11999999999",
       product_id: null,
     },
-    true,
+    false,
   );
 
   return fireOne(config as WebhookConfigRow, event, payload);
