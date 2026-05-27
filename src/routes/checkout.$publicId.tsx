@@ -630,13 +630,15 @@ function PublicCheckout() {
         </form>
 
         {(c.blocks ?? []).filter((b) => b.position === "below").length > 0 && (
-          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-            {(c.blocks ?? [])
-              .filter((b) => b.position === "below")
-              .map((b) => (
-                <BlockRenderer key={b.id} block={b} color={color} asToast={b.type === "notifications"} />
-              ))}
-          </div>
+          <Suspense fallback={null}>
+            <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+              {(c.blocks ?? [])
+                .filter((b) => b.position === "below")
+                .map((b) => (
+                  <BlockRenderer key={b.id} block={b} color={color} asToast={b.type === "notifications"} />
+                ))}
+            </div>
+          </Suspense>
         )}
 
         {c.testimonials.length > 0 && (
