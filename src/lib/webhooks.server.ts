@@ -103,7 +103,7 @@ function buildUtmifyPayload(
       phone: order.customer_phone ?? null,
       document: order.customer_document ?? null,
       country: "BR",
-      ip: null,
+      ip: "0.0.0.0",
     },
     products: [
       {
