@@ -71,14 +71,17 @@ export const createPixPayment = createServerFn({ method: "POST" })
     if (ckErr) throw new Error(ckErr.message);
     if (!ckRow || !ckRow.active) throw new Error("Checkout indisponível");
 
+    // Bloqueio: checkout sem produto associado é inválido (anti-abuso)
+    if (!ckRow.product_id) {
+      throw new Error("Checkout indisponível: produto não configurado.");
+    }
+
     const [{ data: pRow }, { data: bRow }] = await Promise.all([
-      ckRow.product_id
-        ? supabaseAdmin
-            .from("products")
-            .select("id, name")
-            .eq("id", ckRow.product_id)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
+      supabaseAdmin
+        .from("products")
+        .select("id, name")
+        .eq("id", ckRow.product_id)
+        .maybeSingle(),
       ckRow.order_bump_id
         ? supabaseAdmin
             .from("order_bumps")
@@ -87,6 +90,12 @@ export const createPixPayment = createServerFn({ method: "POST" })
             .maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
+
+    // Bloqueio: produto referenciado não existe (foi excluído)
+    if (!pRow) {
+      throw new Error("Checkout indisponível: produto não encontrado.");
+    }
+
 
     const basePrice = variant
       ? Number(variant.amount)
