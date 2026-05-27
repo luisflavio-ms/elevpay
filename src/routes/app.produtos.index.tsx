@@ -352,16 +352,14 @@ function ProdutosPage() {
                   <div className="md:hidden col-span-2 flex flex-wrap items-center gap-2 pt-1">
                     <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10">Ativo</Badge>
                     <span className="text-xs text-muted-foreground">{sales} vendas</span>
-                    <div className="ml-auto flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => duplicateM.mutate(p.id)} disabled={duplicateM.isPending}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
-                        <Pencil className="h-4 w-4 text-primary" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setConfirmIds([p.id])}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                    <div className="ml-auto">
+                      <ProductActions
+                        hasSales={sales > 0}
+                        onEdit={() => openEdit(p)}
+                        onDuplicate={() => duplicateM.mutate(p.id)}
+                        duplicating={duplicateM.isPending}
+                        onDelete={() => setConfirmIds([p.id])}
+                      />
                     </div>
                   </div>
 
