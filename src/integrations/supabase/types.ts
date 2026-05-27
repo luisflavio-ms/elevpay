@@ -252,29 +252,35 @@ export type Database = {
       }
       order_bumps: {
         Row: {
+          compare_at_price: number | null
           created_at: string
           description: string
           id: string
           price: number
-          title: string
+          product_id: string | null
+          title: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          compare_at_price?: number | null
           created_at?: string
           description?: string
           id?: string
           price?: number
-          title: string
+          product_id?: string | null
+          title?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          compare_at_price?: number | null
           created_at?: string
           description?: string
           id?: string
           price?: number
-          title?: string
+          product_id?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string
         }
