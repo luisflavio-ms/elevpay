@@ -25,6 +25,7 @@ import { Route as AppPedidosRouteImport } from './routes/app.pedidos'
 import { Route as AppDashboardRouteImport } from './routes/app.dashboard'
 import { Route as AppConfiguracoesRouteImport } from './routes/app.configuracoes'
 import { Route as AppProdutosIndexRouteImport } from './routes/app.produtos.index'
+import { Route as AppOrderBumpsIndexRouteImport } from './routes/app.order-bumps.index'
 import { Route as AppCheckoutsIndexRouteImport } from './routes/app.checkouts.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AppProdutosIdRouteImport } from './routes/app.produtos.$id'
@@ -116,6 +117,11 @@ const AppProdutosIndexRoute = AppProdutosIndexRouteImport.update({
   path: '/produtos/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOrderBumpsIndexRoute = AppOrderBumpsIndexRouteImport.update({
+  id: '/order-bumps/',
+  path: '/order-bumps/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCheckoutsIndexRoute = AppCheckoutsIndexRouteImport.update({
   id: '/checkouts/',
   path: '/checkouts/',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/app/produtos/$id': typeof AppProdutosIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
+  '/app/order-bumps/': typeof AppOrderBumpsIndexRoute
   '/app/produtos/': typeof AppProdutosIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/app/produtos/$id': typeof AppProdutosIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/checkouts': typeof AppCheckoutsIndexRoute
+  '/app/order-bumps': typeof AppOrderBumpsIndexRoute
   '/app/produtos': typeof AppProdutosIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/app/produtos/$id': typeof AppProdutosIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/app/checkouts/': typeof AppCheckoutsIndexRoute
+  '/app/order-bumps/': typeof AppOrderBumpsIndexRoute
   '/app/produtos/': typeof AppProdutosIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
     | '/app/produtos/$id'
     | '/lovable/email/suppression'
     | '/app/checkouts/'
+    | '/app/order-bumps/'
     | '/app/produtos/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
     | '/app/produtos/$id'
     | '/lovable/email/suppression'
     | '/app/checkouts'
+    | '/app/order-bumps'
     | '/app/produtos'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/app/produtos/$id'
     | '/lovable/email/suppression'
     | '/app/checkouts/'
+    | '/app/order-bumps/'
     | '/app/produtos/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -473,6 +485,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProdutosIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/order-bumps/': {
+      id: '/app/order-bumps/'
+      path: '/order-bumps'
+      fullPath: '/app/order-bumps/'
+      preLoaderRoute: typeof AppOrderBumpsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/checkouts/': {
       id: '/app/checkouts/'
       path: '/checkouts'
@@ -556,6 +575,7 @@ interface AppRouteChildren {
   AppCheckoutsIdRoute: typeof AppCheckoutsIdRoute
   AppProdutosIdRoute: typeof AppProdutosIdRoute
   AppCheckoutsIndexRoute: typeof AppCheckoutsIndexRoute
+  AppOrderBumpsIndexRoute: typeof AppOrderBumpsIndexRoute
   AppProdutosIndexRoute: typeof AppProdutosIndexRoute
 }
 
@@ -569,6 +589,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCheckoutsIdRoute: AppCheckoutsIdRoute,
   AppProdutosIdRoute: AppProdutosIdRoute,
   AppCheckoutsIndexRoute: AppCheckoutsIndexRoute,
+  AppOrderBumpsIndexRoute: AppOrderBumpsIndexRoute,
   AppProdutosIndexRoute: AppProdutosIndexRoute,
 }
 
