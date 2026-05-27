@@ -26,6 +26,11 @@ export interface OrderBump {
   title: string;
   description: string;
   price: number;
+  /** Preço "de" mostrado riscado, opcional. */
+  compareAtPrice?: number;
+  /** Produto vinculado ao bump (entrega automática). */
+  productId?: string;
+  productName?: string;
 }
 
 export interface Checkout {
