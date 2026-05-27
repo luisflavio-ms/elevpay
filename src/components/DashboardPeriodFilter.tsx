@@ -141,11 +141,11 @@ export function DashboardPeriodFilter({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Popover open={specOpen} onOpenChange={setSpecOpen}>
-        <PopoverTrigger asChild>
-          <span className="sr-only" />
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-auto p-0">
+      <Dialog open={specOpen} onOpenChange={setSpecOpen}>
+        <DialogContent className="w-auto max-w-fit">
+          <DialogHeader>
+            <DialogTitle>Selecione uma data</DialogTitle>
+          </DialogHeader>
           <Calendar
             mode="single"
             selected={value.specific}
@@ -159,18 +159,18 @@ export function DashboardPeriodFilter({
             locale={ptBR}
             className={cn("p-3 pointer-events-auto")}
           />
-        </PopoverContent>
-      </Popover>
+        </DialogContent>
+      </Dialog>
 
-      <Popover open={rangeOpen} onOpenChange={setRangeOpen}>
-        <PopoverTrigger asChild>
-          <span className="sr-only" />
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-auto p-0">
+      <Dialog open={rangeOpen} onOpenChange={setRangeOpen}>
+        <DialogContent className="w-auto max-w-fit">
+          <DialogHeader>
+            <DialogTitle>Selecione um intervalo</DialogTitle>
+          </DialogHeader>
           <Calendar
             mode="range"
             selected={{ from: value.from, to: value.to }}
-            onSelect={(r) => {
+            onSelect={(r: any) => {
               if (r?.from && r?.to) {
                 onChange({ preset: "range", from: r.from, to: r.to });
                 setRangeOpen(false);
@@ -183,8 +183,8 @@ export function DashboardPeriodFilter({
             locale={ptBR}
             className={cn("p-3 pointer-events-auto")}
           />
-        </PopoverContent>
-      </Popover>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
