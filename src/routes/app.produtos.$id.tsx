@@ -87,9 +87,10 @@ function ProductPage() {
         .select("id")
         .eq("product_id", id)
         .eq("user_id", user!.id)
-        .maybeSingle();
+        .order("created_at", { ascending: true })
+        .limit(1);
       if (error) throw error;
-      return data?.id ?? null;
+      return data?.[0]?.id ?? null;
     },
   });
 
@@ -101,8 +102,9 @@ function ProductPage() {
         .select("id")
         .eq("product_id", id)
         .eq("user_id", user.id)
-        .maybeSingle();
-      if (existing) return existing.id as string;
+        .order("created_at", { ascending: true })
+        .limit(1);
+      if (existing && existing.length > 0) return existing[0].id as string;
       const { data, error } = await supabase
         .from("checkouts")
         .insert({
@@ -120,15 +122,18 @@ function ProductPage() {
     onError: (e: Error) => toast.error(`Falha ao criar checkout: ${e.message}`),
   });
 
-  // Auto-create checkout when product exists but has none yet
+  // Auto-create checkout when product exists but has none yet — only once per mount
+  const autoCreatedRef = useRef(false);
   useEffect(() => {
     if (
       !isNew &&
       user &&
       checkoutQ.isSuccess &&
       checkoutQ.data === null &&
-      !ensureCheckoutM.isPending
+      !ensureCheckoutM.isPending &&
+      !autoCreatedRef.current
     ) {
+      autoCreatedRef.current = true;
       ensureCheckoutM.mutate(draft.name || "Produto");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
