@@ -457,3 +457,52 @@ function EmptyState({ onAction }: { onAction: () => void }) {
   );
 }
 
+function ProductActions({
+  hasSales,
+  onEdit,
+  onDuplicate,
+  duplicating,
+  onDelete,
+}: {
+  hasSales: boolean;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  duplicating: boolean;
+  onDelete: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Ações">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onClick={onEdit}>
+          <Pencil className="h-4 w-4 mr-2 text-primary" /> Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onDuplicate} disabled={duplicating}>
+          <Copy className="h-4 w-4 mr-2" /> Duplicar
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={(e) => {
+            if (hasSales) {
+              e.preventDefault();
+              toast.error("Não é possível excluir produtos com vendas");
+              return;
+            }
+            onDelete();
+          }}
+          disabled={hasSales}
+          className="text-destructive focus:text-destructive"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          {hasSales ? "Excluir (com vendas)" : "Excluir"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+
