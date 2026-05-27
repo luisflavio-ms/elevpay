@@ -387,6 +387,12 @@ function ConfigPanel({
           </Button>
         </Section>
       </TabsContent>
+      <OrderBumpModal
+        open={bumpModalOpen}
+        onOpenChange={setBumpModalOpen}
+        initial={bumpEditing}
+        onSaved={(id) => update("orderBumpId", id)}
+      />
     </Tabs>
   );
 }
