@@ -109,7 +109,7 @@ function buildUtmifyPayload(
     products: [
       {
         id: order.product_id ?? "produto",
-        name: "Produto",
+        name: order.product_name ?? "Produto",
         planId: null,
         planName: null,
         quantity: 1,
