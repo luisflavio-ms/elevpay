@@ -231,7 +231,7 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select("id, user_id, product_id, amount, status, abacate_billing_id, customer_name, customer_email")
+      .select("id, user_id, product_id, amount, status, abacate_billing_id, customer_name, customer_email, customer_document, customer_phone, utm_source, utm_medium, utm_campaign, utm_term, utm_content")
       .eq("id", data.orderId)
       .maybeSingle();
     if (error) throw new Error(error.message);
