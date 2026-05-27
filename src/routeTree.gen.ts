@@ -16,6 +16,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as ObrigadoOrderIdRouteImport } from './routes/obrigado.$orderId'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as CheckoutPublicIdRouteImport } from './routes/checkout.$publicId'
 import { Route as AppWebhooksRouteImport } from './routes/app.webhooks'
@@ -69,6 +70,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const ObrigadoOrderIdRoute = ObrigadoOrderIdRouteImport.update({
+  id: '/obrigado/$orderId',
+  path: '/obrigado/$orderId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$publicId': typeof CheckoutPublicIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/obrigado/$orderId': typeof ObrigadoOrderIdRoute
   '/app/': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$publicId': typeof CheckoutPublicIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/obrigado/$orderId': typeof ObrigadoOrderIdRoute
   '/app': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/app/webhooks': typeof AppWebhooksRoute
   '/checkout/$publicId': typeof CheckoutPublicIdRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/obrigado/$orderId': typeof ObrigadoOrderIdRoute
   '/app/': typeof AppIndexRoute
   '/api/public/abacate-webhook': typeof ApiPublicAbacateWebhookRoute
   '/app/checkouts/$id': typeof AppCheckoutsIdRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/app/webhooks'
     | '/checkout/$publicId'
     | '/email/unsubscribe'
+    | '/obrigado/$orderId'
     | '/app/'
     | '/api/public/abacate-webhook'
     | '/app/checkouts/$id'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/app/webhooks'
     | '/checkout/$publicId'
     | '/email/unsubscribe'
+    | '/obrigado/$orderId'
     | '/app'
     | '/api/public/abacate-webhook'
     | '/app/checkouts/$id'
@@ -314,6 +325,7 @@ export interface FileRouteTypes {
     | '/app/webhooks'
     | '/checkout/$publicId'
     | '/email/unsubscribe'
+    | '/obrigado/$orderId'
     | '/app/'
     | '/api/public/abacate-webhook'
     | '/app/checkouts/$id'
@@ -337,6 +349,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   CheckoutPublicIdRoute: typeof CheckoutPublicIdRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ObrigadoOrderIdRoute: typeof ObrigadoOrderIdRoute
   ApiPublicAbacateWebhookRoute: typeof ApiPublicAbacateWebhookRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -396,6 +409,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/obrigado/$orderId': {
+      id: '/obrigado/$orderId'
+      path: '/obrigado/$orderId'
+      fullPath: '/obrigado/$orderId'
+      preLoaderRoute: typeof ObrigadoOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
@@ -563,6 +583,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   CheckoutPublicIdRoute: CheckoutPublicIdRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ObrigadoOrderIdRoute: ObrigadoOrderIdRoute,
   ApiPublicAbacateWebhookRoute: ApiPublicAbacateWebhookRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
@@ -574,3 +595,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
