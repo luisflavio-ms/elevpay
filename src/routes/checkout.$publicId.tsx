@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { User, Mail, Phone, IdCard } from "lucide-react";
+import { User, Mail, Phone, IdCard, Lock, ShieldCheck } from "lucide-react";
+import logoMark from "@/assets/logo-mark.png";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
