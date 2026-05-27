@@ -3,7 +3,7 @@ import { render } from '@react-email/components'
 import { supabaseAdmin } from '@/integrations/supabase/client.server'
 import { TEMPLATES } from '@/lib/email-templates/registry'
 
-const SITE_NAME = 'elevpay'
+const SITE_NAME = 'ElevPay'
 const SENDER_DOMAIN = 'notify.elevpayapp.com.br'
 const FROM_DOMAIN = 'notify.elevpayapp.com.br'
 
