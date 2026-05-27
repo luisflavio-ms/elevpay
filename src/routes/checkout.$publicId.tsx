@@ -261,165 +261,12 @@ function PublicCheckout() {
       setPayError("Erro ao ativar notificações: " + (err as Error).message);
     }
   };
-    try {
-      // Detecta iframe (preview do Lovable bloqueia Notification API)
-      const inIframe = (() => {
-        try {
-          return window.self !== window.top;
-        } catch {
-          return true;
-        }
-      })();
-      if (inIframe) {
-        setPayError(
-          "Notificações só funcionam no app publicado (abra em https://elevpay.lovable.app), não no preview do editor.",
-        );
-        return;
-      }
-      if (typeof Notification === "undefined") {
-        setPayError("Seu navegador não suporta notificações.");
-        return;
-      }
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-        setPayError("Seu navegador não suporta notificações push.");
-        return;
-      }
-
-      // IMPORTANTE: requestPermission precisa ser chamado direto no gesto do usuário,
-      // sem awaits antes. Por isso é a primeira chamada async.
-      const perm = await Notification.requestPermission();
-      if (perm === "denied") {
-        setPayError("Permissão negada. Habilite notificações nas configurações do navegador.");
-        return;
-      }
-      if (perm !== "granted") {
-        setPayError("Permissão não concedida.");
-        return;
-      }
-
-      let reg = await navigator.serviceWorker.getRegistration();
-      if (!reg) {
-        reg = await navigator.serviceWorker.register("/sw.js");
-      }
-      reg = await navigator.serviceWorker.ready;
-
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        const { publicKey } = await getVapidKeyFn();
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
-        });
-      }
-
-      const json = sub.toJSON();
-      await subscribePushFn({
-        data: {
-          orderId,
-          endpoint: sub.endpoint,
-          p256dh: json.keys?.p256dh ?? "",
-          auth: json.keys?.auth ?? "",
-          userAgent: navigator.userAgent.slice(0, 500),
-        },
-      });
-      setPayError("✅ Notificações ativadas! Você será avisado quando o pagamento for aprovado.");
-    } catch (err) {
-      setPayError("Erro ao ativar notificações: " + (err as Error).message);
-    }
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        // 1) Tenta achar uma variação de preço pelo public_id
-        const { data: variant } = await supabase
-          .from("checkout_price_variants")
-          .select("checkout_id, amount")
-          .eq("public_id", publicId)
-          .maybeSingle();
-
-        const checkoutFilter = variant
-          ? { column: "id", value: variant.checkout_id as string }
-          : { column: "public_id", value: publicId };
-
-        const { data: ckRow } = await supabase
-          .from("checkouts")
-          .select("*")
-          .eq(checkoutFilter.column, checkoutFilter.value)
-          .eq("active", true)
-          .maybeSingle();
-        if (!ckRow) {
-          if (!cancelled) setLoading(false);
-          return;
-        }
-        const c = rowToCheckout(ckRow as unknown as CheckoutRow);
-
-        const [{ data: pRow }, { data: bRow }] = await Promise.all([
-          c.productId
-            ? supabase
-                .from("products")
-                .select("id,name,description,image,type,delivery_url")
-                .eq("id", c.productId)
-                .maybeSingle()
-            : Promise.resolve({ data: null }),
-          c.orderBumpId
-            ? supabase.from("order_bumps").select("id,title,description,price").eq("id", c.orderBumpId).maybeSingle()
-            : Promise.resolve({ data: null }),
-        ]);
-
-        const priceOverride = variant ? Number(variant.amount) : c.amount;
-        // overrides checkout.amount for this render only
-        c.amount = priceOverride;
-
-        const p: Product | undefined = pRow
-          ? {
-              id: pRow.id as string,
-              name: pRow.name as string,
-              description: (pRow.description as string) ?? "",
-              image: (pRow.image as string) ?? "",
-              type: pRow.type as Product["type"],
-              deliveryUrl: (pRow.delivery_url as string) ?? "",
-            }
-          : undefined;
-
-        const b: OrderBump | undefined = bRow
-          ? {
-              id: bRow.id as string,
-              title: bRow.title as string,
-              description: (bRow.description as string) ?? "",
-              price: Number(bRow.price),
-            }
-          : undefined;
-
-        if (cancelled) return;
-        setData({ c, p, b, priceOverride });
-        const first: PaymentMethod = c.paymentMethods.pix ? "pix" : c.paymentMethods.card ? "cartao" : "boleto";
-        setMethod(first);
-        if (c.scarcityTimerMinutes > 0) setSecondsLeft(c.scarcityTimerMinutes * 60);
-      } catch {
-        // ignore
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [publicId]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
     const i = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(i);
   }, [secondsLeft]);
-
-  useEffect(() => {
-    const productName = data?.p?.name;
-    document.title = productName
-      ? `Finalize sua compra - ${productName} - ElevPay`
-      : "Finalize sua compra - ElevPay";
-  }, [data?.p?.name]);
 
   // Polling do status do pedido PIX (precisa ficar antes dos early returns)
   useEffect(() => {
@@ -448,18 +295,7 @@ function PublicCheckout() {
     return () => clearInterval(interval);
   }, [pix, paid, checkStatus, navigate, form.email, data]);
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#f8fafc", padding: 16 }}>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}>
-          <div style={skeleton(180)} />
-          <div style={{ ...skeleton(24), marginTop: 16, width: "80%" }} />
-          <div style={{ ...skeleton(20), marginTop: 8, width: "60%" }} />
-          <div style={{ ...skeleton(180), marginTop: 16 }} />
-        </div>
-      </div>
-    );
-  }
+
 
   if (!data) {
     return (
