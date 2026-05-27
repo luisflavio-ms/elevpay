@@ -15,6 +15,7 @@ export type OrderForWebhook = {
   customer_document?: string | null;
   customer_phone?: string | null;
   product_id?: string | null;
+  product_name?: string | null;
   utm_source?: string | null;
   utm_medium?: string | null;
   utm_campaign?: string | null;
