@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Gift } from "lucide-react";
@@ -29,6 +29,9 @@ type BumpRow = {
   title: string;
   description: string;
   price: number;
+  compareAtPrice: number | null;
+  productId: string | null;
+  productName: string | null;
 };
 
 function OrderBumpsList() {
@@ -42,15 +45,35 @@ function OrderBumpsList() {
     queryFn: async (): Promise<BumpRow[]> => {
       const { data, error } = await supabase
         .from("order_bumps")
-        .select("id,title,description,price")
+        .select("id,title,description,price,compare_at_price,product_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => ({
-        id: r.id as string,
-        title: r.title as string,
-        description: (r.description as string) ?? "",
-        price: Number(r.price),
-      }));
+
+      const rows = data ?? [];
+      const productIds = Array.from(
+        new Set(rows.map((r) => r.product_id as string | null).filter(Boolean) as string[]),
+      );
+      let nameMap: Record<string, string> = {};
+      if (productIds.length) {
+        const { data: prods } = await supabase
+          .from("products")
+          .select("id,name")
+          .in("id", productIds);
+        nameMap = Object.fromEntries((prods ?? []).map((p) => [p.id as string, p.name as string]));
+      }
+
+      return rows.map((r) => {
+        const pid = (r.product_id as string | null) ?? null;
+        return {
+          id: r.id as string,
+          title: (r.title as string) ?? (pid ? nameMap[pid] ?? "" : ""),
+          description: (r.description as string) ?? "",
+          price: Number(r.price),
+          compareAtPrice: r.compare_at_price == null ? null : Number(r.compare_at_price),
+          productId: pid,
+          productName: pid ? nameMap[pid] ?? null : null,
+        };
+      });
     },
   });
 
@@ -76,7 +99,6 @@ function OrderBumpsList() {
 
   const deleteM = useMutation({
     mutationFn: async (bump: BumpRow) => {
-      // Desvincula dos checkouts antes de remover
       const { error: unlinkErr } = await supabase
         .from("checkouts")
         .update({ order_bump_id: null })
@@ -101,7 +123,13 @@ function OrderBumpsList() {
     setModalOpen(true);
   };
   const openEdit = (b: BumpRow) => {
-    setEditing({ id: b.id, title: b.title, description: b.description, price: b.price });
+    setEditing({
+      id: b.id,
+      productId: b.productId ?? undefined,
+      description: b.description,
+      price: b.price,
+      compareAtPrice: b.compareAtPrice,
+    });
     setModalOpen(true);
   };
 
@@ -113,7 +141,7 @@ function OrderBumpsList() {
             <Gift className="h-6 w-6" /> Order bumps
           </h1>
           <p className="text-sm text-muted-foreground">
-            Ofertas adicionais exibidas no checkout. O preço é validado no servidor.
+            Oferta extra no checkout vinculada a um produto — entrega automática após o pagamento.
           </p>
         </div>
         <Button onClick={openNew}>
@@ -139,13 +167,24 @@ function OrderBumpsList() {
         <div className="grid gap-3">
           {items.map((b) => {
             const used = links[b.id] ?? 0;
+            const label = b.productName ?? b.title ?? "Produto removido";
             return (
               <Card key={b.id}>
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold truncate">{b.title}</h3>
-                      <Badge variant="secondary">{brl(b.price)}</Badge>
+                      <h3 className="font-semibold truncate">{label}</h3>
+                      <Badge variant="secondary">
+                        {brl(b.price)}
+                        {b.compareAtPrice != null && (
+                          <span className="ml-1.5 line-through text-muted-foreground font-normal">
+                            {brl(b.compareAtPrice)}
+                          </span>
+                        )}
+                      </Badge>
+                      {!b.productId && (
+                        <Badge variant="destructive">Sem produto</Badge>
+                      )}
                       {used > 0 && (
                         <Badge variant="outline">
                           {used} checkout{used > 1 ? "s" : ""}

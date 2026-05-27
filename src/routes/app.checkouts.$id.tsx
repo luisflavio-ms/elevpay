@@ -108,17 +108,39 @@ export function CheckoutBuilder({ id, showBack = false }: { id: string; showBack
     queryFn: async (): Promise<OrderBump[]> => {
       const { data, error } = await supabase
         .from("order_bumps")
-        .select("id,title,description,price")
+        .select("id,title,description,price,compare_at_price,product_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((r) => ({
-        id: r.id as string,
-        title: r.title as string,
-        description: (r.description as string) ?? "",
-        price: Number(r.price),
-      }));
+      const rows = data ?? [];
+      const productIds = Array.from(
+        new Set(rows.map((r) => r.product_id as string | null).filter(Boolean) as string[]),
+      );
+      let nameMap: Record<string, string> = {};
+      if (productIds.length) {
+        const { data: prods } = await supabase
+          .from("products")
+          .select("id,name")
+          .in("id", productIds);
+        nameMap = Object.fromEntries(
+          (prods ?? []).map((p) => [p.id as string, p.name as string]),
+        );
+      }
+      return rows.map((r) => {
+        const pid = (r.product_id as string | null) ?? undefined;
+        return {
+          id: r.id as string,
+          title: (r.title as string) || (pid ? nameMap[pid] ?? "" : ""),
+          description: (r.description as string) ?? "",
+          price: Number(r.price),
+          compareAtPrice:
+            r.compare_at_price == null ? undefined : Number(r.compare_at_price),
+          productId: pid,
+          productName: pid ? nameMap[pid] : undefined,
+        };
+      });
     },
   });
+
 
   useEffect(() => {
     if (checkoutQ.data) setCheckout(checkoutQ.data);
@@ -326,9 +348,16 @@ function ConfigPanel({
                 onClick={() => {
                   const b = bumps.find((x) => x.id === checkout.orderBumpId);
                   if (!b) return;
-                  setBumpEditing({ id: b.id, title: b.title, description: b.description, price: b.price });
+                  setBumpEditing({
+                    id: b.id,
+                    productId: b.productId,
+                    description: b.description,
+                    price: b.price,
+                    compareAtPrice: b.compareAtPrice ?? null,
+                  });
                   setBumpModalOpen(true);
                 }}
+
               >
                 <Pencil className="h-4 w-4 mr-1" /> Editar
               </Button>
