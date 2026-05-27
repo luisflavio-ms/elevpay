@@ -310,14 +310,16 @@ function ProdutosPage() {
                     <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10">Ativo</Badge>
                     <span className="text-xs text-muted-foreground">{sales} vendas</span>
                     <div className="ml-auto flex gap-1">
-                      {slug && (
-                        <Button size="icon" variant="ghost" onClick={() => copyLink(slug)}>
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button size="icon" variant="ghost" onClick={() => duplicateM.mutate(p.id)} disabled={duplicateM.isPending}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => openEdit(p)}>
                         <Pencil className="h-4 w-4 text-primary" />
                       </Button>
+                      <Button size="icon" variant="ghost" onClick={() => deleteM.mutate([p.id])}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                       <Button size="icon" variant="ghost" onClick={() => deleteM.mutate([p.id])}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
