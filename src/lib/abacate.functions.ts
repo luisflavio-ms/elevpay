@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { notifyOrderStatus, notifySellerNewSale, notifySellerPendingSale } from "./push.server";
+import { dispatchUserWebhooks } from "./webhooks.server";
 
 
 const ABACATE_BASE = "https://api.abacatepay.com/v2";
@@ -186,6 +187,22 @@ export const createPixPayment = createServerFn({ method: "POST" })
       (e) => console.error("[push] pending notify failed", e),
     );
 
+    // Dispara webhooks payment.pending configurados pelo vendedor (Utmify, Zapier, etc.)
+    dispatchUserWebhooks(ckRow.user_id, "payment.pending", {
+      id: order.id,
+      amount: total,
+      customer_name: data.customer.name,
+      customer_email: data.customer.email,
+      customer_document: taxId,
+      customer_phone: cellphone,
+      product_id: ckRow.product_id,
+      utm_source: data.utm?.source ?? null,
+      utm_medium: data.utm?.medium ?? null,
+      utm_campaign: data.utm?.campaign ?? null,
+      utm_term: data.utm?.term ?? null,
+      utm_content: data.utm?.content ?? null,
+    }).catch((e) => console.error("[webhooks] pending dispatch failed", e));
+
     return {
       orderId: order.id,
       billingId: billing.id,
@@ -257,6 +274,17 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
           await notifySellerNewSale(order.user_id, gross, order.customer_name);
         }
         await notifyOrderStatus(order.id, newStatus);
+        const eventMap = {
+          aprovado: "payment.approved",
+          recusado: "payment.refused",
+          reembolsado: "payment.refunded",
+        } as const;
+        dispatchUserWebhooks(order.user_id, eventMap[newStatus], {
+          id: order.id,
+          amount: Number(order.amount),
+          customer_name: order.customer_name,
+          product_id: order.product_id,
+        }).catch((e) => console.error("[webhooks] dispatch failed", e));
         return { status: newStatus };
       }
 
