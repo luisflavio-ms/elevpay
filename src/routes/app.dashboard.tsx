@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -18,6 +19,12 @@ import { SalesFunnel } from "@/components/SalesFunnel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { EnableAdminPush } from "@/components/EnableAdminPush";
+import {
+  DashboardPeriodFilter,
+  periodLabel,
+  periodRange,
+  type PeriodValue,
+} from "@/components/DashboardPeriodFilter";
 
 export const Route = createFileRoute("/app/dashboard")({
   component: Dashboard,
