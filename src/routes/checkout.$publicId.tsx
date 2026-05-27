@@ -79,6 +79,7 @@ export const Route = createFileRoute("/checkout/$publicId")({
  */
 function PublicCheckout() {
   const { publicId } = Route.useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState<{ c: Checkout; p?: Product; b?: OrderBump; priceOverride?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [method, setMethod] = useState<PaymentMethod>("pix");
