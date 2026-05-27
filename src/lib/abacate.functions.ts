@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { notifyOrderStatus, notifySellerNewSale, notifySellerPendingSale } from "./push.server";
 import { dispatchUserWebhooks } from "./webhooks.server";
+import { sendTransactionalEmailServer } from "./email/send.server";
 
 
 const ABACATE_BASE = "https://api.abacatepay.com/v2";
@@ -226,7 +227,7 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select("id, user_id, product_id, amount, status, abacate_billing_id, customer_name")
+      .select("id, user_id, product_id, amount, status, abacate_billing_id, customer_name, customer_email")
       .eq("id", data.orderId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -272,6 +273,42 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
             net_amount: net,
           });
           await notifySellerNewSale(order.user_id, gross, order.customer_name);
+
+          if (order.customer_email && order.product_id) {
+            try {
+              const { data: product } = await supabaseAdmin
+                .from("products")
+                .select("name, delivery_url")
+                .eq("id", order.product_id)
+                .maybeSingle();
+
+              if (product?.delivery_url) {
+                const amountFmt = new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(Number(order.amount));
+
+                await sendTransactionalEmailServer({
+                  templateName: "product-access",
+                  recipientEmail: order.customer_email,
+                  idempotencyKey: `product-access-${order.id}`,
+                  templateData: {
+                    customerName: order.customer_name?.split(" ")[0],
+                    productName: product.name,
+                    accessUrl: product.delivery_url,
+                    orderId: order.id,
+                    amount: amountFmt,
+                  },
+                });
+              } else {
+                console.warn("[checkOrderStatus] product without delivery_url, skipping access email", {
+                  productId: order.product_id,
+                });
+              }
+            } catch (err) {
+              console.error("[checkOrderStatus] access email failed", err);
+            }
+          }
         }
         await notifyOrderStatus(order.id, newStatus);
         const eventMap = {
