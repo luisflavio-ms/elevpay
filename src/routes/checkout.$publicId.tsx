@@ -563,7 +563,7 @@ function PublicCheckout() {
         >
           <h3 style={{ fontSize: 14, margin: "0 0 10px", fontWeight: 600 }}>Seus dados</h3>
           <Input
-            placeholder="Nome completo (como no documento)"
+            placeholder="Nome completo"
             value={form.name}
             onChange={(v) => setForm({ ...form, name: v })}
             icon={<User size={16} />}
