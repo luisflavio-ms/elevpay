@@ -219,6 +219,20 @@ function PedidosPage() {
               {open.utm_source && <Row k="UTM source" v={open.utm_source} />}
               {open.utm_campaign && <Row k="UTM campaign" v={open.utm_campaign} />}
               <Row k="Data" v={new Date(open.created_at).toLocaleString("pt-BR")} />
+
+              {open.status === "aprovado" && open.customer_email && (
+                <div className="pt-3">
+                  <Button
+                    onClick={() => handleResend(open.id)}
+                    disabled={resending}
+                    className="w-full"
+                    variant="secondary"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    {resending ? "Reenviando…" : "Reenviar email de acesso"}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
