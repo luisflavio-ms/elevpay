@@ -87,9 +87,10 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
 
         const { data: order, error: findErr } = await supabaseAdmin
           .from("orders")
-          .select("id, user_id, product_id, amount, status, customer_name, customer_email, customer_document, customer_phone, utm_source, utm_medium, utm_campaign, utm_term, utm_content")
+          .select("id, user_id, product_id, amount, status, customer_name, customer_email, customer_document, customer_phone, utm_source, utm_medium, utm_campaign, utm_term, utm_content, metadata")
           .eq("abacate_billing_id", billingId)
           .maybeSingle();
+
 
         if (findErr) {
           console.error("[abacate-webhook] find error", findErr);
@@ -125,43 +126,52 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
           // Notifica o vendedor (admin) da nova venda
           await notifySellerNewSale(order.user_id, gross, order.customer_name);
 
-          // Envia email de liberação de acesso ao cliente
-          if (order.customer_email && order.product_id) {
-            try {
-              const { data: product } = await supabaseAdmin
-                .from("products")
-                .select("name, delivery_url")
-                .eq("id", order.product_id)
-                .maybeSingle();
+          // Envia email de liberação de acesso ao cliente (produto principal + bump, se houver)
+          if (order.customer_email) {
+            const amountFmt = new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            }).format(Number(order.amount));
 
-              if (product?.delivery_url) {
-                const amountFmt = new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                }).format(Number(order.amount));
+            const bumpMeta = (order.metadata as { bump?: { product_id?: string | null } } | null)?.bump;
+            const deliveryIds = [
+              order.product_id,
+              bumpMeta?.product_id ?? null,
+            ].filter((v): v is string => !!v);
 
-                await sendTransactionalEmailServer({
-                  templateName: "product-access",
-                  recipientEmail: order.customer_email,
-                  idempotencyKey: `product-access-${order.id}`,
-                  templateData: {
-                    customerName: order.customer_name?.split(" ")[0],
-                    productName: product.name,
-                    accessUrl: product.delivery_url,
-                    orderId: order.id,
-                    amount: amountFmt,
-                  },
-                });
-              } else {
-                console.warn(
-                  "[abacate-webhook] product without delivery_url, skipping access email",
-                  { productId: order.product_id }
-                );
+            for (const pid of deliveryIds) {
+              try {
+                const { data: product } = await supabaseAdmin
+                  .from("products")
+                  .select("name, delivery_url")
+                  .eq("id", pid)
+                  .maybeSingle();
+
+                if (product?.delivery_url) {
+                  await sendTransactionalEmailServer({
+                    templateName: "product-access",
+                    recipientEmail: order.customer_email,
+                    idempotencyKey: `product-access-${order.id}-${pid}`,
+                    templateData: {
+                      customerName: order.customer_name?.split(" ")[0],
+                      productName: product.name,
+                      accessUrl: product.delivery_url,
+                      orderId: order.id,
+                      amount: amountFmt,
+                    },
+                  });
+                } else {
+                  console.warn(
+                    "[abacate-webhook] product without delivery_url, skipping access email",
+                    { productId: pid }
+                  );
+                }
+              } catch (err) {
+                console.error("[abacate-webhook] access email failed", err);
               }
-            } catch (err) {
-              console.error("[abacate-webhook] access email failed", err);
             }
           }
+
         }
 
         // Notifica cliente via push (se inscrito)
