@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Receipt, Search } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Mail, Receipt, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -19,6 +21,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { resendProductAccessEmail } from "@/lib/orders.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/pedidos")({
   component: PedidosPage,
