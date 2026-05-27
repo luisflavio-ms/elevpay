@@ -613,6 +613,7 @@ export type Database = {
           headers: Json
           id: string
           name: string
+          product_ids: string[]
           provider: Database["public"]["Enums"]["webhook_provider"]
           updated_at: string
           url: string
@@ -626,6 +627,7 @@ export type Database = {
           headers?: Json
           id?: string
           name: string
+          product_ids?: string[]
           provider?: Database["public"]["Enums"]["webhook_provider"]
           updated_at?: string
           url: string
@@ -639,6 +641,7 @@ export type Database = {
           headers?: Json
           id?: string
           name?: string
+          product_ids?: string[]
           provider?: Database["public"]["Enums"]["webhook_provider"]
           updated_at?: string
           url?: string

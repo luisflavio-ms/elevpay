@@ -32,7 +32,9 @@ type WebhookConfigRow = {
   events: WebhookEvent[];
   active: boolean;
   headers: Record<string, string> | null;
+  product_ids: string[] | null;
 };
+
 
 function buildGenericPayload(
   event: WebhookEvent,
@@ -214,7 +216,7 @@ export async function dispatchUserWebhooks(
 ): Promise<void> {
   const { data: configs, error } = await supabaseAdmin
     .from("webhook_configs")
-    .select("id, user_id, provider, url, api_token, events, active, headers")
+    .select("id, user_id, provider, url, api_token, events, active, headers, product_ids")
     .eq("user_id", userId)
     .eq("active", true)
     .contains("events", [event]);
@@ -224,6 +226,15 @@ export async function dispatchUserWebhooks(
     return;
   }
   if (!configs || configs.length === 0) return;
+
+  // Filter by product_ids (empty array = all products)
+  const filtered = (configs as WebhookConfigRow[]).filter((c) => {
+    const ids = c.product_ids ?? [];
+    if (ids.length === 0) return true;
+    if (!order.product_id) return false;
+    return ids.includes(order.product_id);
+  });
+  if (filtered.length === 0) return;
 
   // Enriquece com o nome do produto se não veio do caller
   let enriched = order;
@@ -241,12 +252,13 @@ export async function dispatchUserWebhooks(
   }
 
   await Promise.all(
-    (configs as WebhookConfigRow[]).map((c) =>
+    filtered.map((c) =>
       fireOne(c, event, buildPayload(event, c.provider, enriched)).catch((e) =>
         console.error("[dispatchUserWebhooks] fire failed", c.id, e),
       ),
     ),
   );
+
 }
 
 /**
@@ -259,7 +271,8 @@ export async function testWebhookConfig(
 ) {
   const { data: config, error } = await supabaseAdmin
     .from("webhook_configs")
-    .select("id, user_id, provider, url, api_token, events, active, headers")
+    .select("id, user_id, provider, url, api_token, events, active, headers, product_ids")
+
     .eq("id", configId)
     .eq("user_id", userId)
     .maybeSingle();

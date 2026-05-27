@@ -65,6 +65,7 @@ type WebhookConfig = {
   api_token: string | null;
   events: WebhookEvent[];
   active: boolean;
+  product_ids: string[];
   created_at: string;
 };
 
@@ -78,6 +79,8 @@ type WebhookLog = {
   error: string | null;
   created_at: string;
 };
+
+type ProductOption = { id: string; name: string };
 
 const EVENTS: WebhookEvent[] = [
   "payment.approved",
@@ -94,7 +97,9 @@ const emptyForm = (): Omit<WebhookConfig, "id" | "user_id" | "created_at"> => ({
   api_token: "",
   events: ["payment.approved", "payment.pending"],
   active: true,
+  product_ids: [],
 });
+
 
 function WebhooksPage() {
   const { user } = useAuth();
@@ -115,6 +120,18 @@ function WebhooksPage() {
     },
   });
 
+  const productsQ = useQuery({
+    queryKey: ["products_options"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as ProductOption[];
+    },
+  });
+
   const logsQ = useQuery({
     queryKey: ["webhook_logs"],
     queryFn: async () => {
@@ -127,6 +144,7 @@ function WebhooksPage() {
       return (data ?? []) as WebhookLog[];
     },
   });
+
 
   const saveM = useMutation({
     mutationFn: async () => {
@@ -141,7 +159,9 @@ function WebhooksPage() {
         api_token: form.api_token || null,
         events: form.events,
         active: form.active,
+        product_ids: form.product_ids,
       };
+
       if (editing) {
         const { error } = await supabase
           .from("webhook_configs")
@@ -220,9 +240,20 @@ function WebhooksPage() {
       api_token: c.api_token ?? "",
       events: c.events ?? [],
       active: c.active,
+      product_ids: c.product_ids ?? [],
     });
     setOpen(true);
   };
+
+  const toggleProduct = (id: string) => {
+    setForm((f) => ({
+      ...f,
+      product_ids: f.product_ids.includes(id)
+        ? f.product_ids.filter((p) => p !== id)
+        : [...f.product_ids, id],
+    }));
+  };
+
 
   const toggleEvent = (ev: WebhookEvent) => {
     setForm((f) => ({
@@ -314,6 +345,13 @@ function WebhooksPage() {
                     </Badge>
                   ))}
                 </div>
+
+                <div className="text-xs text-muted-foreground">
+                  {(c.product_ids ?? []).length === 0
+                    ? "Dispara em todos os produtos"
+                    : `Dispara apenas em ${(c.product_ids ?? []).length} produto(s) selecionado(s)`}
+                </div>
+
 
                 <div className="border-t pt-3">
                   <div className="text-xs font-medium text-muted-foreground mb-2">
@@ -464,6 +502,46 @@ function WebhooksPage() {
                 ))}
               </div>
             </div>
+
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label>Produtos</Label>
+                <span className="text-xs text-muted-foreground">
+                  {form.product_ids.length === 0
+                    ? "Todos os produtos"
+                    : `${form.product_ids.length} selecionado(s)`}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Deixe vazio para disparar em todos os produtos, ou selecione os
+                produtos específicos que devem disparar este webhook.
+              </p>
+              <div className="max-h-44 overflow-y-auto rounded-md border p-2 space-y-1">
+                {productsQ.isLoading ? (
+                  <div className="text-xs text-muted-foreground p-2">
+                    Carregando produtos…
+                  </div>
+                ) : (productsQ.data ?? []).length === 0 ? (
+                  <div className="text-xs text-muted-foreground p-2">
+                    Nenhum produto cadastrado.
+                  </div>
+                ) : (
+                  (productsQ.data ?? []).map((p) => (
+                    <label
+                      key={p.id}
+                      className="flex items-center gap-2 text-sm cursor-pointer px-2 py-1 rounded hover:bg-muted/60"
+                    >
+                      <Checkbox
+                        checked={form.product_ids.includes(p.id)}
+                        onCheckedChange={() => toggleProduct(p.id)}
+                      />
+                      <span className="truncate">{p.name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+
 
             <div className="flex items-center justify-between">
               <Label>Ativo</Label>
