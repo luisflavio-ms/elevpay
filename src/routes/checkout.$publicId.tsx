@@ -1,52 +1,103 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
-import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import { createPixPayment, checkOrderStatus } from "@/lib/abacate.functions";
 import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
-import { urlBase64ToUint8Array } from "@/lib/push-config";
+
+const BlockRenderer = lazy(() =>
+  import("@/components/checkout/BlockRenderer").then((m) => ({ default: m.BlockRenderer })),
+);
+
+const SUPABASE_ORIGIN = (() => {
+  try {
+    return new URL(import.meta.env.VITE_SUPABASE_URL as string).origin;
+  } catch {
+    return "";
+  }
+})();
 
 export const Route = createFileRoute("/checkout/$publicId")({
   component: PublicCheckout,
   loader: async ({ params }) => {
     try {
+      // 1) Lookup variant pelo public_id
       const { data: variant } = await supabase
         .from("checkout_price_variants")
         .select("checkout_id, amount")
         .eq("public_id", params.publicId)
         .maybeSingle();
+
       const filter = variant
         ? { column: "id", value: variant.checkout_id as string }
         : { column: "public_id", value: params.publicId };
-      const { data: ck } = await supabase
+
+      const { data: ckRow } = await supabase
         .from("checkouts")
-        .select("product_id, amount")
+        .select("*")
         .eq(filter.column, filter.value)
         .eq("active", true)
         .maybeSingle();
-      if (!ck) return { meta: null };
-      const { data: p } = ck.product_id
-        ? await supabase
-            .from("products")
-            .select("name, description, image")
-            .eq("id", ck.product_id as string)
-            .maybeSingle()
-        : { data: null };
-      const amount = variant ? Number(variant.amount) : Number(ck.amount);
+
+      if (!ckRow) return { data: null, meta: null };
+
+      const c = rowToCheckout(ckRow as unknown as CheckoutRow);
+
+      // 2) Produto + order bump em paralelo
+      const [{ data: pRow }, { data: bRow }] = await Promise.all([
+        c.productId
+          ? supabase
+              .from("products")
+              .select("id,name,description,image,type,delivery_url")
+              .eq("id", c.productId)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+        c.orderBumpId
+          ? supabase
+              .from("order_bumps")
+              .select("id,title,description,price")
+              .eq("id", c.orderBumpId)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      const priceOverride = variant ? Number(variant.amount) : c.amount;
+      c.amount = priceOverride;
+
+      const p: Product | undefined = pRow
+        ? {
+            id: pRow.id as string,
+            name: pRow.name as string,
+            description: (pRow.description as string) ?? "",
+            image: (pRow.image as string) ?? "",
+            type: pRow.type as Product["type"],
+            deliveryUrl: (pRow.delivery_url as string) ?? "",
+          }
+        : undefined;
+
+      const b: OrderBump | undefined = bRow
+        ? {
+            id: bRow.id as string,
+            title: bRow.title as string,
+            description: (bRow.description as string) ?? "",
+            price: Number(bRow.price),
+          }
+        : undefined;
+
       return {
+        data: { c, p, b, priceOverride },
         meta: {
-          name: (p?.name as string) ?? "Finalize sua compra",
-          description: (p?.description as string) ?? "Pagamento seguro via ElevPay",
-          image: (p?.image as string) ?? "",
-          amount,
+          name: p?.name ?? "Finalize sua compra",
+          description: p?.description ?? "Pagamento seguro via ElevPay",
+          image: p?.image ?? c.image ?? "",
+          amount: priceOverride,
         },
       };
     } catch {
-      return { meta: null };
+      return { data: null, meta: null };
     }
   },
   head: ({ loaderData }) => {
@@ -56,6 +107,14 @@ export const Route = createFileRoute("/checkout/$publicId")({
       ? `${m.name} por ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(m.amount)} - Pagamento seguro via PIX, cartão ou boleto.`
       : "Pagamento rápido e seguro via ElevPay.";
     const image = m?.image || "";
+    const links: Array<Record<string, string>> = [];
+    if (SUPABASE_ORIGIN) {
+      links.push({ rel: "preconnect", href: SUPABASE_ORIGIN, crossorigin: "" });
+    }
+    links.push({ rel: "dns-prefetch", href: "https://api.abacatepay.com" });
+    if (image) {
+      links.push({ rel: "preload", as: "image", href: image, fetchpriority: "high" });
+    }
     return {
       meta: [
         { title },
@@ -69,6 +128,7 @@ export const Route = createFileRoute("/checkout/$publicId")({
         { name: "twitter:description", content: description },
         ...(image ? [{ name: "twitter:image", content: image }] : []),
       ],
+      links,
     };
   },
 });
@@ -79,15 +139,23 @@ export const Route = createFileRoute("/checkout/$publicId")({
  */
 function PublicCheckout() {
   const { publicId } = Route.useParams();
+  const loaderData = Route.useLoaderData();
+  const initialData = loaderData?.data ?? null;
   const navigate = useNavigate();
-  const [data, setData] = useState<{ c: Checkout; p?: Product; b?: OrderBump; priceOverride?: number } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [method, setMethod] = useState<PaymentMethod>("pix");
+  const [data] = useState<{ c: Checkout; p?: Product; b?: OrderBump; priceOverride?: number } | null>(initialData);
+  const [method, setMethod] = useState<PaymentMethod>(() => {
+    const c = initialData?.c;
+    if (!c) return "pix";
+    return c.paymentMethods.pix ? "pix" : c.paymentMethods.card ? "cartao" : "boleto";
+  });
   const [bumpOn, setBumpOn] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", whatsapp: "", cpf: "" });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState<number>(0);
+  const [secondsLeft, setSecondsLeft] = useState<number>(() => {
+    const mins = initialData?.c.scarcityTimerMinutes ?? 0;
+    return mins > 0 ? mins * 60 : 0;
+  });
   const [pix, setPix] = useState<{ orderId: string; qr: string; copy: string; amount: number } | null>(null);
   const [paid, setPaid] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
@@ -119,7 +187,7 @@ function PublicCheckout() {
 
   const createPix = useServerFn(createPixPayment);
   const checkStatus = useServerFn(checkOrderStatus);
-  
+
   const subscribePushFn = useServerFn(subscribePush);
   const getVapidKeyFn = useServerFn(getVapidPublicKey);
 
@@ -168,7 +236,10 @@ function PublicCheckout() {
 
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
-        const { publicKey } = await getVapidKeyFn();
+        const [{ urlBase64ToUint8Array }, { publicKey }] = await Promise.all([
+          import("@/lib/push-config"),
+          getVapidKeyFn(),
+        ]);
         sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
@@ -192,97 +263,10 @@ function PublicCheckout() {
   };
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        // 1) Tenta achar uma variação de preço pelo public_id
-        const { data: variant } = await supabase
-          .from("checkout_price_variants")
-          .select("checkout_id, amount")
-          .eq("public_id", publicId)
-          .maybeSingle();
-
-        const checkoutFilter = variant
-          ? { column: "id", value: variant.checkout_id as string }
-          : { column: "public_id", value: publicId };
-
-        const { data: ckRow } = await supabase
-          .from("checkouts")
-          .select("*")
-          .eq(checkoutFilter.column, checkoutFilter.value)
-          .eq("active", true)
-          .maybeSingle();
-        if (!ckRow) {
-          if (!cancelled) setLoading(false);
-          return;
-        }
-        const c = rowToCheckout(ckRow as unknown as CheckoutRow);
-
-        const [{ data: pRow }, { data: bRow }] = await Promise.all([
-          c.productId
-            ? supabase
-                .from("products")
-                .select("id,name,description,image,type,delivery_url")
-                .eq("id", c.productId)
-                .maybeSingle()
-            : Promise.resolve({ data: null }),
-          c.orderBumpId
-            ? supabase.from("order_bumps").select("id,title,description,price").eq("id", c.orderBumpId).maybeSingle()
-            : Promise.resolve({ data: null }),
-        ]);
-
-        const priceOverride = variant ? Number(variant.amount) : c.amount;
-        // overrides checkout.amount for this render only
-        c.amount = priceOverride;
-
-        const p: Product | undefined = pRow
-          ? {
-              id: pRow.id as string,
-              name: pRow.name as string,
-              description: (pRow.description as string) ?? "",
-              image: (pRow.image as string) ?? "",
-              type: pRow.type as Product["type"],
-              deliveryUrl: (pRow.delivery_url as string) ?? "",
-            }
-          : undefined;
-
-        const b: OrderBump | undefined = bRow
-          ? {
-              id: bRow.id as string,
-              title: bRow.title as string,
-              description: (bRow.description as string) ?? "",
-              price: Number(bRow.price),
-            }
-          : undefined;
-
-        if (cancelled) return;
-        setData({ c, p, b, priceOverride });
-        const first: PaymentMethod = c.paymentMethods.pix ? "pix" : c.paymentMethods.card ? "cartao" : "boleto";
-        setMethod(first);
-        if (c.scarcityTimerMinutes > 0) setSecondsLeft(c.scarcityTimerMinutes * 60);
-      } catch {
-        // ignore
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [publicId]);
-
-  useEffect(() => {
     if (secondsLeft <= 0) return;
     const i = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(i);
   }, [secondsLeft]);
-
-  useEffect(() => {
-    const productName = data?.p?.name;
-    document.title = productName
-      ? `Finalize sua compra - ${productName} - ElevPay`
-      : "Finalize sua compra - ElevPay";
-  }, [data?.p?.name]);
 
   // Polling do status do pedido PIX (precisa ficar antes dos early returns)
   useEffect(() => {
@@ -311,18 +295,7 @@ function PublicCheckout() {
     return () => clearInterval(interval);
   }, [pix, paid, checkStatus, navigate, form.email, data]);
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#f8fafc", padding: 16 }}>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}>
-          <div style={skeleton(180)} />
-          <div style={{ ...skeleton(24), marginTop: 16, width: "80%" }} />
-          <div style={{ ...skeleton(20), marginTop: 8, width: "60%" }} />
-          <div style={{ ...skeleton(180), marginTop: 16 }} />
-        </div>
-      </div>
-    );
-  }
+
 
   if (!data) {
     return (
@@ -467,21 +440,25 @@ function PublicCheckout() {
         )}
 
         {(c.blocks ?? []).filter((b) => (b.position ?? "above") === "above").length > 0 && (
-          <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
-            {(c.blocks ?? [])
-              .filter((b) => (b.position ?? "above") === "above")
-              .map((b) => (
-                <BlockRenderer key={b.id} block={b} color={color} asToast={b.type === "notifications"} />
-
-              ))}
-          </div>
+          <Suspense fallback={null}>
+            <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
+              {(c.blocks ?? [])
+                .filter((b) => (b.position ?? "above") === "above")
+                .map((b) => (
+                  <BlockRenderer key={b.id} block={b} color={color} asToast={b.type === "notifications"} />
+                ))}
+            </div>
+          </Suspense>
         )}
 
         {c.image && (
           <img
             src={c.image}
             alt=""
-            loading="lazy"
+            loading="eager"
+            // @ts-expect-error fetchpriority is valid HTML attr
+            fetchpriority="high"
+            decoding="async"
             style={{ width: "100%", aspectRatio: "16/9", objectFit: "cover", borderRadius: 12, marginBottom: 12 }}
           />
         )}
@@ -653,13 +630,15 @@ function PublicCheckout() {
         </form>
 
         {(c.blocks ?? []).filter((b) => b.position === "below").length > 0 && (
-          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-            {(c.blocks ?? [])
-              .filter((b) => b.position === "below")
-              .map((b) => (
-                <BlockRenderer key={b.id} block={b} color={color} asToast={b.type === "notifications"} />
-              ))}
-          </div>
+          <Suspense fallback={null}>
+            <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+              {(c.blocks ?? [])
+                .filter((b) => b.position === "below")
+                .map((b) => (
+                  <BlockRenderer key={b.id} block={b} color={color} asToast={b.type === "notifications"} />
+                ))}
+            </div>
+          </Suspense>
         )}
 
         {c.testimonials.length > 0 && (
