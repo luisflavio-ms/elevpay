@@ -151,6 +151,8 @@ function WebhooksPage() {
       if (!user) throw new Error("Não autenticado");
       if (!form.name.trim() || !form.url.trim())
         throw new Error("Nome e URL são obrigatórios");
+      if (form.product_ids.length === 0)
+        throw new Error("Selecione ao menos 1 produto para este webhook");
       const payload = {
         user_id: user.id,
         provider: form.provider,
