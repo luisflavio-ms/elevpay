@@ -268,13 +268,23 @@ function PublicCheckout() {
         if (status === "aprovado") {
           setPaid(true);
           clearInterval(interval);
+          navigate({
+            to: "/obrigado/$orderId",
+            params: { orderId: pix.orderId },
+            search: {
+              email: form.email || undefined,
+              product: data?.p?.name || undefined,
+              amount: pix.amount,
+              redirect: data?.c?.redirectUrl || undefined,
+            },
+          });
         }
       } catch {
         /* ignore */
       }
     }, 4000);
     return () => clearInterval(interval);
-  }, [pix, paid, checkStatus]);
+  }, [pix, paid, checkStatus, navigate, form.email, data]);
 
   if (loading) {
     return (
