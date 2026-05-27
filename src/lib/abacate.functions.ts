@@ -189,20 +189,24 @@ export const createPixPayment = createServerFn({ method: "POST" })
     );
 
     // Dispara webhooks payment.pending configurados pelo vendedor (Utmify, Zapier, etc.)
-    dispatchUserWebhooks(ckRow.user_id, "payment.pending", {
-      id: order.id,
-      amount: total,
-      customer_name: data.customer.name,
-      customer_email: data.customer.email,
-      customer_document: taxId,
-      customer_phone: cellphone,
-      product_id: ckRow.product_id,
-      utm_source: data.utm?.source ?? null,
-      utm_medium: data.utm?.medium ?? null,
-      utm_campaign: data.utm?.campaign ?? null,
-      utm_term: data.utm?.term ?? null,
-      utm_content: data.utm?.content ?? null,
-    }).catch((e) => console.error("[webhooks] pending dispatch failed", e));
+    try {
+      await dispatchUserWebhooks(ckRow.user_id, "payment.pending", {
+        id: order.id,
+        amount: total,
+        customer_name: data.customer.name,
+        customer_email: data.customer.email,
+        customer_document: taxId,
+        customer_phone: cellphone,
+        product_id: ckRow.product_id,
+        utm_source: data.utm?.source ?? null,
+        utm_medium: data.utm?.medium ?? null,
+        utm_campaign: data.utm?.campaign ?? null,
+        utm_term: data.utm?.term ?? null,
+        utm_content: data.utm?.content ?? null,
+      });
+    } catch (e) {
+      console.error("[webhooks] pending dispatch failed", e);
+    }
 
     return {
       orderId: order.id,
