@@ -562,19 +562,38 @@ function PublicCheckout() {
           style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, marginTop: 8 }}
         >
           <h3 style={{ fontSize: 14, margin: "0 0 10px", fontWeight: 600 }}>Seus dados</h3>
-          <Input placeholder="Nome completo" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
           <Input
-            placeholder="E-mail"
+            placeholder="Nome completo (como no documento)"
+            value={form.name}
+            onChange={(v) => setForm({ ...form, name: v })}
+            icon={<User size={16} />}
+            autoComplete="name"
+          />
+          <Input
+            placeholder="E-mail que irá receber a compra"
             type="email"
             value={form.email}
             onChange={(v) => setForm({ ...form, email: v })}
+            icon={<Mail size={16} />}
+            autoComplete="email"
+            inputMode="email"
           />
           <Input
-            placeholder="WhatsApp"
+            placeholder="(DDD) 99999-9999"
             value={form.whatsapp}
             onChange={(v) => setForm({ ...form, whatsapp: maskPhone(v) })}
+            icon={<Phone size={16} />}
+            autoComplete="tel"
+            inputMode="tel"
           />
-          <Input placeholder="CPF" value={form.cpf} onChange={(v) => setForm({ ...form, cpf: maskCpf(v) })} />
+          <Input
+            placeholder="000.000.000-00"
+            value={form.cpf}
+            onChange={(v) => setForm({ ...form, cpf: maskCpf(v) })}
+            icon={<IdCard size={16} />}
+            autoComplete="off"
+            inputMode="numeric"
+          />
 
           <h3 style={{ fontSize: 14, margin: "14px 0 8px", fontWeight: 600 }}>Pagamento</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
