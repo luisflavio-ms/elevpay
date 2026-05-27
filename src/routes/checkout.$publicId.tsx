@@ -1,52 +1,103 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import type { Checkout, Product, OrderBump, PaymentMethod } from "@/lib/types";
 import { brl } from "@/lib/store";
-import { BlockRenderer } from "@/components/checkout/BlockRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { rowToCheckout, type CheckoutRow } from "@/lib/checkout-mapper";
 import { createPixPayment, checkOrderStatus } from "@/lib/abacate.functions";
 import { getVapidPublicKey, subscribePush } from "@/lib/push.functions";
-import { urlBase64ToUint8Array } from "@/lib/push-config";
+
+const BlockRenderer = lazy(() =>
+  import("@/components/checkout/BlockRenderer").then((m) => ({ default: m.BlockRenderer })),
+);
+
+const SUPABASE_ORIGIN = (() => {
+  try {
+    return new URL(import.meta.env.VITE_SUPABASE_URL as string).origin;
+  } catch {
+    return "";
+  }
+})();
 
 export const Route = createFileRoute("/checkout/$publicId")({
   component: PublicCheckout,
   loader: async ({ params }) => {
     try {
+      // 1) Lookup variant pelo public_id
       const { data: variant } = await supabase
         .from("checkout_price_variants")
         .select("checkout_id, amount")
         .eq("public_id", params.publicId)
         .maybeSingle();
+
       const filter = variant
         ? { column: "id", value: variant.checkout_id as string }
         : { column: "public_id", value: params.publicId };
-      const { data: ck } = await supabase
+
+      const { data: ckRow } = await supabase
         .from("checkouts")
-        .select("product_id, amount")
+        .select("*")
         .eq(filter.column, filter.value)
         .eq("active", true)
         .maybeSingle();
-      if (!ck) return { meta: null };
-      const { data: p } = ck.product_id
-        ? await supabase
-            .from("products")
-            .select("name, description, image")
-            .eq("id", ck.product_id as string)
-            .maybeSingle()
-        : { data: null };
-      const amount = variant ? Number(variant.amount) : Number(ck.amount);
+
+      if (!ckRow) return { data: null, meta: null };
+
+      const c = rowToCheckout(ckRow as unknown as CheckoutRow);
+
+      // 2) Produto + order bump em paralelo
+      const [{ data: pRow }, { data: bRow }] = await Promise.all([
+        c.productId
+          ? supabase
+              .from("products")
+              .select("id,name,description,image,type,delivery_url")
+              .eq("id", c.productId)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+        c.orderBumpId
+          ? supabase
+              .from("order_bumps")
+              .select("id,title,description,price")
+              .eq("id", c.orderBumpId)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      const priceOverride = variant ? Number(variant.amount) : c.amount;
+      c.amount = priceOverride;
+
+      const p: Product | undefined = pRow
+        ? {
+            id: pRow.id as string,
+            name: pRow.name as string,
+            description: (pRow.description as string) ?? "",
+            image: (pRow.image as string) ?? "",
+            type: pRow.type as Product["type"],
+            deliveryUrl: (pRow.delivery_url as string) ?? "",
+          }
+        : undefined;
+
+      const b: OrderBump | undefined = bRow
+        ? {
+            id: bRow.id as string,
+            title: bRow.title as string,
+            description: (bRow.description as string) ?? "",
+            price: Number(bRow.price),
+          }
+        : undefined;
+
       return {
+        data: { c, p, b, priceOverride },
         meta: {
-          name: (p?.name as string) ?? "Finalize sua compra",
-          description: (p?.description as string) ?? "Pagamento seguro via ElevPay",
-          image: (p?.image as string) ?? "",
-          amount,
+          name: p?.name ?? "Finalize sua compra",
+          description: p?.description ?? "Pagamento seguro via ElevPay",
+          image: p?.image ?? c.image ?? "",
+          amount: priceOverride,
         },
       };
     } catch {
-      return { meta: null };
+      return { data: null, meta: null };
     }
   },
   head: ({ loaderData }) => {
@@ -56,6 +107,14 @@ export const Route = createFileRoute("/checkout/$publicId")({
       ? `${m.name} por ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(m.amount)} - Pagamento seguro via PIX, cartão ou boleto.`
       : "Pagamento rápido e seguro via ElevPay.";
     const image = m?.image || "";
+    const links: Array<Record<string, string>> = [];
+    if (SUPABASE_ORIGIN) {
+      links.push({ rel: "preconnect", href: SUPABASE_ORIGIN, crossorigin: "" });
+    }
+    links.push({ rel: "dns-prefetch", href: "https://api.abacatepay.com" });
+    if (image) {
+      links.push({ rel: "preload", as: "image", href: image, fetchpriority: "high" });
+    }
     return {
       meta: [
         { title },
@@ -69,6 +128,7 @@ export const Route = createFileRoute("/checkout/$publicId")({
         { name: "twitter:description", content: description },
         ...(image ? [{ name: "twitter:image", content: image }] : []),
       ],
+      links,
     };
   },
 });
