@@ -1,11 +1,39 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 
+const isSafePublicUrl = (u: string): boolean => {
+  try {
+    const parsed = new URL(u);
+    if (parsed.protocol !== "https:") return false;
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" ||
+      host === "0.0.0.0" ||
+      host === "::1" ||
+      host.startsWith("127.") ||
+      host.startsWith("10.") ||
+      host.startsWith("192.168.") ||
+      host.startsWith("169.254.") ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const searchSchema = z.object({
-  email: z.string().optional(),
-  product: z.string().optional(),
-  amount: z.coerce.number().optional(),
-  redirect: z.string().optional(),
+  email: z.string().email().max(255).optional().catch(undefined),
+  product: z.string().max(200).optional().catch(undefined),
+  amount: z.coerce.number().min(0).max(1_000_000).optional().catch(undefined),
+  redirect: z
+    .string()
+    .max(2048)
+    .refine(isSafePublicUrl, { message: "Invalid redirect URL" })
+    .optional()
+    .catch(undefined),
 });
 
 export const Route = createFileRoute("/obrigado/$orderId")({
