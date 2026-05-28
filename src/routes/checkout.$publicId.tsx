@@ -28,107 +28,83 @@ export const Route = createFileRoute("/checkout/$publicId")({
   component: PublicCheckout,
   loader: async ({ params }) => {
     try {
-      // 1) Em paralelo: tenta resolver publicId como variant E como checkout direto
-      const [variantRes, ckByPublicRes] = await Promise.all([
-        supabase
-          .from("checkout_price_variants")
-          .select("checkout_id, amount")
-          .eq("public_id", params.publicId)
-          .maybeSingle(),
-        supabase
-          .from("checkouts")
-          .select("*")
-          .eq("public_id", params.publicId)
-          .eq("active", true)
-          .maybeSingle(),
-      ]);
+      // Uma única RPC traz checkout (resolvendo variant), produto, order bump e produto do bump
+      const { data: rpcData, error: rpcErr } = await supabase.rpc("get_public_checkout", {
+        p_public_id: params.publicId,
+      });
+      if (rpcErr) throw rpcErr;
 
-      const variant = variantRes.data;
+      const payload = (rpcData ?? {}) as {
+        checkout: CheckoutRow | null;
+        variant: { checkout_id: string; amount: number } | null;
+        product: {
+          id: string;
+          name: string;
+          description: string | null;
+          image: string | null;
+          type: Product["type"];
+          delivery_url: string | null;
+        } | null;
+        order_bump: {
+          id: string;
+          title: string | null;
+          description: string | null;
+          price: number;
+          compare_at_price: number | null;
+          product_id: string | null;
+        } | null;
+        order_bump_product: { name: string | null; image: string | null } | null;
+      };
 
-      // Se for variant, precisa buscar o checkout pelo id da variant
-      let ckRow = ckByPublicRes.data;
-      if (variant && !ckRow) {
-        const { data } = await supabase
-          .from("checkouts")
-          .select("*")
-          .eq("id", variant.checkout_id as string)
-          .eq("active", true)
-          .maybeSingle();
-        ckRow = data;
-      }
-
+      const ckRow = payload.checkout;
       if (!ckRow) return { data: null, meta: null, blocked: "notfound" as const };
 
       const c = rowToCheckout(ckRow as unknown as CheckoutRow);
 
-      // Bloqueio: checkout sem produto associado é inválido
       if (!c.productId) {
         return { data: null, meta: null, blocked: "no_product" as const };
       }
 
-      // 2) Produto + order bump em paralelo
-      const [{ data: pRow }, { data: bRow }] = await Promise.all([
-        supabase
-          .from("products")
-          .select("id,name,description,image,type,delivery_url")
-          .eq("id", c.productId)
-          .maybeSingle(),
-        c.orderBumpId
-          ? supabase
-              .from("order_bumps")
-              .select("id,title,description,price,compare_at_price,product_id")
-              .eq("id", c.orderBumpId)
-              .maybeSingle()
-          : Promise.resolve({ data: null }),
-      ]);
-
-      // Bloqueio: produto referenciado não existe mais
+      const pRow = payload.product;
       if (!pRow) {
         return { data: null, meta: null, blocked: "no_product" as const };
       }
 
+      const variant = payload.variant;
       const priceOverride = variant ? Number(variant.amount) : c.amount;
       c.amount = priceOverride;
 
-      // Bloqueio: valor inválido
       if (!(priceOverride > 0)) {
         return { data: null, meta: null, blocked: "invalid_amount" as const };
       }
 
       const p: Product = {
-        id: pRow.id as string,
-        name: pRow.name as string,
-        description: (pRow.description as string) ?? "",
-        image: (pRow.image as string) ?? "",
-        type: pRow.type as Product["type"],
-        deliveryUrl: (pRow.delivery_url as string) ?? "",
+        id: pRow.id,
+        name: pRow.name,
+        description: pRow.description ?? "",
+        image: pRow.image ?? "",
+        type: pRow.type,
+        deliveryUrl: pRow.delivery_url ?? "",
       };
 
-      let bumpProductName: string | undefined;
-      let bumpProductImage: string | undefined;
-      if (bRow?.product_id) {
-        const { data: bp } = await supabase
-          .from("products")
-          .select("name, image")
-          .eq("id", bRow.product_id as string)
-          .maybeSingle();
-        bumpProductName = (bp?.name as string) ?? undefined;
-        bumpProductImage = (bp?.image as string) ?? undefined;
-      }
+      const bRow = payload.order_bump;
+      const bumpProductName = payload.order_bump_product?.name ?? undefined;
+      const bumpProductImage = payload.order_bump_product?.image ?? undefined;
 
       const b: OrderBump | undefined = bRow
         ? {
-            id: bRow.id as string,
-            title: (bRow.title as string) || bumpProductName || "",
-            description: (bRow.description as string) ?? "",
+            id: bRow.id,
+            title: bRow.title || bumpProductName || "",
+            description: bRow.description ?? "",
             price: Number(bRow.price),
             compareAtPrice:
               bRow.compare_at_price == null ? undefined : Number(bRow.compare_at_price),
-            productId: (bRow.product_id as string | null) ?? undefined,
+            productId: bRow.product_id ?? undefined,
             productName: bumpProductName,
             productImage: bumpProductImage,
           }
         : undefined;
+
 
 
       return {
