@@ -24,136 +24,101 @@ const SUPABASE_ORIGIN = (() => {
   }
 })();
 
+type CheckoutLoadResult =
+  | { data: { c: Checkout; p: Product; b?: OrderBump; priceOverride: number }; blocked: null }
+  | { data: null; blocked: "notfound" | "no_product" | "invalid_amount" | "error" };
+
+async function fetchCheckoutData(publicId: string): Promise<CheckoutLoadResult> {
+  try {
+    const { data: rpcData, error: rpcErr } = await supabase.rpc("get_public_checkout", {
+      p_public_id: publicId,
+    });
+    if (rpcErr) throw rpcErr;
+
+    const payload = (rpcData ?? {}) as {
+      checkout: CheckoutRow | null;
+      variant: { checkout_id: string; amount: number } | null;
+      product: {
+        id: string;
+        name: string;
+        description: string | null;
+        image: string | null;
+        type: Product["type"];
+        delivery_url: string | null;
+      } | null;
+      order_bump: {
+        id: string;
+        title: string | null;
+        description: string | null;
+        price: number;
+        compare_at_price: number | null;
+        product_id: string | null;
+      } | null;
+      order_bump_product: { name: string | null; image: string | null } | null;
+    };
+
+    const ckRow = payload.checkout;
+    if (!ckRow) return { data: null, blocked: "notfound" };
+
+    const c = rowToCheckout(ckRow as unknown as CheckoutRow);
+    if (!c.productId) return { data: null, blocked: "no_product" };
+
+    const pRow = payload.product;
+    if (!pRow) return { data: null, blocked: "no_product" };
+
+    const variant = payload.variant;
+    const priceOverride = variant ? Number(variant.amount) : c.amount;
+    c.amount = priceOverride;
+    if (!(priceOverride > 0)) return { data: null, blocked: "invalid_amount" };
+
+    const p: Product = {
+      id: pRow.id,
+      name: pRow.name,
+      description: pRow.description ?? "",
+      image: pRow.image ?? "",
+      type: pRow.type,
+      deliveryUrl: pRow.delivery_url ?? "",
+    };
+
+    const bRow = payload.order_bump;
+    const bumpProductName = payload.order_bump_product?.name ?? undefined;
+    const bumpProductImage = payload.order_bump_product?.image ?? undefined;
+
+    const b: OrderBump | undefined = bRow
+      ? {
+          id: bRow.id,
+          title: bRow.title || bumpProductName || "",
+          description: bRow.description ?? "",
+          price: Number(bRow.price),
+          compareAtPrice:
+            bRow.compare_at_price == null ? undefined : Number(bRow.compare_at_price),
+          productId: bRow.product_id ?? undefined,
+          productName: bumpProductName,
+          productImage: bumpProductImage,
+        }
+      : undefined;
+
+    return { data: { c, p, b, priceOverride }, blocked: null };
+  } catch {
+    return { data: null, blocked: "error" };
+  }
+}
+
 export const Route = createFileRoute("/checkout/$publicId")({
   component: PublicCheckout,
-  loader: async ({ params }) => {
-    try {
-      // Uma única RPC traz checkout (resolvendo variant), produto, order bump e produto do bump
-      const { data: rpcData, error: rpcErr } = await supabase.rpc("get_public_checkout", {
-        p_public_id: params.publicId,
-      });
-      if (rpcErr) throw rpcErr;
-
-      const payload = (rpcData ?? {}) as {
-        checkout: CheckoutRow | null;
-        variant: { checkout_id: string; amount: number } | null;
-        product: {
-          id: string;
-          name: string;
-          description: string | null;
-          image: string | null;
-          type: Product["type"];
-          delivery_url: string | null;
-        } | null;
-        order_bump: {
-          id: string;
-          title: string | null;
-          description: string | null;
-          price: number;
-          compare_at_price: number | null;
-          product_id: string | null;
-        } | null;
-        order_bump_product: { name: string | null; image: string | null } | null;
-      };
-
-      const ckRow = payload.checkout;
-      if (!ckRow) return { data: null, meta: null, blocked: "notfound" as const };
-
-      const c = rowToCheckout(ckRow as unknown as CheckoutRow);
-
-      if (!c.productId) {
-        return { data: null, meta: null, blocked: "no_product" as const };
-      }
-
-      const pRow = payload.product;
-      if (!pRow) {
-        return { data: null, meta: null, blocked: "no_product" as const };
-      }
-
-      const variant = payload.variant;
-      const priceOverride = variant ? Number(variant.amount) : c.amount;
-      c.amount = priceOverride;
-
-      if (!(priceOverride > 0)) {
-        return { data: null, meta: null, blocked: "invalid_amount" as const };
-      }
-
-      const p: Product = {
-        id: pRow.id,
-        name: pRow.name,
-        description: pRow.description ?? "",
-        image: pRow.image ?? "",
-        type: pRow.type,
-        deliveryUrl: pRow.delivery_url ?? "",
-      };
-
-      const bRow = payload.order_bump;
-      const bumpProductName = payload.order_bump_product?.name ?? undefined;
-      const bumpProductImage = payload.order_bump_product?.image ?? undefined;
-
-      const b: OrderBump | undefined = bRow
-        ? {
-            id: bRow.id,
-            title: bRow.title || bumpProductName || "",
-            description: bRow.description ?? "",
-            price: Number(bRow.price),
-            compareAtPrice:
-              bRow.compare_at_price == null ? undefined : Number(bRow.compare_at_price),
-            productId: bRow.product_id ?? undefined,
-            productName: bumpProductName,
-            productImage: bumpProductImage,
-          }
-        : undefined;
-
-
-
-      return {
-        data: { c, p, b, priceOverride },
-        meta: {
-          name: p.name,
-          description: p.description || "Pagamento seguro via ElevPay",
-          image: p.image || c.image || "",
-          amount: priceOverride,
-        },
-        blocked: null,
-      };
-    } catch {
-      return { data: null, meta: null, blocked: "error" as const };
-    }
-  },
-
-  head: ({ loaderData }) => {
-    const m = loaderData?.meta;
-    const title = m ? `Finalize sua compra - ${m.name} - ElevPay` : "Finalize sua compra - ElevPay";
-    const description = m
-      ? `${m.name} por ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(m.amount)} - Pagamento seguro via PIX, cartão ou boleto.`
-      : "Pagamento rápido e seguro via ElevPay.";
-    const image = m?.image || "";
-    const links: Array<Record<string, string>> = [];
-    if (SUPABASE_ORIGIN) {
-      links.push({ rel: "preconnect", href: SUPABASE_ORIGIN, crossorigin: "" });
-    }
-    links.push({ rel: "dns-prefetch", href: "https://api.abacatepay.com" });
-    if (image) {
-      links.push({ rel: "preload", as: "image", href: image, fetchpriority: "high" });
-    }
-    return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "website" },
-        ...(image ? [{ property: "og:image", content: image }] : []),
-        { name: "twitter:card", content: image ? "summary_large_image" : "summary" },
-        { name: "twitter:title", content: title },
-        { name: "twitter:description", content: description },
-        ...(image ? [{ name: "twitter:image", content: image }] : []),
-      ],
-      links,
-    };
-  },
+  // CSR-only: fetch acontece no browser para manter TTFB baixo
+  head: () => ({
+    meta: [
+      { title: "Finalize sua compra - ElevPay" },
+      { name: "description", content: "Pagamento rápido e seguro via ElevPay." },
+    ],
+    links: [
+      ...(SUPABASE_ORIGIN ? [{ rel: "preconnect", href: SUPABASE_ORIGIN, crossorigin: "" }] : []),
+      { rel: "dns-prefetch", href: "https://api.abacatepay.com" },
+    ],
+  }),
 });
+
 
 /**
  * Public checkout — busca pelo public_id curto (10 chars).
