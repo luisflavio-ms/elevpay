@@ -1,5 +1,5 @@
-import logoMark from "@/assets/logo-mark.png";
-import logoFull from "@/assets/logo-full.png";
+import logoMark from "@/assets/logo-mark.webp";
+import logoFull from "@/assets/logo-full.webp";
 
 export function LogoMark({ size = 28, className = "" }: { size?: number; className?: string }) {
   return (
