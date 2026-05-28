@@ -51,6 +51,22 @@ function ProductPage() {
 
   const [draft, setDraft] = useState<Draft>(empty);
   const [tab, setTab] = useState<"produto" | "checkout">("produto");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleImageUpload(file: File) {
+    if (!user) return;
+    setUploading(true);
+    try {
+      const url = await uploadProductImage(file, user.id);
+      setDraft((d) => ({ ...d, image: url }));
+      toast.success("Imagem enviada");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha no upload");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const productQ = useQuery({
     queryKey: ["product", id],
