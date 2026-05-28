@@ -126,26 +126,46 @@ export const Route = createFileRoute("/checkout/$publicId")({
  */
 function PublicCheckout() {
   const { publicId } = Route.useParams();
-  const loaderData = Route.useLoaderData();
-  const initialData = loaderData?.data ?? null;
   const navigate = useNavigate();
-  const [data] = useState<{ c: Checkout; p?: Product; b?: OrderBump; priceOverride?: number } | null>(initialData);
-  const [method, setMethod] = useState<PaymentMethod>(() => {
-    const c = initialData?.c;
-    if (!c) return "pix";
-    return c.paymentMethods.pix ? "pix" : c.paymentMethods.card ? "cartao" : "boleto";
-  });
+  const [data, setData] = useState<{ c: Checkout; p: Product; b?: OrderBump; priceOverride: number } | null>(null);
+  const [blocked, setBlocked] = useState<"notfound" | "no_product" | "invalid_amount" | "error" | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [method, setMethod] = useState<PaymentMethod>("pix");
   const [bumpOn, setBumpOn] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", whatsapp: "", cpf: "" });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState<number>(() => {
-    const mins = initialData?.c.scarcityTimerMinutes ?? 0;
-    return mins > 0 ? mins * 60 : 0;
-  });
+  const [secondsLeft, setSecondsLeft] = useState<number>(0);
   const [pix, setPix] = useState<{ orderId: string; qr: string; copy: string; amount: number } | null>(null);
   const [paid, setPaid] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+
+  // Fetch CSR para manter TTFB baixo
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchCheckoutData(publicId).then((res) => {
+      if (cancelled) return;
+      if (res.data) {
+        setData(res.data);
+        const c = res.data.c;
+        setMethod(c.paymentMethods.pix ? "pix" : c.paymentMethods.card ? "cartao" : "boleto");
+        if (c.scarcityTimerMinutes > 0) setSecondsLeft(c.scarcityTimerMinutes * 60);
+        // SEO/title dinâmico
+        if (typeof document !== "undefined") {
+          document.title = `Finalize sua compra - ${res.data.p.name} - ElevPay`;
+        }
+      } else {
+        setBlocked(res.blocked);
+      }
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [publicId]);
+
+
 
   // Captura UTM params da URL (anúncios) e persiste durante a sessão.
   const utm = useMemo(() => {
