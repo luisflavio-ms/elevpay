@@ -710,6 +710,7 @@ export type Database = {
         Returns: number
       }
       gen_short_id: { Args: { len?: number }; Returns: string }
+      get_public_checkout: { Args: { p_public_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
