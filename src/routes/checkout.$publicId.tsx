@@ -322,7 +322,13 @@ function PublicCheckout() {
 
 
   if (!data) {
-    const blocked = loaderData?.blocked;
+    if (loading) {
+      return (
+        <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "system-ui", padding: 16 }}>
+          <div style={{ textAlign: "center", color: "#64748b" }}>Carregando…</div>
+        </div>
+      );
+    }
     const msg =
       blocked === "no_product"
         ? "Este checkout está temporariamente indisponível. Entre em contato com o vendedor."
