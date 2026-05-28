@@ -28,23 +28,34 @@ export const Route = createFileRoute("/checkout/$publicId")({
   component: PublicCheckout,
   loader: async ({ params }) => {
     try {
-      // 1) Lookup variant pelo public_id
-      const { data: variant } = await supabase
-        .from("checkout_price_variants")
-        .select("checkout_id, amount")
-        .eq("public_id", params.publicId)
-        .maybeSingle();
+      // 1) Em paralelo: tenta resolver publicId como variant E como checkout direto
+      const [variantRes, ckByPublicRes] = await Promise.all([
+        supabase
+          .from("checkout_price_variants")
+          .select("checkout_id, amount")
+          .eq("public_id", params.publicId)
+          .maybeSingle(),
+        supabase
+          .from("checkouts")
+          .select("*")
+          .eq("public_id", params.publicId)
+          .eq("active", true)
+          .maybeSingle(),
+      ]);
 
-      const filter = variant
-        ? { column: "id", value: variant.checkout_id as string }
-        : { column: "public_id", value: params.publicId };
+      const variant = variantRes.data;
 
-      const { data: ckRow } = await supabase
-        .from("checkouts")
-        .select("*")
-        .eq(filter.column, filter.value)
-        .eq("active", true)
-        .maybeSingle();
+      // Se for variant, precisa buscar o checkout pelo id da variant
+      let ckRow = ckByPublicRes.data;
+      if (variant && !ckRow) {
+        const { data } = await supabase
+          .from("checkouts")
+          .select("*")
+          .eq("id", variant.checkout_id as string)
+          .eq("active", true)
+          .maybeSingle();
+        ckRow = data;
+      }
 
       if (!ckRow) return { data: null, meta: null, blocked: "notfound" as const };
 
