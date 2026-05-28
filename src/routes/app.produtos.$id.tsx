@@ -287,11 +287,52 @@ function ProductPage() {
               <p className="text-xs text-muted-foreground">
                 O preço é definido na aba Checkout, permitindo variações de valor.
               </p>
-              <Field label="URL da imagem">
-                <Input
-                  value={draft.image}
-                  onChange={(e) => setDraft({ ...draft, image: e.target.value })}
+              <Field label="Imagem do produto">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleImageUpload(f);
+                    e.target.value = "";
+                  }}
                 />
+                {draft.image ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={draft.image}
+                      alt="Produto"
+                      className="h-32 w-32 rounded-md object-cover border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setDraft({ ...draft, image: "" })}
+                      className="absolute -top-2 -right-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow"
+                      aria-label="Remover imagem"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-2" />
+                    )}
+                    {uploading ? "Enviando..." : "Enviar imagem"}
+                  </Button>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Máx. 1MB — otimizamos automaticamente para WebP.
+                </p>
               </Field>
               <Field label="URL de entrega">
                 <Input
