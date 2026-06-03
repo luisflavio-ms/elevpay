@@ -130,9 +130,9 @@ function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           <DashboardPeriodFilter value={period} onChange={setPeriod} />
-          <Link to="/app/checkouts">
+          <Link to="/app/produtos/$id" params={{ id: "new" }}>
             <Button className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" /> Criar checkout
+              <Plus className="h-4 w-4 mr-2" /> Criar produto
             </Button>
           </Link>
         </div>
