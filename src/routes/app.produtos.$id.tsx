@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Save, Lock, Upload, X, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Lock, Upload, X, Loader2, LayoutTemplate } from "lucide-react";
 import { uploadProductImage } from "@/lib/image-upload";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -242,6 +242,17 @@ function ProductPage() {
         <h1 className="text-lg font-semibold truncate">
           {isNew ? "Novo produto" : draft.name || "Produto"}
         </h1>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+          disabled={isNew || ensureCheckoutM.isPending}
+          onClick={() => handleTabChange("checkout")}
+        >
+          <LayoutTemplate className="h-4 w-4 mr-1" />
+          Abrir builder do checkout
+        </Button>
       </div>
 
       <Tabs value={tab} onValueChange={handleTabChange}>
