@@ -50,6 +50,13 @@ export type Database = {
             referencedRelation: "checkouts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "checkout_price_variants_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: false
+            referencedRelation: "public_checkouts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       checkouts: {
@@ -374,6 +381,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_checkout_id_fkey"
+            columns: ["checkout_id"]
+            isOneToOne: false
+            referencedRelation: "public_checkouts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -546,7 +560,7 @@ export type Database = {
           {
             foreignKeyName: "sales_order_id_fkey"
             columns: ["order_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
@@ -698,7 +712,90 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_checkouts: {
+        Row: {
+          active: boolean | null
+          amount: number | null
+          benefits: Json | null
+          blocks: Json | null
+          button_text: string | null
+          guarantee: string | null
+          headline: string | null
+          id: string | null
+          image: string | null
+          name: string | null
+          order_bump_id: string | null
+          payment_methods: Json | null
+          primary_color: string | null
+          product_id: string | null
+          public_id: string | null
+          scarcity_timer_minutes: number | null
+          secure_seal: boolean | null
+          subheadline: string | null
+          testimonials: Json | null
+          urgency_message: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          amount?: number | null
+          benefits?: Json | null
+          blocks?: Json | null
+          button_text?: string | null
+          guarantee?: string | null
+          headline?: string | null
+          id?: string | null
+          image?: string | null
+          name?: string | null
+          order_bump_id?: string | null
+          payment_methods?: Json | null
+          primary_color?: string | null
+          product_id?: string | null
+          public_id?: string | null
+          scarcity_timer_minutes?: number | null
+          secure_seal?: boolean | null
+          subheadline?: string | null
+          testimonials?: Json | null
+          urgency_message?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          amount?: number | null
+          benefits?: Json | null
+          blocks?: Json | null
+          button_text?: string | null
+          guarantee?: string | null
+          headline?: string | null
+          id?: string | null
+          image?: string | null
+          name?: string | null
+          order_bump_id?: string | null
+          payment_methods?: Json | null
+          primary_color?: string | null
+          product_id?: string | null
+          public_id?: string | null
+          scarcity_timer_minutes?: number | null
+          secure_seal?: boolean | null
+          subheadline?: string | null
+          testimonials?: Json | null
+          urgency_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkouts_order_bump_id_fkey"
+            columns: ["order_bump_id"]
+            isOneToOne: false
+            referencedRelation: "order_bumps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkouts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       delete_email: {
