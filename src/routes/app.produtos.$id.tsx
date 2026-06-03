@@ -242,6 +242,17 @@ function ProductPage() {
         <h1 className="text-lg font-semibold truncate">
           {isNew ? "Novo produto" : draft.name || "Produto"}
         </h1>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+          disabled={isNew || ensureCheckoutM.isPending}
+          onClick={() => handleTabChange("checkout")}
+        >
+          <LayoutTemplate className="h-4 w-4 mr-1" />
+          Abrir builder do checkout
+        </Button>
       </div>
 
       <Tabs value={tab} onValueChange={handleTabChange}>
