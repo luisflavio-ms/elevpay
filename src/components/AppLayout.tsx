@@ -24,7 +24,6 @@ import { supabase } from "@/integrations/supabase/client";
 const nav = [
   { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/app/produtos", label: "Produtos", icon: Package },
-  { to: "/app/checkouts", label: "Checkouts", icon: ShoppingCart },
   { to: "/app/order-bumps", label: "Order bumps", icon: Gift },
   { to: "/app/vendas", label: "Vendas", icon: TrendingUp },
   { to: "/app/pedidos", label: "Pedidos", icon: Receipt },
