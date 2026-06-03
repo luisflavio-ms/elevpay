@@ -6,11 +6,9 @@ import {
   ShoppingBag,
   TrendingUp,
   Zap,
-  Plus,
   ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/store";
 import type { Order, Product } from "@/lib/types";
@@ -130,11 +128,6 @@ function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           <DashboardPeriodFilter value={period} onChange={setPeriod} />
-          <Link to="/app/produtos/$id" params={{ id: "new" }}>
-            <Button className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" /> Criar produto
-            </Button>
-          </Link>
         </div>
       </div>
 
