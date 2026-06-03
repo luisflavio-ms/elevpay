@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Package,
-  ShoppingCart,
   Gift,
   Receipt,
   TrendingUp,
