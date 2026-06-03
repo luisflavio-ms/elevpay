@@ -298,7 +298,22 @@ export const checkOrderStatus = createServerFn({ method: "POST" })
       };
       const newStatus = remoteStatus ? map[remoteStatus] : undefined;
       if (newStatus) {
-        await supabaseAdmin.from("orders").update({ status: newStatus }).eq("id", order.id);
+        // Optimistic concurrency: only the first caller that flips status away
+        // from "pendente" runs the side-effects (sales insert, emails, webhooks).
+        const { data: updated, error: updErr } = await supabaseAdmin
+          .from("orders")
+          .update({ status: newStatus })
+          .eq("id", order.id)
+          .eq("status", "pendente")
+          .select("id");
+        if (updErr) {
+          console.error("[checkOrderStatus] update error", updErr);
+          return { status: order.status };
+        }
+        if (!updated || updated.length === 0) {
+          // Another concurrent call already transitioned this order.
+          return { status: newStatus };
+        }
         if (newStatus === "aprovado") {
           const gross = Number(order.amount);
           const fee = Math.round(gross * 0.0499 * 100) / 100;

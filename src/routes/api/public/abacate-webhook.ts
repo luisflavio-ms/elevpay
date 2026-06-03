@@ -101,13 +101,21 @@ export const Route = createFileRoute("/api/public/abacate-webhook")({
         // Idempotência: se já aprovado, não duplica venda
         if (order.status === newStatus) return new Response("ok", { status: 200 });
 
-        const { error: updateErr } = await supabaseAdmin
+        // Optimistic concurrency: only the writer that actually transitions
+        // the row away from its prior status runs the side-effects below.
+        const { data: updatedRows, error: updateErr } = await supabaseAdmin
           .from("orders")
           .update({ status: newStatus })
-          .eq("id", order.id);
+          .eq("id", order.id)
+          .neq("status", newStatus)
+          .select("id");
         if (updateErr) {
           console.error("[abacate-webhook] update error", updateErr);
           return new Response("DB error", { status: 500 });
+        }
+        if (!updatedRows || updatedRows.length === 0) {
+          // Another concurrent webhook/poll already applied this transition.
+          return new Response("ok", { status: 200 });
         }
 
         // Cria registro em sales quando aprovado
