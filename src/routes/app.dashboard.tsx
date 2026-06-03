@@ -6,7 +6,6 @@ import {
   ShoppingBag,
   TrendingUp,
   Zap,
-  Plus,
   ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
