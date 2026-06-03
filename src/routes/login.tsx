@@ -7,16 +7,27 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 
+// Allow only same-origin relative paths (must start with "/" and not "//").
+function isSafeRelativePath(u: unknown): u is string {
+  return typeof u === "string" && u.startsWith("/") && !u.startsWith("//");
+}
+
 const searchSchema = z.object({
-  redirect: z.string().optional().catch(undefined),
+  redirect: z
+    .string()
+    .max(512)
+    .refine(isSafeRelativePath, { message: "Invalid redirect" })
+    .optional()
+    .catch(undefined),
 });
 
 export const Route = createFileRoute("/login")({
-  validateSearch: searchSchema,
+  validateSearch: (s) => searchSchema.parse(s),
   beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getSession();
     if (data.session) {
-      throw redirect({ to: (search.redirect as string) || "/app/dashboard" });
+      const dest = isSafeRelativePath(search.redirect) ? search.redirect : "/app/dashboard";
+      throw redirect({ to: dest });
     }
   },
   component: LoginPage,
@@ -39,7 +50,8 @@ function LoginPage() {
       return;
     }
     toast.success("Bem-vindo de volta!");
-    navigate({ to: search.redirect || "/app/dashboard" });
+    const dest = isSafeRelativePath(search.redirect) ? search.redirect : "/app/dashboard";
+    navigate({ to: dest });
   }
 
   return (
