@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Gift } from "lucide-react";
+import { Plus, Pencil, Trash2, Gift, Search, MoreHorizontal, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { brl } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { OrderBumpModal, type OrderBumpInput } from "@/components/OrderBumpModal";
@@ -39,6 +46,8 @@ function OrderBumpsList() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<OrderBumpInput | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<BumpRow | null>(null);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const q = useQuery({
     queryKey: ["order_bumps", "list"],
@@ -97,6 +106,31 @@ function OrderBumpsList() {
   const links = linksQ.data ?? {};
   const items = q.data ?? [];
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (b) =>
+        b.title.toLowerCase().includes(q) ||
+        b.productName?.toLowerCase().includes(q) ||
+        b.id.toLowerCase().includes(q),
+    );
+  }, [items, query]);
+
+  const toggle = (id: string) =>
+    setSelected((s) => {
+      const n = new Set(s);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+
+  const toggleAll = () =>
+    setSelected((s) =>
+      s.size === filtered.length ? new Set() : new Set(filtered.map((b) => b.id)),
+    );
+
+  const allSelected = filtered.length > 0 && selected.size === filtered.length;
+
   const deleteM = useMutation({
     mutationFn: async (bump: BumpRow) => {
       const { error: unlinkErr } = await supabase
@@ -135,7 +169,7 @@ function OrderBumpsList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Gift className="h-6 w-6" /> Order bumps
@@ -144,15 +178,27 @@ function OrderBumpsList() {
             Oferta extra no checkout vinculada a um produto — entrega automática após o pagamento.
           </p>
         </div>
-        <Button onClick={openNew}>
+        <Button onClick={openNew} className="bg-gradient-to-r from-primary to-[oklch(0.68_0.22_300)]">
           <Plus className="h-4 w-4 mr-2" /> Novo bump
         </Button>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por título ou ID..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="pl-9 bg-card/60"
+          />
+        </div>
       </div>
 
       {q.isLoading ? (
         <div className="text-sm text-muted-foreground py-10 text-center">Carregando...</div>
       ) : items.length === 0 ? (
-        <Card>
+        <Card className="rounded-2xl">
           <CardContent className="py-16 text-center space-y-3">
             <Gift className="h-10 w-10 mx-auto text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -164,57 +210,111 @@ function OrderBumpsList() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3">
-          {items.map((b) => {
-            const used = links[b.id] ?? 0;
-            const label = b.productName ?? b.title ?? "Produto removido";
-            return (
-              <Card key={b.id}>
-                <CardContent className="p-4 flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold truncate">{label}</h3>
-                      <Badge variant="secondary">
-                        {brl(b.price)}
-                        {b.compareAtPrice != null && (
-                          <span className="ml-1.5 line-through text-muted-foreground font-normal">
-                            {brl(b.compareAtPrice)}
+        <Card className="rounded-2xl bg-card/60 backdrop-blur border-border/60 overflow-hidden">
+          <div className="hidden md:grid grid-cols-[40px_minmax(0,3fr)_120px_100px_100px_120px] gap-4 px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border/60 bg-background/40">
+            <button
+              onClick={toggleAll}
+              aria-label="Selecionar todos"
+              className={`h-4 w-4 rounded border ${allSelected ? "bg-primary border-primary" : "border-muted-foreground/40"}`}
+            />
+            <span>Bump</span>
+            <span>Preço</span>
+            <span>Checkouts</span>
+            <span>Status</span>
+            <span className="text-right">Ações</span>
+          </div>
+
+          <ul className="divide-y divide-border/40">
+            {filtered.map((b) => {
+              const isSel = selected.has(b.id);
+              const used = links[b.id] ?? 0;
+              const label = b.productName ?? b.title ?? "Produto removido";
+
+              return (
+                <li
+                  key={b.id}
+                  className={`grid grid-cols-[40px_1fr] md:grid-cols-[40px_minmax(0,3fr)_120px_100px_100px_120px] gap-4 px-5 py-4 items-center transition-colors hover:bg-primary/5 ${isSel ? "bg-primary/5" : ""}`}
+                >
+                  <button
+                    onClick={() => toggle(b.id)}
+                    aria-label="Selecionar"
+                    className={`h-4 w-4 rounded border transition ${isSel ? "bg-primary border-primary" : "border-muted-foreground/40 hover:border-primary"}`}
+                  />
+
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-11 w-11 rounded-lg bg-muted overflow-hidden flex items-center justify-center shrink-0 ring-1 ring-border/60">
+                      <Gift className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{label}</div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                          ID: {b.id.slice(-6).toUpperCase()}
+                        </span>
+                        {b.description && (
+                          <span className="text-[10px] truncate max-w-[150px] text-muted-foreground italic">
+                            — {b.description}
                           </span>
                         )}
-                      </Badge>
-                      {!b.productId && (
-                        <Badge variant="destructive">Sem produto</Badge>
-                      )}
-                      {used > 0 && (
-                        <Badge variant="outline">
-                          {used} checkout{used > 1 ? "s" : ""}
-                        </Badge>
-                      )}
+                      </div>
                     </div>
-                    {b.description && (
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                        {b.description}
-                      </p>
+                  </div>
+
+                  <div className="md:hidden col-span-2 flex flex-wrap items-center gap-2 pt-1">
+                    <Badge variant="secondary">{brl(b.price)}</Badge>
+                    <Badge variant="outline">{used} checkouts</Badge>
+                    {!b.productId && <Badge variant="destructive">Sem produto</Badge>}
+                    <div className="ml-auto">
+                      <BumpActions
+                        onEdit={() => openEdit(b)}
+                        onDelete={() => setConfirmDelete(b)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="hidden md:block tabular-nums text-sm font-medium">
+                    {brl(b.price)}
+                    {b.compareAtPrice != null && (
+                      <div className="text-[10px] line-through text-muted-foreground font-normal">
+                        {brl(b.compareAtPrice)}
+                      </div>
                     )}
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(b)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setConfirmDelete(b)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+
+                  <div className="hidden md:block tabular-nums text-sm">
+                    {used}
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+
+                  <div className="hidden md:block">
+                    {b.productId ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Ativo
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">
+                        <span className="h-1.5 w-1.5 rounded-full bg-red-400" /> Inativo
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="hidden md:flex justify-end">
+                    <BumpActions
+                      onEdit={() => openEdit(b)}
+                      onDelete={() => setConfirmDelete(b)}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {filtered.length === 0 && (
+            <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+              Nenhum order bump encontrado para "{query}".
+            </div>
+          )}
+        </Card>
+      ) }
 
       <OrderBumpModal
         open={modalOpen}
@@ -250,5 +350,31 @@ function OrderBumpsList() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+function BumpActions({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuItem onClick={onEdit}>
+          <Pencil className="h-4 w-4 mr-2" /> Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
